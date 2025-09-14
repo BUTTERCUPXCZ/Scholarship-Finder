@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  fullname String
+  email    String @unique
+  password String
+  role     Role   @default(STUDENT)
+
+  // Relations
+  applications Application[]
+  scholarships Scholarship[] @relation("ScholarshipOrg")
+
+  @@index([email])
+  @@index([password])
+}
+
+enum Role {
+  STUDENT
+  ORGANIZATION
+  ADMIN
+}
+
+// Add this new enum for scholarship status
+enum ScholarshipStatus {
+  ACTIVE
+  EXPIRED
+}
+
+model Scholarship {
+  id           String            @id @default(cuid())
+  title        String
+  description  String
+  providerId   String
+  provider     User              @relation("ScholarshipOrg", fields: [providerId], references: [id])
+  deadline     DateTime
+  location     String
+  type         String // gov, school-based, private
+  benefits     String
+  requirements String
+  status       ScholarshipStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  applications Application[]
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  userId        String
+  scholarshipId String
+  status        ApplicationStatus @default(PENDING)
+  submittedAt   DateTime          @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  scholarship Scholarship @relation(fields: [scholarshipId], references: [id])
+}
+
+enum ApplicationStatus {
+  PENDING
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+}
