@@ -131,7 +131,7 @@ const Profile = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* Profile Sidebar */}
                         <div className="lg:col-span-4">
-                            <Card className=" border-0 bg-white/80 backdrop-blur-sm border border-gray-300">
+                            <Card className=" border bg-white/80 backdrop-blur-sm border-gray-300">
                                 <CardContent className="p-8">
                                     {/* Profile Photo Section */}
                                     <div className="text-center mb-6">

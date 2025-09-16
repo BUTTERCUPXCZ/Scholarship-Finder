@@ -148,10 +148,18 @@ const Login = () => {
                         >
                             {mutation.isPending ? (
                                 <>
-                                    <div className="relative">
-                                        <div className="w-5 h-5 rounded-full border-2 border-white/20"></div>
-                                        <div className="absolute top-0 left-0 w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                                    </div>
+                                    {/* SVG gradient arc spinner */}
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="lg-spinner" x1="0" y1="0" x2="1" y2="1">
+                                                <stop offset="0%" stopColor="#4F39F6" stopOpacity="1" />
+                                                <stop offset="100%" stopColor="#C7B8FF" stopOpacity="0.6" />
+                                            </linearGradient>
+                                        </defs>
+                                        <g className="animate-spin origin-center">
+                                            <circle cx="12" cy="12" r="9" stroke="url(#lg-spinner)" strokeWidth="2" strokeLinecap="round" strokeDasharray="40 120" strokeDashoffset="0" fill="none" />
+                                        </g>
+                                    </svg>
                                     <span className="animate-pulse">Logging in...</span>
                                 </>
                             ) : (

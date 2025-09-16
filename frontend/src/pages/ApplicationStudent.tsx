@@ -95,7 +95,21 @@ const ApplicationStudent = () => {
                 <StudentNavbar />
                 <div className="container mx-auto p-6">
                     <div className="flex items-center justify-center h-64">
-                        <div className="text-lg">Loading...</div>
+                        <div className="flex items-center gap-3">
+                            {/* SVG gradient arc spinner */}
+                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="lg-spinner-home" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stopColor="#4F39F6" stopOpacity="1" />
+                                        <stop offset="100%" stopColor="#C7B8FF" stopOpacity="0.6" />
+                                    </linearGradient>
+                                </defs>
+                                <g className="animate-spin origin-center">
+                                    <circle cx="12" cy="12" r="9" stroke="url(#lg-spinner-home)" strokeWidth="2" strokeLinecap="round" strokeDasharray="40 120" strokeDashoffset="0" fill="none" />
+                                </g>
+                            </svg>
+                            <div className="text-lg text-gray-600">Loading...</div>
+                        </div>
                     </div>
                 </div>
             </>

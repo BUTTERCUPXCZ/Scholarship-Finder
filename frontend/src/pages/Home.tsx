@@ -1,12 +1,6 @@
 import StudentNavbar from '../components/studentNavbar'
 import { Button } from '../components/ui/button'
-import {
-    GraduationCap,
-    BookOpen,
-    Users,
-    Award,
-    Target
-} from 'lucide-react'
+import { BookOpen, Users, Award } from 'lucide-react'
 
 const Home = () => {
     return (
@@ -48,52 +42,14 @@ const Home = () => {
                         </div>
                     </div>
 
-                    {/* Right Illustration */}
+                    {/* Right Illustration (replaced with provided image) */}
                     <div className="flex justify-center lg:justify-end">
                         <div className="relative">
-                            {/* Main Figure */}
-                            <div className="w-80 h-96 bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-3xl flex items-center justify-center relative overflow-hidden">
-                                {/* Person Silhouette */}
-                                <div className="absolute bottom-0 right-8">
-                                    <div className="w-32 h-48 bg-gray-800 rounded-t-full relative">
-                                        {/* Head */}
-                                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gray-800 rounded-full"></div>
-                                        {/* Arms */}
-                                        <div className="absolute top-8 -left-4 w-8 h-16 bg-gray-800 rounded-full transform rotate-12"></div>
-                                        <div className="absolute top-12 -right-6 w-8 h-20 bg-gray-800 rounded-full transform -rotate-12"></div>
-                                    </div>
-                                </div>
-
-                                {/* Floating Elements */}
-                                <div className="absolute top-8 left-8 bg-white p-3 rounded-lg shadow-lg">
-                                    <BookOpen className="h-6 w-6 text-indigo-600" />
-                                </div>
-
-                                <div className="absolute top-16 right-12 bg-white p-3 rounded-lg shadow-lg">
-                                    <Award className="h-6 w-6 text-indigo-600" />
-                                </div>
-
-                                <div className="absolute bottom-32 left-12 bg-white p-3 rounded-lg shadow-lg">
-                                    <Target className="h-6 w-6 text-indigo-600" />
-                                </div>
-
-                                {/* Progress Lines */}
-                                <div className="absolute top-24 right-6 space-y-2">
-                                    <div className="w-16 h-1 bg-indigo-600 rounded"></div>
-                                    <div className="w-12 h-1 bg-indigo-400 rounded"></div>
-                                    <div className="w-8 h-1 bg-indigo-300 rounded"></div>
-                                </div>
-
-                                {/* Checkmarks */}
-                                <div className="absolute bottom-48 right-4 space-y-2">
-                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                        <div className="w-3 h-3 text-white text-xs">✓</div>
-                                    </div>
-                                    <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                                        <div className="w-3 h-3 text-white text-xs">✓</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <img
+                                src="/illustration.png"
+                                alt="student standing on books illustration"
+                                className="w-64 sm:w-80 md:w-96 lg:w-[28rem] h-auto rounded-3xl shadow-lg object-contain"
+                            />
                         </div>
                     </div>
                 </div>

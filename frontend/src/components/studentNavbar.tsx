@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import { ChevronDown, LogOut, User, FileText } from 'lucide-react'
+import { Bell } from 'lucide-react'
 
 const StudentNavbar = () => {
     const [open, setOpen] = useState(false)
@@ -52,6 +53,22 @@ const StudentNavbar = () => {
                 <Link to="/scholarship" className="text-gray-700 hover:text-indigo-600 transition-colors">
                     Scholarship
                 </Link>
+
+                {/* Notification Bell (visible only when user is logged in) */}
+                {user && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="relative px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+                            <Bell className="w-5 h-5 text-gray-600" />
+                            {/* Unread badge (hardcoded 0 for now) */}
+                            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium leading-none text-white bg-red-600 rounded-full">0</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-72">
+                            <div className="px-3 py-2 text-sm font-medium">Notifications</div>
+                            <DropdownMenuSeparator />
+                            <div className="px-3 py-2 text-sm text-gray-600">No new notifications</div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
                 {/* User Dropdown or Login Button */}
                 {user ? (
@@ -121,6 +138,13 @@ const StudentNavbar = () => {
                 <div className="w-full mt-2">
                     {user ? (
                         <>
+                            <Link to="/notifications" className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded">
+                                <div className="relative">
+                                    <Bell className="h-4 w-4" />
+                                    <span className="absolute -top-1 -right-2 inline-flex items-center justify-center px-1 text-xs font-medium leading-none text-white bg-red-600 rounded-full">0</span>
+                                </div>
+                                Notifications
+                            </Link>
                             <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg mb-2">
                                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-medium"
                                     style={{ backgroundColor: '#4F39F6' }}
