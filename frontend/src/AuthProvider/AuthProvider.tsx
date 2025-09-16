@@ -1,4 +1,5 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface User {
     id: string;
@@ -11,78 +12,123 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (user: User, token: string) => void;
+    login: (user: User) => void;
     logout: () => void;
+    refetchUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const checkAuthStatus = async (): Promise<User | null> => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.status === 401) {
+            // Not authenticated yet → return null without error
+            return null;
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.success && data.user ? data.user : null;
+        }
+
+        return null;
+    } catch (error) {
+        console.error("AuthProvider - Failed to check auth status:", error);
+        return null;
+    }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [initialCheckComplete, setInitialCheckComplete] = useState(false);
+    const queryClient = useQueryClient();
 
-    // Initialize auth state from localStorage on mount
+    // Check if current route is login or register
+    const isAuthPage = ["/login", "/register"].includes(window.location.pathname);
+
+    const { data: userData, isLoading: queryLoading, refetch, error } = useQuery({
+        queryKey: ["auth", "currentUser"],
+        queryFn: checkAuthStatus,
+        // ✅ Run on app start unless on auth pages
+        enabled: !isAuthPage,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+        retry: false,
+        refetchOnWindowFocus: false,
+    });
+
+    // Sync user state with query and mark initial check as complete
     useEffect(() => {
-        const initializeAuth = () => {
-            try {
-                const storedAuth = localStorage.getItem("auth");
-                if (storedAuth) {
-                    const { user: storedUser, token: storedToken } = JSON.parse(storedAuth);
-                    if (storedUser && storedToken) {
-                        setUser(storedUser);
-                        setToken(storedToken);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to restore auth state:", error);
-                // Clear corrupted data
-                localStorage.removeItem("auth");
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        if (userData) {
+            setUser(userData);
+            setInitialCheckComplete(true);
+        } else if (error || userData === null) {
+            setUser(null);
+            setInitialCheckComplete(true);
+        }
+    }, [userData, error]);
 
-        initializeAuth();
-    }, []);
+    // On auth pages, mark initial check as complete immediately
+    useEffect(() => {
+        if (isAuthPage) {
+            setInitialCheckComplete(true);
+        }
+    }, [isAuthPage]);
 
-    const login = (user: User, token: string) => {
+    const login = useCallback((user: User) => {
         setUser(user);
-        setToken(token);
-        // Store both user and token together
-        localStorage.setItem("auth", JSON.stringify({ user, token }));
-    };
+        queryClient.setQueryData(["auth", "currentUser"], user);
+        setInitialCheckComplete(true);
+    }, [queryClient]);
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem("auth");
-        localStorage.removeItem("token"); // Also remove old token storage for migration
-    };
+    const logout = useCallback(async () => {
+        try {
+            await fetch(`${import.meta.env.VITE_API_URL}/users/logout`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+            });
+        } catch (err) {
+            console.error("Logout request failed:", err);
+        } finally {
+            setUser(null);
+            setInitialCheckComplete(false);
+            queryClient.removeQueries({ queryKey: ["auth"] });
+            localStorage.removeItem("auth");
+            localStorage.removeItem("token");
+        }
+    }, [queryClient]);
 
-    const isAuthenticated = Boolean(user && token);
+    const refetchUser = useCallback(() => {
+        refetch();
+    }, [refetch]);
 
-    return (
-        <AuthContext.Provider value={{
-            user,
-            token,
-            isLoading,
-            isAuthenticated,
-            login,
-            logout
-        }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    // Show loading only while we're still checking auth status
+    const isLoading = queryLoading || !initialCheckComplete;
+    const isAuthenticated = Boolean(user);
+
+    const value = useMemo(() => ({
+        user,
+        isLoading,
+        isAuthenticated,
+        login,
+        logout,
+        refetchUser,
+    }), [user, isLoading, isAuthenticated, login, logout, refetchUser]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error("useAuth must be used within an AuthProvider");
     return context;
 };

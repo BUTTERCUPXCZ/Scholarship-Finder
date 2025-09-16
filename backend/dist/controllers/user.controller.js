@@ -1,0 +1,122 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getCurrentUser = exports.userLogout = exports.userLogin = exports.userRegister = void 0;
+const client_1 = require("@prisma/client");
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const auth_1 = require("../middleware/auth");
+const prisma = new client_1.PrismaClient();
+const userRegister = async (req, res) => {
+    try {
+        const { fullname, email, password, role } = req.body;
+        if (!fullname || !email || !password || !role) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+        const hashPassword = await bcrypt_1.default.hash(password, 10);
+        const response = await prisma.user.create({
+            data: { fullname, email, password: hashPassword, role }
+        });
+        res.status(201).json({ success: true, user: response });
+    }
+    catch (error) {
+        console.log("Error User Registration: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.userRegister = userRegister;
+const userLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+        const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+        // Exclude sensitive fields
+        const { password: _, ...safeUser } = user;
+        // Generate token
+        const token = (0, auth_1.signToken)({ id: user.id, email: user.email, role: user.role });
+        // Set HTTP-only cookie (secure token storage)
+        res.cookie('authToken', token, {
+            httpOnly: true, // Cannot be accessed by JavaScript
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+            sameSite: 'strict', // CSRF protection
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'
+        });
+        // Don't send token in response body for security
+        res.status(200).json({
+            success: true,
+            user: safeUser,
+            message: "Login successful"
+        });
+    }
+    catch (error) {
+        console.log("Error User Login: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.userLogin = userLogin;
+// Logout endpoint to clear the HTTP-only cookie
+const userLogout = async (req, res) => {
+    try {
+        // Clear the auth cookie
+        res.clearCookie('authToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+        res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
+        });
+    }
+    catch (error) {
+        console.log("Error User Logout: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.userLogout = userLogout;
+// Get current user profile (for authentication check)
+const getCurrentUser = async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+        const user = await prisma.user.findUnique({
+            where: { id: String(userId) },
+            select: {
+                id: true,
+                fullname: true,
+                email: true,
+                role: true
+            }
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+            success: true,
+            user
+        });
+    }
+    catch (error) {
+        console.log("Error Get Current User: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.getCurrentUser = getCurrentUser;

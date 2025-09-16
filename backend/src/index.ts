@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes';
@@ -19,6 +20,7 @@ declare global {
             JWT_SECRET: string;
             JWT_EXPIRES_IN?: string;
             DATABASE_URL?: string;
+            FRONTEND_URL?: string;
             NODE_ENV?: "development" | "production" | "test";
         }
     }
@@ -30,7 +32,19 @@ const app = express();
 startScholarshipJobs();
 app.use(helmet());
 app.use(morgan('combined'));
-app.use(cors());
+
+// CORS configuration to allow credentials (cookies)
+app.use(cors({
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        'http://localhost:5174' // Allow both development ports
+    ],
+    credentials: true, // Allow cookies to be sent
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(cookieParser()); // Parse cookies
 app.use(express.json());
 
 app.use('/users', userRoutes);

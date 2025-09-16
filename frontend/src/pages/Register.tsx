@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { registerUser, type RegisterData } from '../services/auth'
+import { useAuth } from '../AuthProvider/AuthProvider'
 
 
 
@@ -18,6 +19,7 @@ const Register = () => {
     // ✅ Use Set for O(1) lookups/removals
     const [errorFields, setErrorFields] = useState<Set<string>>(new Set());
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -51,8 +53,9 @@ const Register = () => {
         mutationFn: (data: RegisterData) => registerUser(data),
         onSuccess: (data) => {
             setError(null);
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
+
+            // Use AuthProvider login method (no token needed with cookies)
+            login(data.user);
 
             // Role-based redirect after registration
             const role = data?.user?.role?.toString?.() ?? '';

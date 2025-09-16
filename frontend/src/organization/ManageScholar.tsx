@@ -1,12 +1,10 @@
-import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 import {
     SidebarProvider,
-    SidebarTrigger,
     SidebarInset,
 } from '../components/ui/sidebar'
-import { Separator } from '../components/ui/separator'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,7 +15,6 @@ import {
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import {
-    Bell,
     Search,
     Edit,
     Archive,
@@ -36,10 +33,18 @@ import {
     AlertTriangle
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
+import Navbar from '../components/Navbar'
 import ApplicationManagement from './ApplicationManagement'
-import { useQuery } from '@tanstack/react-query'
+import EditModalForm from '../components/Editmodalform'
+import CreateScholarshipModal from '../components/CreateScholarshipModal'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getAllScholars } from '../services/getScholarships'
+import { deleteScholarship } from '../services/deleteScholarship'
+import { archiveScholarship } from '../services/Archive'
+import { updateExpiredScholarships } from '../services/updateExpiredScholarships'
+import toast from 'react-hot-toast'
 
-// Mock data type for scholarships
+// Interface matching backend schema
 interface Scholarship {
     id: string
     title: string
@@ -47,122 +52,171 @@ interface Scholarship {
     location: string
     benefits: string
     deadline: string
-    applicationLink: string
-    status: 'active' | 'archived' | 'expired'
-    applicants: number
+    type: string
+    requirements: string
+    status: 'ACTIVE' | 'EXPIRED'
     createdAt: string
-    isExpired: boolean
+    updatedAt: string
+    providerId: string
+    applications?: any[]
 }
 
 const ManageScholar = () => {
     const navigate = useNavigate()
-    const { logout } = useAuth()
+    const { logout, isAuthenticated, isLoading: authLoading } = useAuth()
+    const queryClient = useQueryClient()
 
     // State management
     const [searchTerm, setSearchTerm] = useState('')
-    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'archived' | 'expired'>('all')
+    const [filterStatus, setFilterStatus] = useState<'all' | 'ACTIVE' | 'EXPIRED'>('all')
     const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'deadline' | 'applicants' | 'name' | 'gpa'>('newest')
-    const [isLoading, setIsLoading] = useState(false)
 
     // State for viewing applications
     const [viewingApplications, setViewingApplications] = useState<string | null>(null)
 
-    // Mock scholarship data - In real app, this would come from an API
-    const [scholarships, setScholarships] = useState<Scholarship[]>([
-        {
-            id: '1',
-            title: 'Tech Innovation Scholarship',
-            description: 'Supporting students pursuing computer science and engineering degrees with a focus on innovation and technology.',
-            location: 'United States',
-            benefits: '$5,000 annual award + mentorship program',
-            deadline: '2025-10-15',
-            applicationLink: 'https://example.com/apply/tech',
-            status: 'active',
-            applicants: 145,
-            createdAt: '2025-08-15',
-            isExpired: false
-        },
-        {
-            id: '2',
-            title: 'Global Leadership Fellowship',
-            description: 'Empowering future leaders through education and international experience opportunities.',
-            location: 'Global',
-            benefits: '$10,000 + study abroad opportunity',
-            deadline: '2025-09-01',
-            applicationLink: 'https://example.com/apply/leadership',
-            status: 'expired',
-            applicants: 289,
-            createdAt: '2025-06-20',
-            isExpired: true
-        },
-        {
-            id: '3',
-            title: 'Women in STEM Scholarship',
-            description: 'Encouraging women to pursue careers in Science, Technology, Engineering, and Mathematics.',
-            location: 'Canada',
-            benefits: '$3,000 + networking opportunities',
-            deadline: '2025-12-01',
-            applicationLink: 'https://example.com/apply/women-stem',
-            status: 'active',
-            applicants: 87,
-            createdAt: '2025-09-01',
-            isExpired: false
-        },
-        {
-            id: '4',
-            title: 'Community Service Award',
-            description: 'Recognizing students who have made significant contributions to their communities.',
-            location: 'Online',
-            benefits: '$2,500 + community project funding',
-            deadline: '2025-08-30',
-            applicationLink: 'https://example.com/apply/community',
-            status: 'archived',
-            applicants: 234,
-            createdAt: '2025-05-10',
-            isExpired: true
-        }
-    ])
+    // State for edit modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [selectedScholarship, setSelectedScholarship] = useState<Scholarship | null>(null)
 
-    // Fetch user data from localStorage using useQuery
-    const { data: user } = useQuery({
-        queryKey: ['user'],
-        queryFn: () => {
-            const authData = localStorage.getItem('auth')
-            if (authData) {
-                try {
-                    const parsed = JSON.parse(authData)
-                    return parsed.user as { fullname?: string; email?: string } | null
-                } catch (error) {
-                    console.error('Error parsing auth data:', error)
-                    return null
+    // State for create scholarship modal
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+    // Fetch scholarships using TanStack Query
+    const {
+        data: scholarships = [],
+        isLoading,
+        error,
+        refetch
+    } = useQuery<Scholarship[], Error>({
+        queryKey: ['scholarships'],
+        queryFn: async () => {
+            try {
+                return await getAllScholars()
+            } catch (error: any) {
+                // Handle authentication errors
+                if (error?.message?.includes('UNAUTHORIZED')) {
+                    toast.error('Your session has expired. Please log in again.')
+                    logout()
+                    navigate('/login')
+                    throw error
                 }
+                // For other errors, show generic message and re-throw
+                toast.error('Failed to load scholarships. Please try again.')
+                throw error
             }
-            return null
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        enabled: isAuthenticated, // Only run query if authenticated
         refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: (failureCount, error: any) => {
+            // If it's an auth error, don't retry
+            if (error?.message?.includes('UNAUTHORIZED')) {
+                return false
+            }
+            // For other errors, retry up to 3 times
+            return failureCount < 3
+        }
     })
 
-    const handleLogout = () => {
-        logout()
-        navigate('/login')
+    // Redirect to login if not authenticated - only run once when auth state changes
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            toast.error('Please log in to access this page')
+            navigate('/login', { replace: true })
+        }
+    }, [isAuthenticated, authLoading, navigate])
+
+    // Delete scholarship mutation
+    const deleteScholarshipMutation = useMutation({
+        mutationFn: (id: string) =>
+            deleteScholarship(id),
+        onSuccess: (data) => {
+            // Invalidate and refetch scholarships list
+            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            // Show success message
+            toast.success(data.message || 'Scholarship deleted successfully')
+        },
+        onError: (error: Error) => {
+            // Handle authentication errors
+            if (error?.message?.includes('UNAUTHORIZED')) {
+                toast.error('Your session has expired. Please log in again.')
+                logout()
+                navigate('/login')
+            } else {
+                toast.error(error.message || 'Failed to delete scholarship')
+            }
+        },
+    })
+
+    // Archive scholarship mutation
+    const archiveScholarshipMutation = useMutation({
+        mutationFn: (id: string) =>
+            archiveScholarship(id),
+        onSuccess: (data) => {
+            // Invalidate and refetch scholarships list
+            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            // Show success message
+            toast.success(data.message || 'Scholarship archived successfully')
+        },
+        onError: (error: Error) => {
+            // Handle authentication errors
+            if (error?.message?.includes('UNAUTHORIZED')) {
+                toast.error('Your session has expired. Please log in again.')
+                logout()
+                navigate('/login')
+            } else {
+                toast.error(error.message || 'Failed to archive scholarship')
+            }
+        },
+    })
+
+    // Update expired scholarships mutation
+    const updateExpiredMutation = useMutation({
+        mutationFn: () =>
+            updateExpiredScholarships(),
+        onSuccess: (data) => {
+            // Invalidate and refetch scholarships list to show updated statuses
+            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            // Show success message if any scholarships were updated
+            if (data.count > 0) {
+                toast.success(`${data.count} scholarship(s) marked as expired`)
+            }
+        },
+        onError: (error: Error) => {
+            // Handle authentication errors
+            if (error?.message?.includes('UNAUTHORIZED')) {
+                toast.error('Your session has expired. Please log in again.')
+                logout()
+                navigate('/login')
+            } else {
+                toast.error(error.message || 'Failed to update expired scholarships')
+            }
+        },
+    })
+
+    // Function to manually check for expired scholarships
+    const handleCheckExpired = () => {
+        updateExpiredMutation.mutate()
     }
 
-    // Utility functions
+    // Function to check if a scholarship is expired (client-side check)
+    const isScholarshipExpired = (deadline: string) => {
+        return new Date(deadline) < new Date()
+    }
+
+    // Utility functions - updated to work with backend data
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'bg-green-100 text-green-800 border-green-200'
-            case 'expired': return 'bg-red-100 text-red-800 border-red-200'
-            case 'archived': return 'bg-gray-100 text-gray-800 border-gray-200'
+            case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200'
+            case 'EXPIRED': return 'bg-red-100 text-red-800 border-red-200'
             default: return 'bg-gray-100 text-gray-800 border-gray-200'
         }
     }
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'active': return <CheckCircle className="h-4 w-4" />
-            case 'expired': return <XCircle className="h-4 w-4" />
-            case 'archived': return <Archive className="h-4 w-4" />
+            case 'ACTIVE': return <CheckCircle className="h-4 w-4" />
+            case 'EXPIRED': return <XCircle className="h-4 w-4" />
             default: return <AlertTriangle className="h-4 w-4" />
         }
     }
@@ -182,27 +236,33 @@ const ManageScholar = () => {
         return daysUntilDeadline <= 7 && daysUntilDeadline > 0
     }
 
+    const handleDeleteScholarship = async (id: string) => {
+        // Show confirmation dialog
+        if (window.confirm('Are you sure you want to delete this scholarship? This action cannot be undone.')) {
+            deleteScholarshipMutation.mutate(id)
+        }
+    }
+
     // Event handlers
-    const handleEditScholarship = (id: string) => {
-        // Navigate to edit page or open edit modal
-        navigate(`/organization/edit-scholarship/${id}`)
+    const handleEditScholarship = (scholarship: Scholarship) => {
+        setSelectedScholarship(scholarship)
+        setIsEditModalOpen(true)
+    }
+
+    const handleEditSuccess = () => {
+        // Invalidate and refetch scholarships data after successful edit
+        queryClient.invalidateQueries({ queryKey: ['scholarships'] })
     }
 
     const handleArchiveScholarship = async (id: string) => {
-        setIsLoading(true)
-        try {
-            // In real app, make API call to archive scholarship
-            setScholarships(prev =>
-                prev.map(scholarship =>
-                    scholarship.id === id
-                        ? { ...scholarship, status: 'archived' as const }
-                        : scholarship
-                )
-            )
-        } catch (error) {
-            console.error('Error archiving scholarship:', error)
-        } finally {
-            setIsLoading(false)
+        // Show confirmation dialog
+        if (window.confirm('Are you sure you want to archive this scholarship? It will be moved to the archive and no longer visible to applicants.')) {
+            try {
+                await archiveScholarshipMutation.mutateAsync(id)
+            } catch (error) {
+                console.error('Error archiving scholarship:', error)
+                // Error handling is already done in the mutation's onError callback
+            }
         }
     }
 
@@ -214,9 +274,7 @@ const ManageScholar = () => {
         setViewingApplications(null)
     }
 
-    // Scholarship utility functions
-
-    // Filter and sort scholarships
+    // Filter and sort scholarships - updated for backend data
     const filteredAndSortedScholarships = scholarships
         .filter(scholarship => {
             const matchesSearch = scholarship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -233,87 +291,55 @@ const ManageScholar = () => {
                 case 'deadline':
                     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
                 case 'applicants':
-                    return b.applicants - a.applicants
+                    return (b.applications?.length || 0) - (a.applications?.length || 0)
                 default:
                     return 0
             }
         })
 
-    const getUserDisplayName = () => {
-        return user?.fullname || user?.email || 'User'
-    }
+    const LoadingContent = () => (
+        <div className="flex items-center justify-center min-h-[60vh] bg-white">
+            <div className="flex flex-col items-center space-y-6">
+                {/* Spinner */}
+                <div className="relative">
+                    <div className="h-24 w-24 rounded-full border-4 border-gray-200"></div>
+                    <div className="absolute top-0 left-0 h-24 w-24 rounded-full border-4 border-t-indigo-500 border-r-indigo-400 animate-spin"></div>
+                </div>
+
+                {/* Loading text */}
+                <p className="text-lg font-medium text-gray-700 animate-pulse">
+                    Loading scholarships...
+                </p>
+            </div>
+        </div>
+    )
+
+    const ErrorContent = () => (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+                <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading scholarships</h2>
+                <p className="text-gray-600 mb-4">Something went wrong. Please try again.</p>
+                <Button onClick={() => refetch()}>Try Again</Button>
+            </div>
+        </div>
+    )
+
     return (
         <SidebarProvider>
             <div className="flex h-screen w-full">
                 <OrgSidebar />
 
                 <SidebarInset className="flex-1">
-                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
-                        <div className="flex items-center gap-2">
-                            <SidebarTrigger className="-ml-1" />
-                            <Separator orientation="vertical" className="mr-2 h-4" />
-                            <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground">Manage Scholarships</span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            {/* Notification Bell */}
-                            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <Bell className="size-5 text-gray-600" />
-                            </button>
-
-                            {/* User Dropdown */}
-                            {user ? (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 text-white rounded-full cursor-pointer transition"
-                                        style={{ backgroundColor: '#4F39F6' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
-                                    >
-                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-sm font-medium"
-                                            style={{ color: '#4F39F6' }}
-                                        >
-                                            {getUserDisplayName().charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm">{getUserDisplayName()}</span>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56">
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <span>Profile</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <span>Settings</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                            className="cursor-pointer text-red-600 focus:text-red-600"
-                                            onClick={handleLogout}
-                                        >
-                                            <span>Log out</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            ) : (
-                                <button
-                                    className="cursor-pointer px-8 py-2 text-white rounded-full transition"
-                                    style={{ backgroundColor: '#4F39F6' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
-                                    onClick={() => navigate('/login')}
-                                >
-                                    Login
-                                </button>
-                            )}
-                        </div>
-                    </header>
+                    <Navbar showSidebarToggle={true} pageTitle="Manage Scholarships" />
 
                     <div className="flex flex-1 flex-col gap-6 p-6">
                         <div className="max-w-7xl mx-auto w-full">
-                            {viewingApplications ? (
+                            {isLoading ? (
+                                <LoadingContent />
+                            ) : error ? (
+                                <ErrorContent />
+                            ) : viewingApplications ? (
                                 // Applications View using the component
                                 <ApplicationManagement
                                     scholarshipId={viewingApplications}
@@ -330,7 +356,7 @@ const ManageScholar = () => {
                                             <p className="text-gray-600 mt-1">Monitor, edit, and manage your posted scholarship opportunities</p>
                                         </div>
                                         <Button
-                                            onClick={() => navigate('/organization/create-scholar')}
+                                            onClick={() => setIsCreateModalOpen(true)}
                                             className="text-white"
                                             style={{ backgroundColor: '#4F39F6' }}
                                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
@@ -351,7 +377,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Active</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'active').length}
+                                                        {scholarships.filter(s => s.status === 'ACTIVE').length}
                                                     </p>
                                                 </div>
                                             </div>
@@ -365,7 +391,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'active' && isDeadlineNear(s.deadline)).length}
+                                                        {scholarships.filter(s => s.status === 'ACTIVE' && isDeadlineNear(s.deadline)).length}
                                                     </p>
                                                 </div>
                                             </div>
@@ -379,7 +405,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Total Applicants</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.reduce((sum, s) => sum + s.applicants, 0)}
+                                                        {scholarships.reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -391,9 +417,9 @@ const ManageScholar = () => {
                                                     <Archive className="h-6 w-6 text-gray-600" />
                                                 </div>
                                                 <div className="ml-4">
-                                                    <p className="text-sm font-medium text-gray-600">Archived</p>
+                                                    <p className="text-sm font-medium text-gray-600">Expired</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'archived').length}
+                                                        {scholarships.filter(s => s.status === 'EXPIRED').length}
                                                     </p>
                                                 </div>
                                             </div>
@@ -422,21 +448,18 @@ const ManageScholar = () => {
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="outline" className="gap-2">
                                                             <Filter className="h-4 w-4" />
-                                                            Status: {filterStatus === 'all' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                                            Status: {filterStatus === 'all' ? 'All' : filterStatus}
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem onClick={() => setFilterStatus('all')}>
                                                             All Scholarships
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('active')}>
+                                                        <DropdownMenuItem onClick={() => setFilterStatus('ACTIVE')}>
                                                             Active Only
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('expired')}>
+                                                        <DropdownMenuItem onClick={() => setFilterStatus('EXPIRED')}>
                                                             Expired Only
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('archived')}>
-                                                            Archived Only
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -464,6 +487,17 @@ const ManageScholar = () => {
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
+
+                                                {/* Check Expired Button */}
+                                                <Button
+                                                    variant="outline"
+                                                    className="gap-2"
+                                                    onClick={handleCheckExpired}
+                                                    disabled={updateExpiredMutation.isPending}
+                                                >
+                                                    <Clock className="h-4 w-4" />
+                                                    {updateExpiredMutation.isPending ? 'Checking...' : 'Check Expired'}
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
@@ -498,104 +532,124 @@ const ManageScholar = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            filteredAndSortedScholarships.map((scholarship) => (
-                                                <div key={scholarship.id} className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                                                    {/* Header with Title and Status */}
-                                                    <div className="flex items-start justify-between gap-2 mb-4">
-                                                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
-                                                            {scholarship.title}
-                                                        </h3>
-                                                        <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(scholarship.status)}`}>
-                                                                {getStatusIcon(scholarship.status)}
-                                                                {scholarship.status.charAt(0).toUpperCase() + scholarship.status.slice(1)}
-                                                            </span>
-                                                            {isDeadlineNear(scholarship.deadline) && scholarship.status === 'active' && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                                                    <AlertTriangle className="h-3 w-3" />
-                                                                    Soon
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                            filteredAndSortedScholarships.map((scholarship) => {
+                                                const isExpired = isScholarshipExpired(scholarship.deadline)
+                                                const isNearDeadline = isDeadlineNear(scholarship.deadline)
 
-                                                    {/* Description */}
-                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-                                                        {scholarship.description}
-                                                    </p>
+                                                return (
+                                                    <div key={scholarship.id} className={`bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
+                                                        {/* Header with Title and Status */}
+                                                        <div className="flex items-start justify-between gap-2 mb-4">
+                                                            <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
+                                                                {scholarship.title}
+                                                            </h3>
+                                                            <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                                                                {/* Status badge - show "Deadline Passed" if expired, otherwise show normal status */}
+                                                                {isExpired && scholarship.status === 'ACTIVE' ? (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                        <XCircle className="h-3 w-3" />
+                                                                        Deadline Passed
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(scholarship.status)}`}>
+                                                                        {getStatusIcon(scholarship.status)}
+                                                                        {scholarship.status}
+                                                                    </span>
+                                                                )}
 
-                                                    {/* Metadata */}
-                                                    <div className="space-y-2 mb-4">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                            <MapPin className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="truncate">{scholarship.location}</span>
+                                                                {/* Near deadline indicator - only show if not expired */}
+                                                                {isNearDeadline && scholarship.status === 'ACTIVE' && !isExpired && (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                                                        <AlertTriangle className="h-3 w-3" />
+                                                                        Soon
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                            <DollarSign className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="truncate">{scholarship.benefits}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                            <Calendar className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                            <Users className="h-4 w-4 flex-shrink-0" />
-                                                            <span>{scholarship.applicants} applicants</span>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Actions */}
-                                                    <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleViewApplications(scholarship.id)}
-                                                            className="gap-2 w-full justify-center"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                            View Applications
-                                                        </Button>
+                                                        {/* Description */}
+                                                        <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
+                                                            {scholarship.description}
+                                                        </p>
 
-                                                        <div className="flex gap-2">
+                                                        {/* Metadata */}
+                                                        <div className="space-y-2 mb-4">
+                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                <MapPin className="h-4 w-4 flex-shrink-0" />
+                                                                <span className="truncate">{scholarship.location}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                                                                <span className="truncate">{scholarship.benefits}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                <Calendar className="h-4 w-4 flex-shrink-0" />
+                                                                <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                <Users className="h-4 w-4 flex-shrink-0" />
+                                                                <span>{scholarship.applications?.length || 0} applicants</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Actions */}
+                                                        <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => handleEditScholarship(scholarship.id)}
-                                                                className="gap-2 flex-1 justify-center"
+                                                                onClick={() => handleViewApplications(scholarship.id)}
+                                                                className="gap-2 w-full justify-center"
                                                             >
-                                                                <Edit className="h-4 w-4" />
-                                                                Edit
+                                                                <Eye className="h-4 w-4" />
+                                                                View Applications
                                                             </Button>
 
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="outline" size="sm" className="px-3">
-                                                                        <MoreHorizontal className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    {scholarship.status !== 'archived' && (
+                                                            <div className="flex gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleEditScholarship(scholarship)}
+                                                                    className="gap-2 flex-1 justify-center"
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                    Edit
+                                                                </Button>
+
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="outline" size="sm" className="px-3">
+                                                                            <MoreHorizontal className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
                                                                         <DropdownMenuItem
                                                                             onClick={() => handleArchiveScholarship(scholarship.id)}
                                                                             className="gap-2 text-amber-600 focus:text-amber-600"
+                                                                            disabled={archiveScholarshipMutation.isPending}
                                                                         >
                                                                             <Archive className="h-4 w-4" />
-                                                                            Archive
+                                                                            {archiveScholarshipMutation.isPending ? 'Archiving...' : 'Archive'}
                                                                         </DropdownMenuItem>
-                                                                    )}
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem
-                                                                        className="gap-2 text-red-600 focus:text-red-600"
-                                                                    >
-                                                                        <XCircle className="h-4 w-4" />
-                                                                        Delete
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleDeleteScholarship(scholarship.id)}
+                                                                            className="gap-2 text-red-600 focus:text-red-600"
+                                                                            disabled={deleteScholarshipMutation.isPending}
+                                                                        >
+                                                                            <XCircle className="h-4 w-4" />
+                                                                            {deleteScholarshipMutation.isPending &&
+                                                                                deleteScholarshipMutation.variables === scholarship.id
+                                                                                ? 'Deleting...'
+                                                                                : 'Delete'
+                                                                            }
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))
+                                                )
+                                            })
                                         )}
                                     </div>
 
@@ -613,6 +667,19 @@ const ManageScholar = () => {
                     </div>
                 </SidebarInset>
             </div>
+
+            {/* Edit Modal */}
+            <EditModalForm
+                isOpen={isEditModalOpen}
+                onOpenChange={setIsEditModalOpen}
+                scholarship={selectedScholarship}
+                onSuccess={handleEditSuccess}
+            />
+
+            <CreateScholarshipModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
         </SidebarProvider>
     )
 }

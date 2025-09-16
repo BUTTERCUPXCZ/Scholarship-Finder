@@ -1,22 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../AuthProvider/AuthProvider'
 import {
     SidebarProvider,
-    SidebarTrigger,
     SidebarInset,
 } from '../components/ui/sidebar'
-import { Separator } from '../components/ui/separator'
 import { Button } from '../components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu'
-import {
-    Bell,
     Users,
     GraduationCap,
     DollarSign,
@@ -30,39 +19,11 @@ import {
     AlertCircle
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
+import Navbar from '../components/Navbar'
 
 const orgdashboard = () => {
     const navigate = useNavigate()
-    const { logout } = useAuth()
-
-    // Fetch user data from localStorage using useQuery
-    const { data: user } = useQuery({
-        queryKey: ['user'],
-        queryFn: () => {
-            const authData = localStorage.getItem('auth')
-            if (authData) {
-                try {
-                    const parsed = JSON.parse(authData)
-                    return parsed.user as { fullname?: string; email?: string } | null
-                } catch (error) {
-                    console.error('Error parsing auth data:', error)
-                    return null
-                }
-            }
-            return null
-        },
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchOnWindowFocus: false,
-    })
-
-    const handleLogout = () => {
-        logout()
-        navigate('/login')
-    }
-
-    const getUserDisplayName = () => {
-        return user?.fullname || user?.email || 'User'
-    }
+    const { user } = useAuth()
 
     return (
         <SidebarProvider>
@@ -70,73 +31,12 @@ const orgdashboard = () => {
                 <OrgSidebar />
 
                 <SidebarInset className="flex-1">
-                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
-                        <div className="flex items-center gap-2">
-                            <SidebarTrigger className="-ml-1" />
-                            <Separator orientation="vertical" className="mr-2 h-4" />
-                            <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground">Dashboard</span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            {/* Notification Bell */}
-                            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <Bell className="size-5 text-gray-600" />
-                            </button>
-
-                            {/* User Dropdown */}
-                            {user ? (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 text-white rounded-full cursor-pointer transition"
-                                        style={{ backgroundColor: '#4F39F6' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
-                                    >
-                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-sm font-medium"
-                                            style={{ color: '#4F39F6' }}
-                                        >
-                                            {getUserDisplayName().charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm">{getUserDisplayName()}</span>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56">
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <span>Profile</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <span>Settings</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                            className="cursor-pointer text-red-600 focus:text-red-600"
-                                            onClick={handleLogout}
-                                        >
-                                            <span>Log out</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            ) : (
-                                <button
-                                    className="cursor-pointer px-8 py-2 text-white rounded-full transition"
-                                    style={{ backgroundColor: '#4F39F6' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
-                                    onClick={() => navigate('/login')}
-                                >
-                                    Login
-                                </button>
-                            )}
-                        </div>
-                    </header>
+                    <Navbar showSidebarToggle={true} pageTitle="Dashboard" />
 
                     <div className="flex flex-1 flex-col gap-6 p-6">
                         {/* Welcome Header */}
                         <div className="flex flex-col gap-2">
-                            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {getUserDisplayName()}!</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.fullname || user?.email || 'User'}!</h1>
                             <p className="text-gray-600">Here's what's happening with your scholarships today.</p>
                         </div>
 

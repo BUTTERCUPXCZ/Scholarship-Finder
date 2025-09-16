@@ -16,11 +16,14 @@ const Login = () => {
 
     const mutation = useMutation({
         mutationFn: loginUser,
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
             setError(null);
 
-            // Use AuthProvider login method to update context and localStorage
-            login(data.user, data.token);
+            // Use AuthProvider login method to update context (no token needed with cookies)
+            login(data.user);
+
+            // Small delay to ensure cookie is set before navigation
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Determine where to redirect
             let redirectPath = from;
@@ -140,16 +143,16 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
                             disabled={mutation.isPending}
                         >
                             {mutation.isPending ? (
                                 <>
-                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                    </svg>
-                                    <span>Logging in...</span>
+                                    <div className="relative">
+                                        <div className="w-5 h-5 rounded-full border-2 border-white/20"></div>
+                                        <div className="absolute top-0 left-0 w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                                    </div>
+                                    <span className="animate-pulse">Logging in...</span>
                                 </>
                             ) : (
                                 'Login'

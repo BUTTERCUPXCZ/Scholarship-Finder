@@ -48,13 +48,21 @@ export const authenticate = (
     res: Response,
     next: NextFunction
 ): Response<any, Record<string, any>> | void => {
-    const authHeader = req.headers["authorization"];
+    // First try to get token from cookie (HTTP-only cookie method)
+    let token = req.cookies?.authToken;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Fallback: try Authorization header for backward compatibility
+    if (!token) {
+        const authHeader = req.headers["authorization"];
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            token = authHeader.split(" ")[1];
+        }
+    }
+
+    if (!token) {
         return res.status(401).json({ message: "No token provided" });
     }
 
-    const token = authHeader.split(" ")[1];
     const secret = process.env.JWT_SECRET;
 
     if (!secret) {

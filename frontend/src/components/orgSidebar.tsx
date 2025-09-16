@@ -12,12 +12,11 @@ import {
 } from './ui/sidebar'
 import {
     Building2,
-    Users,
     BarChart3,
     Settings,
     GraduationCap,
     Plus,
-    TrendingUp,
+    Archive,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -65,17 +64,17 @@ const OrgSidebar = () => {
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
-                                    <Link to="/create-scholar" className="flex items-center gap-2">
-                                        <Plus className="size-4" />
-                                        <span>Create Scholarship Post</span>
+                                    <Link to="/manage-scholarships" className="flex items-center gap-2">
+                                        <GraduationCap className="size-4" />
+                                        <span>Manage Posted Scholarships</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
-                                    <Link to="/manage-scholarships" className="flex items-center gap-2">
-                                        <GraduationCap className="size-4" />
-                                        <span>Manage Posted Scholarships</span>
+                                    <Link to="/archive" className="flex items-center gap-2">
+                                        <Archive className="size-4" />
+                                        <span>Archive</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -88,9 +87,9 @@ const OrgSidebar = () => {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <Link to="#" className="flex items-center gap-2">
+                            <Link to="/ProfileOrg" className="flex items-center gap-2">
                                 <Settings className="size-4" />
-                                <span>Settings</span>
+                                <span>Profile</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
