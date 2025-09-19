@@ -1,32 +1,101 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id       String @id @default(cuid())
-  fullname String
-  email    String @unique
-  password String
-  role     Role   @default(STUDENT)
-
-  // Relations
+  id                   String        @id @default(cuid())
+  fullname             String
+  email                String        @unique
+  password             String
+  role                 Role          @default(STUDENT)
   applications         Application[]
-  scholarships         Scholarship[] @relation("ScholarshipOrg")
   archivedScholarships Archive[]     @relation("ArchivedScholarships")
+  scholarships         Scholarship[] @relation("ScholarshipOrg")
 
   @@index([email])
-  @@index([password])
+}
+
+model Scholarship {
+  id           String            @id @default(cuid())
+  title        String
+  description  String
+  providerId   String
+  deadline     DateTime
+  location     String
+  type         String
+  benefits     String
+  requirements String
+  status       ScholarshipStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  applications Application[]
+  provider     User              @relation("ScholarshipOrg", fields: [providerId], references: [id])
+
+  @@index([providerId, status])
+  @@index([deadline])
+}
+
+model Application {
+  id            String                @id @default(cuid())
+  userId        String
+  scholarshipId String
+  status        ApplicationStatus     @default(PENDING)
+  submittedAt   DateTime              @default(now())
+  Address       String
+  City          String
+  Email         String
+  Firstname     String
+  Lastname      String
+  Middlename    String
+  Phone         String
+  scholarship   Scholarship           @relation(fields: [scholarshipId], references: [id])
+  user          User                  @relation(fields: [userId], references: [id])
+  documents     ApplicationDocument[]
+
+  @@index([scholarshipId])
+  @@index([userId])
+}
+
+model ApplicationDocument {
+  id            String      @id @default(cuid())
+  applicationId String
+  filename      String
+  contentType   String
+  size          Int
+  fileUrl       String
+  storagePath   String
+  uploadedAt    DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+model Archive {
+  id                String            @id @default(cuid())
+  scholarshipId     String            @unique
+  title             String
+  description       String
+  providerId        String
+  deadline          DateTime
+  location          String
+  type              String
+  benefits          String
+  requirements      String
+  originalStatus    ScholarshipStatus
+  archivedAt        DateTime          @default(now())
+  archivedBy        String
+  originalCreatedAt DateTime
+  originalUpdatedAt DateTime
+  provider          User              @relation("ArchivedScholarships", fields: [providerId], references: [id])
+
+  @@index([providerId])
+  @@index([archivedAt])
 }
 
 enum Role {
@@ -35,39 +104,9 @@ enum Role {
   ADMIN
 }
 
-// Add this new enum for scholarship status
 enum ScholarshipStatus {
   ACTIVE
   EXPIRED
-}
-
-model Scholarship {
-  id           String            @id @default(cuid())
-  title        String
-  description  String
-  providerId   String
-  provider     User              @relation("ScholarshipOrg", fields: [providerId], references: [id])
-  deadline     DateTime
-  location     String
-  type         String // gov, school-based, private
-  benefits     String
-  requirements String
-  status       ScholarshipStatus @default(ACTIVE)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-
-  applications Application[]
-}
-
-model Application {
-  id            String            @id @default(cuid())
-  userId        String
-  scholarshipId String
-  status        ApplicationStatus @default(PENDING)
-  submittedAt   DateTime          @default(now())
-
-  user        User        @relation(fields: [userId], references: [id])
-  scholarship Scholarship @relation(fields: [scholarshipId], references: [id])
 }
 
 enum ApplicationStatus {
@@ -76,28 +115,4 @@ enum ApplicationStatus {
   UNDER_REVIEW
   ACCEPTED
   REJECTED
-}
-
-model Archive {
-  id             String            @id @default(cuid())
-  scholarshipId  String            @unique
-  title          String
-  description    String
-  providerId     String
-  provider       User              @relation("ArchivedScholarships", fields: [providerId], references: [id])
-  deadline       DateTime
-  location       String
-  type           String
-  benefits       String
-  requirements   String
-  originalStatus ScholarshipStatus // Status when archived
-  archivedAt     DateTime          @default(now())
-  archivedBy     String // User ID who archived it
-
-  // Original scholarship data
-  originalCreatedAt DateTime
-  originalUpdatedAt DateTime
-
-  @@index([providerId])
-  @@index([archivedAt])
 }

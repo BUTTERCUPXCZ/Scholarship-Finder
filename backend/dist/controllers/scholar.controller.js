@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ArchiveScholarship = exports.deleteScholarship = exports.updateScholar = exports.getAllScholars = exports.updateExpiredScholarships = exports.createScholar = void 0;
+exports.getArchivedScholarships = exports.ArchiveScholarship = exports.deleteScholarship = exports.updateScholar = exports.getScholarshipById = exports.getAllScholars = exports.updateExpiredScholarships = exports.createScholar = void 0;
 const client_1 = require("@prisma/client");
 const CreateScholar_1 = require("../Validators/CreateScholar");
 const zod_1 = require("zod");
@@ -82,6 +82,29 @@ const getAllScholars = async (req, res) => {
     }
 };
 exports.getAllScholars = getAllScholars;
+const getScholarshipById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Scholarship ID is required" });
+        }
+        // First, update any expired scholarships
+        await (0, exports.updateExpiredScholarships)();
+        // Then fetch the specific scholarship
+        const scholarship = await prisma.scholarship.findUnique({
+            where: { id }
+        });
+        if (!scholarship) {
+            return res.status(404).json({ success: false, message: "Scholarship not found" });
+        }
+        return res.status(200).json({ success: true, data: scholarship });
+    }
+    catch (error) {
+        console.error("Error fetching scholarship:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+exports.getScholarshipById = getScholarshipById;
 const updateScholar = async (req, res) => {
     try {
         const providerId = req.userId;
@@ -217,3 +240,24 @@ const ArchiveScholarship = async (req, res) => {
     }
 };
 exports.ArchiveScholarship = ArchiveScholarship;
+const getArchivedScholarships = async (req, res) => {
+    try {
+        const providerId = req.userId;
+        if (!providerId) {
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
+        }
+        const archivedScholarships = await prisma.archive.findMany({
+            where: { providerId: providerId },
+            orderBy: { archivedAt: "desc" },
+        });
+        return res.status(200).json({
+            success: true,
+            data: archivedScholarships,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching archived scholarships:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+exports.getArchivedScholarships = getArchivedScholarships;

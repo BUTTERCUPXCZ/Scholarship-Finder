@@ -25,10 +25,6 @@ export const getAllScholars = async (): Promise<Scholarship[]> => {
     });
 
     if (!response.ok) {
-        if (response.status === 401) {
-            throw new Error('UNAUTHORIZED');
-        }
-
         let errorMessage = 'Failed to fetch scholarships';
         try {
             const errorData = await response.json();

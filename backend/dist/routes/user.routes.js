@@ -11,4 +11,6 @@ router.post('/register', user_controller_1.userRegister);
 router.post('/login', user_controller_1.userLogin);
 router.post('/logout', user_controller_1.userLogout);
 router.get('/me', auth_1.authenticate, user_controller_1.getCurrentUser);
+router.patch('/profile', auth_1.authenticate, user_controller_1.updateUserProfile);
+router.get('/organization/stats', auth_1.authenticate, user_controller_1.getOrganizationStats);
 exports.default = router;

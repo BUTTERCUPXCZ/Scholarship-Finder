@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 
 interface User {
     id: string;
@@ -50,15 +51,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [initialCheckComplete, setInitialCheckComplete] = useState(false);
     const queryClient = useQueryClient();
+    const location = useLocation();
 
-    // Check if current route is login or register
-    const isAuthPage = ["/login", "/register"].includes(window.location.pathname);
+    // Check if current route is a public page that doesn't require auth check
+    const isPublicPage = useMemo(() => {
+        const publicPaths = ["/login", "/register", "/home", "/scholarship"];
+        // Only the exact /scholarship path is public, not /scholarship/:id
+        return publicPaths.includes(location.pathname);
+    }, [location.pathname]);
 
     const { data: userData, isLoading: queryLoading, refetch, error } = useQuery({
         queryKey: ["auth", "currentUser"],
         queryFn: checkAuthStatus,
-        // ✅ Run on app start unless on auth pages
-        enabled: !isAuthPage,
+        // ✅ Only run auth check on pages that actually need authentication
+        enabled: !isPublicPage,
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
         retry: false,
@@ -76,12 +82,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [userData, error]);
 
-    // On auth pages, mark initial check as complete immediately
+    // On public pages, mark initial check as complete immediately
     useEffect(() => {
-        if (isAuthPage) {
+        if (isPublicPage) {
             setInitialCheckComplete(true);
         }
-    }, [isAuthPage]);
+    }, [isPublicPage]);
 
     const login = useCallback((user: User) => {
         setUser(user);

@@ -68,23 +68,10 @@ export interface ScholarshipFilters {
 
 // ✅ Hook for fetching all scholarships with advanced filtering and caching
 export const useScholarships = (filters: ScholarshipFilters = {}) => {
-    const { logout } = useAuth()
-    const navigate = useNavigate()
-
     return useQuery<Scholarship[], Error>({
         queryKey: scholarshipKeys.list(filters),
         queryFn: async () => {
-            try {
-                return await getAllScholars()
-            } catch (error: any) {
-                if (error?.message?.includes('UNAUTHORIZED')) {
-                    toast.error('Your session has expired. Please log in again.')
-                    logout()
-                    navigate('/login')
-                    throw error
-                }
-                throw error
-            }
+            return await getAllScholars()
         },
         // ✅ Optimized caching strategy
         staleTime: 1000 * 60 * 2, // 2 minutes - scholarships don't change frequently
@@ -93,7 +80,7 @@ export const useScholarships = (filters: ScholarshipFilters = {}) => {
         retry: 2,
         // ✅ Enable background refetching for better UX
         refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
-        // ✅ Only run query if user is authenticated
+        // ✅ Always enabled since this is public data
         enabled: true,
     })
 }

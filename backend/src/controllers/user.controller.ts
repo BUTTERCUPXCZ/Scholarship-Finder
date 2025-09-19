@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { signToken } from "../middleware/auth";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/db";
 
 export const userRegister = async (req: Request, res: Response) => {
     try {

@@ -14,6 +14,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const scholarshipJobs_1 = require("./controllers/job/scholarshipJobs");
 const scholar_routes_1 = __importDefault(require("./routes/scholar.routes"));
+const application_routes_1 = __importDefault(require("./routes/application.routes"));
 dotenv_1.default.config();
 const PORT = process.env.PORT || 3000;
 const app = (0, express_1.default)();
@@ -22,7 +23,10 @@ app.use((0, helmet_1.default)());
 app.use((0, morgan_1.default)('combined'));
 // CORS configuration to allow credentials (cookies)
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Your frontend URL
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        'http://localhost:5174' // Allow both development ports
+    ],
     credentials: true, // Allow cookies to be sent
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -31,6 +35,7 @@ app.use((0, cookie_parser_1.default)()); // Parse cookies
 app.use(express_1.default.json());
 app.use('/users', user_routes_1.default);
 app.use('/scholar', scholar_routes_1.default);
+app.use('/applications', application_routes_1.default);
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {

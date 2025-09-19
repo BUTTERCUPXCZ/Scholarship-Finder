@@ -1,4 +1,12 @@
 import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getDownloadUrl, getDownloadUrlFromBackend } from '../services/supabaseStorage'
+import {
+    getScholarshipApplications,
+    updateApplicationStatus,
+    type BackendApplication,
+    type ApplicationDocument
+} from '../services/applications'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,35 +28,33 @@ import {
     Clock,
     Star,
     Users,
-    GraduationCap,
     MapPin,
     Mail,
     Phone,
-    FileText,
     Calendar,
     ChevronLeft,
     CheckCircle2,
     XCircle,
-    AlertTriangle
+    AlertTriangle,
+    Loader2
 } from 'lucide-react'
 
-// Types for applicant data
+
 interface Applicant {
     id: string
     name: string
     email: string
     phone: string
-    status: 'pending' | 'accepted' | 'rejected' | 'shortlisted'
+    status: 'pending' | 'under_review' | 'accepted' | 'rejected'
     location: string
-    university: string
     appliedDate: string
-    documents: {
-        resume: string
-        transcript: string
-        coverLetter: string
-        recommendations: string[]
-    }
+    documents: ApplicationDocument[]
     scholarshipId: string
+    address: string
+    city: string
+    firstname: string
+    lastname: string
+    middlename?: string
 }
 
 interface ApplicationManagementProps {
@@ -58,108 +64,69 @@ interface ApplicationManagementProps {
 }
 
 const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: ApplicationManagementProps) => {
-    // State management
+    const queryClient = useQueryClient()
+
+
     const [searchTerm, setSearchTerm] = useState('')
-    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected' | 'shortlisted'>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'under_review' | 'accepted' | 'rejected'>('all')
     const [selectedApplicants, setSelectedApplicants] = useState<string[]>([])
-    const [isLoading, setIsLoading] = useState(false)
+    const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-    // Mock applicant data - In real app, this would come from an API
-    const applicants: Applicant[] = [
-        {
-            id: '1',
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@email.com',
-            phone: '+1 (555) 123-4567',
-            status: 'pending',
-            location: 'California, USA',
-            university: 'Stanford University',
-            appliedDate: '2025-09-10',
-            scholarshipId: '1',
-            documents: {
-                resume: 'sarah_resume.pdf',
-                transcript: 'sarah_transcript.pdf',
-                coverLetter: 'sarah_cover.pdf',
-                recommendations: ['prof_smith_rec.pdf', 'prof_davis_rec.pdf']
-            }
+
+    const transformApplication = (app: BackendApplication): Applicant => ({
+        id: app.id,
+        name: `${app.Firstname} ${app.Middlename ? app.Middlename + ' ' : ''}${app.Lastname}`,
+        email: app.Email,
+        phone: app.Phone,
+        status: app.status.toLowerCase() as 'pending' | 'under_review' | 'accepted' | 'rejected',
+        location: `${app.City}, ${app.Address}`,
+        appliedDate: app.submittedAt,
+        documents: app.documents,
+        scholarshipId: app.scholarshipId,
+        address: app.Address,
+        city: app.City,
+        firstname: app.Firstname,
+        lastname: app.Lastname,
+        middlename: app.Middlename
+    })
+
+
+    const {
+        data: backendApplications = [],
+        isLoading,
+        error,
+        refetch
+    } = useQuery<BackendApplication[], Error>({
+        queryKey: ['scholarship-applications', scholarshipId],
+        queryFn: () => getScholarshipApplications(scholarshipId),
+        enabled: !!scholarshipId,
+        staleTime: 1000 * 60 * 5,
+        retry: 1
+    })
+
+
+    const applicants = backendApplications.map(transformApplication)
+
+    // Update application status mutation
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ applicationId, status }: { applicationId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' }) =>
+            updateApplicationStatus(applicationId, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['scholarship-applications', scholarshipId] })
         },
-        {
-            id: '2',
-            name: 'Michael Chen',
-            email: 'michael.chen@email.com',
-            phone: '+1 (555) 987-6543',
-            status: 'shortlisted',
-            location: 'New York, USA',
-            university: 'MIT',
-            appliedDate: '2025-09-08',
-            scholarshipId: '1',
-            documents: {
-                resume: 'michael_resume.pdf',
-                transcript: 'michael_transcript.pdf',
-                coverLetter: 'michael_cover.pdf',
-                recommendations: ['prof_wong_rec.pdf']
-            }
-        },
-        {
-            id: '3',
-            name: 'Emily Rodriguez',
-            email: 'emily.rodriguez@email.com',
-            phone: '+1 (555) 456-7890',
-            status: 'accepted',
-            location: 'Texas, USA',
-            university: 'University of Texas',
-            appliedDate: '2025-09-12',
-            scholarshipId: '1',
-            documents: {
-                resume: 'emily_resume.pdf',
-                transcript: 'emily_transcript.pdf',
-                coverLetter: 'emily_cover.pdf',
-                recommendations: ['prof_garcia_rec.pdf', 'prof_kim_rec.pdf']
-            }
-        },
-        {
-            id: '4',
-            name: 'David Wilson',
-            email: 'david.wilson@email.com',
-            phone: '+1 (555) 234-5678',
-            status: 'rejected',
-            location: 'Florida, USA',
-            university: 'University of Florida',
-            appliedDate: '2025-09-05',
-            scholarshipId: '2',
-            documents: {
-                resume: 'david_resume.pdf',
-                transcript: 'david_transcript.pdf',
-                coverLetter: 'david_cover.pdf',
-                recommendations: ['prof_brown_rec.pdf']
-            }
-        },
-        {
-            id: '5',
-            name: 'Aisha Patel',
-            email: 'aisha.patel@email.com',
-            phone: '+1 (555) 345-6789',
-            status: 'pending',
-            location: 'Washington, USA',
-            university: 'University of Washington',
-            appliedDate: '2025-09-11',
-            scholarshipId: '1',
-            documents: {
-                resume: 'aisha_resume.pdf',
-                transcript: 'aisha_transcript.pdf',
-                coverLetter: 'aisha_cover.pdf',
-                recommendations: ['prof_lee_rec.pdf', 'prof_taylor_rec.pdf']
-            }
+        onError: (error: Error) => {
+            console.error('Failed to update application status:', error)
+
         }
-    ]
+    })
 
-    // Utility functions
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
             case 'accepted': return 'bg-green-100 text-green-800 border-green-200'
             case 'rejected': return 'bg-red-100 text-red-800 border-red-200'
-            case 'shortlisted': return 'bg-blue-100 text-blue-800 border-blue-200'
+            case 'under_review': return 'bg-blue-100 text-blue-800 border-blue-200'
             default: return 'bg-gray-100 text-gray-800 border-gray-200'
         }
     }
@@ -169,7 +136,7 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
             case 'pending': return <Clock className="h-4 w-4" />
             case 'accepted': return <CheckCircle2 className="h-4 w-4" />
             case 'rejected': return <XCircle className="h-4 w-4" />
-            case 'shortlisted': return <Star className="h-4 w-4" />
+            case 'under_review': return <Star className="h-4 w-4" />
             default: return <AlertTriangle className="h-4 w-4" />
         }
     }
@@ -182,36 +149,102 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
         })
     }
 
-    // Event handlers
+
     const handleStatusChange = async (applicantId: string, newStatus: Applicant['status']) => {
-        setIsLoading(true)
         try {
-            console.log(`Updating applicant ${applicantId} status to ${newStatus}`)
-            // In real app, make API call to update status
+            setUpdatingStatus(applicantId)
+            const backendStatus = newStatus.toUpperCase() as 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'
+            await updateStatusMutation.mutateAsync({ applicationId: applicantId, status: backendStatus })
         } catch (error) {
             console.error('Error updating status:', error)
+
+            alert('Failed to update application status. Please try again.')
         } finally {
-            setIsLoading(false)
+            setUpdatingStatus(null)
         }
     }
 
-    const handleDownloadDocument = (applicantId: string, documentType: string, fileName: string) => {
-        console.log(`Downloading ${documentType} for applicant ${applicantId}: ${fileName}`)
-        const link = document.createElement('a')
-        link.href = '#'
-        link.download = fileName
-        link.click()
+    const handleDownloadDocument = async (documentFile: ApplicationDocument) => {
+        try {
+            console.log(`Downloading document: ${documentFile.filename}`)
+            console.log(`Storage path: ${documentFile.storagePath}`)
+
+            // First, try to get signed URL using the backend endpoint (more reliable)
+            let signedUrl = await getDownloadUrlFromBackend(documentFile.storagePath)
+
+
+            if (!signedUrl) {
+                console.log('Backend download failed, trying direct Supabase client...')
+                signedUrl = await getDownloadUrl(documentFile.storagePath, 3600) // 
+            }
+
+            if (!signedUrl) {
+                console.error('Failed to get download URL for:', documentFile.filename)
+                console.error('Storage path:', documentFile.storagePath)
+
+
+                if (documentFile.fileUrl) {
+                    console.log('Trying final fallback with fileUrl:', documentFile.fileUrl)
+                    const link = window.document.createElement('a')
+                    link.href = documentFile.fileUrl
+                    link.download = documentFile.filename
+                    link.target = '_blank'
+                    window.document.body.appendChild(link)
+                    link.click()
+                    window.document.body.removeChild(link)
+                    return
+                }
+
+                alert('Failed to download document. Please try again or contact support.')
+                return
+            }
+
+
+            const link = window.document.createElement('a')
+            link.href = signedUrl
+            link.download = documentFile.filename
+            link.target = '_blank'
+
+
+            window.document.body.appendChild(link)
+            link.click()
+            window.document.body.removeChild(link)
+
+        } catch (error) {
+            console.error('Error downloading document:', error)
+
+            // Fallback: try using the fileUrl directly if available
+            if (documentFile.fileUrl) {
+                console.log('Using fileUrl fallback due to error:', documentFile.fileUrl)
+                try {
+                    const link = window.document.createElement('a')
+                    link.href = documentFile.fileUrl
+                    link.download = documentFile.filename
+                    link.target = '_blank'
+                    window.document.body.appendChild(link)
+                    link.click()
+                    window.document.body.removeChild(link)
+                    return
+                } catch (fallbackError) {
+                    console.error('Fallback download also failed:', fallbackError)
+                }
+            }
+
+            alert('Failed to download document. Please try again or contact support.')
+        }
     }
 
-    const handleSendResponse = async (applicantIds: string[], responseType: 'review' | 'accepted' | 'rejected') => {
-        setIsLoading(true)
+    const handleSendResponse = async (applicantIds: string[], responseType: 'under_review' | 'accepted' | 'rejected') => {
         try {
-            console.log(`Sending ${responseType} response to applicants:`, applicantIds)
-            alert(`Response sent to ${applicantIds.length} applicant(s)`)
+            const backendStatus = responseType.toUpperCase().replace('_', '_') as 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'
+            await Promise.all(
+                applicantIds.map(id =>
+                    updateStatusMutation.mutateAsync({ applicationId: id, status: backendStatus })
+                )
+            )
+            setSelectedApplicants([])
         } catch (error) {
             console.error('Error sending response:', error)
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -231,12 +264,12 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
         }
     }
 
-    // Get applicants for the current scholarship
-    const scholarshipApplicants = applicants.filter(applicant => applicant.scholarshipId === scholarshipId)
 
-    // Filter and sort applicants
+    const scholarshipApplicants = applicants
+
+
     const filteredAndSortedApplicants = scholarshipApplicants
-        .filter(applicant => {
+        .filter((applicant: Applicant) => {
             const matchesSearch = applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 applicant.email.toLowerCase().includes(searchTerm.toLowerCase())
 
@@ -244,7 +277,35 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
 
             return matchesSearch && matchesStatus
         })
-        .sort((a, b) => new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime())
+        .sort((a: Applicant, b: Applicant) => new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime())
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-2 text-lg">Loading applications...</span>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Applications</h3>
+                        <p className="text-gray-600 mb-4">{error.message}</p>
+                        <Button onClick={() => refetch()}>Try Again</Button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
 
@@ -326,9 +387,9 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                             <Star className="h-6 w-6 text-purple-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Shortlisted</p>
+                            <p className="text-sm font-medium text-gray-600">Under Review</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {scholarshipApplicants.filter(a => a.status === 'shortlisted').length}
+                                {scholarshipApplicants.filter((a: Applicant) => a.status === 'under_review').length}
                             </p>
                         </div>
                     </div>
@@ -372,7 +433,7 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setStatusFilter('all')}>All Applications</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setStatusFilter('pending')}>Pending Only</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setStatusFilter('shortlisted')}>Shortlisted Only</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter('under_review')}>Under Review Only</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setStatusFilter('accepted')}>Accepted Only</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setStatusFilter('rejected')}>Rejected Only</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -382,27 +443,27 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                         {selectedApplicants.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="gap-2 border-2" disabled={isLoading}
+                                    <Button variant="outline" className="gap-2 border-2" disabled={updateStatusMutation.isPending}
                                         style={{ borderColor: '#4F39F6', color: '#4F39F6' }}
                                         onMouseEnter={(e) => {
-                                            if (!isLoading) {
+                                            if (!updateStatusMutation.isPending) {
                                                 e.currentTarget.style.backgroundColor = '#4F39F6'
                                                 e.currentTarget.style.color = 'white'
                                             }
                                         }}
                                         onMouseLeave={(e) => {
-                                            if (!isLoading) {
+                                            if (!updateStatusMutation.isPending) {
                                                 e.currentTarget.style.backgroundColor = 'transparent'
                                                 e.currentTarget.style.color = '#4F39F6'
                                             }
                                         }}
                                     >
                                         <Send className="h-4 w-4" />
-                                        {isLoading ? 'Sending...' : `Send Response (${selectedApplicants.length})`}
+                                        {updateStatusMutation.isPending ? 'Sending...' : `Send Response (${selectedApplicants.length})`}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleSendResponse(selectedApplicants, 'review')}>Under Review</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleSendResponse(selectedApplicants, 'under_review')}>Under Review</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleSendResponse(selectedApplicants, 'accepted')}>Congratulations</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleSendResponse(selectedApplicants, 'rejected')}>Thank You</DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -470,33 +531,56 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                                                     </span>
                                                 </div>
                                                 <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                                    <GraduationCap className="h-3 w-3" />
-                                                    {applicant.university}
+                                                    <MapPin className="h-3 w-3" />
+                                                    {applicant.location}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <button className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border cursor-pointer hover:opacity-80 ${getStatusColor(applicant.status)}`}>
-                                                        {getStatusIcon(applicant.status)}
-                                                        {applicant.status.charAt(0).toUpperCase() + applicant.status.slice(1)}
+                                                    <button
+                                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border cursor-pointer hover:opacity-80 ${getStatusColor(applicant.status)}`}
+                                                        disabled={updatingStatus === applicant.id}
+                                                    >
+                                                        {updatingStatus === applicant.id ? (
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                        ) : (
+                                                            getStatusIcon(applicant.status)
+                                                        )}
+                                                        {applicant.status === 'under_review' ? 'Under Review' : applicant.status.charAt(0).toUpperCase() + applicant.status.slice(1)}
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="start">
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'pending')} className="gap-2">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(applicant.id, 'pending')}
+                                                        className="gap-2"
+                                                        disabled={updatingStatus === applicant.id}
+                                                    >
                                                         <Clock className="h-4 w-4 text-yellow-600" />
                                                         Pending
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'shortlisted')} className="gap-2">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(applicant.id, 'under_review')}
+                                                        className="gap-2"
+                                                        disabled={updatingStatus === applicant.id}
+                                                    >
                                                         <Star className="h-4 w-4 text-blue-600" />
-                                                        Shortlist
+                                                        Under Review
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'accepted')} className="gap-2">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(applicant.id, 'accepted')}
+                                                        className="gap-2"
+                                                        disabled={updatingStatus === applicant.id}
+                                                    >
                                                         <Check className="h-4 w-4 text-green-600" />
                                                         Accept
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'rejected')} className="gap-2">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(applicant.id, 'rejected')}
+                                                        className="gap-2"
+                                                        disabled={updatingStatus === applicant.id}
+                                                    >
                                                         <X className="h-4 w-4 text-red-600" />
                                                         Reject
                                                     </DropdownMenuItem>
@@ -549,20 +633,18 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => handleDownloadDocument(applicant.id, 'resume', applicant.documents.resume)} className="gap-2">
-                                                            <Download className="h-4 w-4" />
-                                                            Download Resume
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleDownloadDocument(applicant.id, 'transcript', applicant.documents.transcript)} className="gap-2">
-                                                            <Download className="h-4 w-4" />
-                                                            Download Transcript
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleDownloadDocument(applicant.id, 'cover', applicant.documents.coverLetter)} className="gap-2">
-                                                            <FileText className="h-4 w-4" />
-                                                            Cover Letter
-                                                        </DropdownMenuItem>
+                                                        {applicant.documents.map((document, index) => (
+                                                            <DropdownMenuItem
+                                                                key={index}
+                                                                onClick={() => handleDownloadDocument(document)}
+                                                                className="gap-2"
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                                Download {document.filename}
+                                                            </DropdownMenuItem>
+                                                        ))}
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleSendResponse([applicant.id], 'review')} className="gap-2">
+                                                        <DropdownMenuItem onClick={() => handleSendResponse([applicant.id], 'under_review')} className="gap-2">
                                                             <Send className="h-4 w-4" />
                                                             Send Response
                                                         </DropdownMenuItem>

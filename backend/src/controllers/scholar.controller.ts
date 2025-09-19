@@ -1,9 +1,8 @@
-import { PrismaClient, ScholarshipStatus, Prisma } from "@prisma/client";
+import { ScholarshipStatus, Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/db";
 
 export const createScholar = async (req: Request, res: Response) => {
     try {

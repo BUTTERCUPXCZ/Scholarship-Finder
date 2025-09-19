@@ -8,7 +8,7 @@ import { deleteScholarship } from '../controllers/scholar.controller';
 const router = express.Router();
 
 router.post('/create-scholar', authenticate, createScholar);
-router.get('/get-scholars', authenticate, getAllScholars);
+router.get('/get-scholars', getAllScholars); // Remove authentication - allow public access
 router.get('/get-scholarship/:id', authenticate, getScholarshipById);
 router.put('/update-scholar/:id', authenticate, updateScholar);
 router.delete('/delete-scholar/:id', authenticate, deleteScholarship);

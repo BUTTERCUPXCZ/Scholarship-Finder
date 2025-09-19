@@ -8,7 +8,9 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes';
 import { startScholarshipJobs } from './controllers/job/scholarshipJobs';
-import scholarRoutes from './routes/scholar.routes'
+import scholarRoutes from './routes/scholar.routes';
+import applicationRoutes from './routes/application.routes';
+import uploadRoutes from './routes/upload.routes';
 
 
 dotenv.config();
@@ -40,7 +42,7 @@ app.use(cors({
         'http://localhost:5174' // Allow both development ports
     ],
     credentials: true, // Allow cookies to be sent
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -49,6 +51,8 @@ app.use(express.json());
 
 app.use('/users', userRoutes);
 app.use('/scholar', scholarRoutes);
+app.use('/applications', applicationRoutes);
+app.use('/upload', uploadRoutes);
 
 const server = http.createServer(app);
 

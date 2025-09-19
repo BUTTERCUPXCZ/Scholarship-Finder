@@ -6,7 +6,7 @@ export interface LoginData {
 export const loginUser = async (data: LoginData) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/users/login`, {
         method: "POST",
-        credentials: 'include', // Include cookies for CORS
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });

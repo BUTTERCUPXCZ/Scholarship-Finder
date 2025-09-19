@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCurrentUser = exports.userLogout = exports.userLogin = exports.userRegister = void 0;
+exports.getOrganizationStats = exports.updateUserProfile = exports.getCurrentUser = exports.userLogout = exports.userLogin = exports.userRegister = void 0;
 const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const auth_1 = require("../middleware/auth");
@@ -52,9 +52,9 @@ const userLogin = async (req, res) => {
         res.cookie('authToken', token, {
             httpOnly: true, // Cannot be accessed by JavaScript
             secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'strict', // CSRF protection
+            sameSite: 'lax', // Allow cross-site requests for login flows
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'
+            path: '/' // Available for all routes
         });
         // Don't send token in response body for security
         res.status(200).json({
@@ -95,7 +95,7 @@ const getCurrentUser = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) {
-            return res.status(401).json({ message: "User not authenticated" });
+            return null;
         }
         const user = await prisma.user.findUnique({
             where: { id: String(userId) },
@@ -120,3 +120,97 @@ const getCurrentUser = async (req, res) => {
     }
 };
 exports.getCurrentUser = getCurrentUser;
+// Update user profile
+const updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { fullname, email } = req.body;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (!fullname || !email) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        // Check if email is already taken by another user
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                email,
+                NOT: { id: String(userId) }
+            }
+        });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
+        }
+        const updatedUser = await prisma.user.update({
+            where: { id: String(userId) },
+            data: { fullname, email },
+            select: {
+                id: true,
+                fullname: true,
+                email: true,
+                role: true
+            }
+        });
+        res.status(200).json({
+            success: true,
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        console.log("Error Update User Profile: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.updateUserProfile = updateUserProfile;
+// Get organization statistics
+const getOrganizationStats = async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        // Verify user is an organization
+        const user = await prisma.user.findUnique({
+            where: { id: String(userId) },
+            select: { role: true }
+        });
+        if (!user || user.role !== 'ORGANIZATION') {
+            return res.status(403).json({ message: "Access denied. Organizations only." });
+        }
+        // Get scholarship statistics
+        const [totalScholarships, activeScholarships, archivedScholarships] = await Promise.all([
+            prisma.scholarship.count({
+                where: { providerId: String(userId) }
+            }),
+            prisma.scholarship.count({
+                where: {
+                    providerId: String(userId),
+                    status: 'ACTIVE'
+                }
+            }),
+            prisma.archive.count({
+                where: { providerId: String(userId) }
+            })
+        ]);
+        // Get total applications for all scholarships by this organization
+        const totalApplications = await prisma.application.count({
+            where: {
+                scholarship: {
+                    providerId: String(userId)
+                }
+            }
+        });
+        const stats = {
+            totalScholarships,
+            activeScholarships,
+            archivedScholarships,
+            totalApplications
+        };
+        res.status(200).json(stats);
+    }
+    catch (error) {
+        console.log("Error Get Organization Stats: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+exports.getOrganizationStats = getOrganizationStats;

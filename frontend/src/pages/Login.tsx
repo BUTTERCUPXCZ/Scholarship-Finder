@@ -144,9 +144,9 @@ const Login = () => {
                         <button
                             type="submit"
                             className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
-                            disabled={mutation.isPending}
+                            disabled={mutation.status === 'pending'}
                         >
-                            {mutation.isPending ? (
+                            {mutation.status === 'pending' ? (
                                 <>
                                     {/* SVG gradient arc spinner */}
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
