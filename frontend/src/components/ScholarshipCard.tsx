@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardFooter } from './ui/card'
 import { Button } from './ui/button'
-import { Calendar, MapPin, Award, Eye } from 'lucide-react'
+import { Calendar, MapPin, Award } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 
@@ -23,11 +23,10 @@ interface Scholarship {
 
 interface ScholarshipCardProps {
     scholarship: Scholarship
-    onApply?: (scholarshipId: string) => void
     onViewDetails?: (scholarshipId: string) => void
 }
 
-const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onApply, onViewDetails }) => {
+const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDetails }) => {
     const navigate = useNavigate()
     const { user } = useAuth()
     const isExpired = scholarship.status === 'EXPIRED' || new Date(scholarship.deadline) < new Date()

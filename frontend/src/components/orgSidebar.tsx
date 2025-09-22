@@ -15,7 +15,6 @@ import {
     BarChart3,
     Settings,
     GraduationCap,
-    Plus,
     Archive,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
