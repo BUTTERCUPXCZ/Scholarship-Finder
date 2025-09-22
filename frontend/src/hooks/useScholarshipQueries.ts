@@ -59,11 +59,11 @@ export interface Scholarship {
 
 // ✅ Filters interface for better type safety
 export interface ScholarshipFilters {
-    status?: 'all' | 'ACTIVE' | 'EXPIRED'
-    searchTerm?: string
-    sortBy?: 'newest' | 'oldest' | 'deadline' | 'applicants' | 'name'
     page?: number
     limit?: number
+    status?: 'ACTIVE' | 'EXPIRED'
+    type?: string
+    search?: string
 }
 
 // ✅ Hook for fetching all scholarships with advanced filtering and caching
@@ -71,7 +71,8 @@ export const useScholarships = (filters: ScholarshipFilters = {}) => {
     return useQuery<Scholarship[], Error>({
         queryKey: scholarshipKeys.list(filters),
         queryFn: async () => {
-            return await getAllScholars()
+            const response = await getAllScholars()
+            return response.data
         },
         // ✅ Optimized caching strategy
         staleTime: 1000 * 60 * 2, // 2 minutes - scholarships don't change frequently
@@ -95,16 +96,16 @@ export const useInfiniteScholarships = (filters: ScholarshipFilters = {}) => {
         queryFn: async ({ pageParam }: { pageParam: number }) => {
             try {
                 // This would be modified to support pagination in the backend
-                const scholarships = await getAllScholars()
+                const response = await getAllScholars({ ...filters, page: pageParam })
                 const limit = filters.limit || 10
                 const start = (pageParam - 1) * limit
                 const end = start + limit
 
                 return {
-                    data: scholarships.slice(start, end),
+                    data: response.data.slice(start, end),
                     currentPage: pageParam,
-                    hasNextPage: end < scholarships.length,
-                    totalCount: scholarships.length
+                    hasNextPage: end < response.data.length,
+                    totalCount: response.data.length
                 }
             } catch (error: any) {
                 if (error?.message?.includes('UNAUTHORIZED')) {
@@ -371,7 +372,7 @@ export const usePrefetchScholarships = () => {
     return (filters: ScholarshipFilters = {}) => {
         queryClient.prefetchQuery({
             queryKey: scholarshipKeys.list(filters),
-            queryFn: getAllScholars,
+            queryFn: () => getAllScholars(filters),
             staleTime: 1000 * 60 * 2,
         })
     }

@@ -171,8 +171,8 @@ export const getDownloadUrlFromBackend = async (storagePath: string): Promise<st
 
         const response = await fetch(`${import.meta.env.VITE_API_URL}/upload/download`, {
             method: 'POST',
+            credentials: 'include', // This sends cookies instead of Authorization header
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({

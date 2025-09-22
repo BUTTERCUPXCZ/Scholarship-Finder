@@ -10,6 +10,7 @@ import Orgdashboard from './organization/orgdashboard'
 import ManageScholar from './organization/ManageScholar'
 import Archive from './organization/Archive'
 import { AuthProvider } from './AuthProvider/AuthProvider'
+import { NotificationProvider } from './Context/NotificationContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AuthenticatedRedirect from './components/AuthenticatedRedirect'
 import PublicRoute from './components/PublicRoute'
@@ -24,145 +25,147 @@ function App() {
   return (
     <>
       <AuthProvider>
-        {/* Network Status Banner */}
-        <NetworkStatusBanner isOnline={isOnline} />
+        <NotificationProvider>
+          {/* Network Status Banner */}
+          <NetworkStatusBanner isOnline={isOnline} />
 
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
-            // Add margin-top to account for offline banner
-            style: {
-              marginTop: !isOnline ? '60px' : '0px',
-            },
-          }}
-        />
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
+              // Add margin-top to account for offline banner
+              style: {
+                marginTop: !isOnline ? '60px' : '0px',
+              },
+            }}
+          />
 
-        <Routes>
-          {/* Public routes - redirect if already authenticated */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
+          <Routes>
+            {/* Public routes - redirect if already authenticated */}
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Login />
+                  </div>
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Register />
+                  </div>
+                </PublicRoute>
+              }
+            />
+
+            {/* Public student-accessible pages (browse without login) */}
+            <Route
+              path="/home"
+              element={
                 <div className={!isOnline ? 'pt-16' : ''}>
-                  <Login />
+                  <Home />
                 </div>
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
+              }
+            />
+            <Route
+              path="/scholarship"
+              element={
                 <div className={!isOnline ? 'pt-16' : ''}>
-                  <Register />
+                  <Scholarship />
                 </div>
-              </PublicRoute>
-            }
-          />
-
-          {/* Public student-accessible pages (browse without login) */}
-          <Route
-            path="/home"
-            element={
-              <div className={!isOnline ? 'pt-16' : ''}>
-                <Home />
-              </div>
-            }
-          />
-          <Route
-            path="/scholarship"
-            element={
-              <div className={!isOnline ? 'pt-16' : ''}>
-                <Scholarship />
-              </div>
-            }
-          />
-          {/* Scholarship details requires authentication */}
-          <Route
-            path="/scholarship/:id"
-            element={
-              <ProtectedRoute allowedRoles={["STUDENT"]}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <Scholarshipdetails />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <Profile />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-applications"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <ApplicationStudent />
-                </div>
-              </ProtectedRoute>
-            }
-          />
+              }
+            />
+            {/* Scholarship details requires authentication */}
+            <Route
+              path="/scholarship/:id"
+              element={
+                <ProtectedRoute allowedRoles={["STUDENT"]}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Scholarshipdetails />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Profile />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-applications"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <ApplicationStudent />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
 
 
-          {/* Protected organization routes */}
-          <Route
-            path="/orgdashboard"
-            element={
-              <ProtectedRoute allowedRoles={['ORGANIZATION']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <Orgdashboard />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage-scholarships"
-            element={
-              <ProtectedRoute allowedRoles={['ORGANIZATION']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <ManageScholar />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/archive"
-            element={
-              <ProtectedRoute allowedRoles={['ORGANIZATION']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <Archive />
-                </div>
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected organization routes */}
+            <Route
+              path="/orgdashboard"
+              element={
+                <ProtectedRoute allowedRoles={['ORGANIZATION']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Orgdashboard />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manage-scholarships"
+              element={
+                <ProtectedRoute allowedRoles={['ORGANIZATION']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <ManageScholar />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/archive"
+              element={
+                <ProtectedRoute allowedRoles={['ORGANIZATION']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <Archive />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/ProfileOrg"
-            element={
-              <ProtectedRoute allowedRoles={['ORGANIZATION']}>
-                <div className={!isOnline ? 'pt-16' : ''}>
-                  <ProfileOrg />
-                </div>
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/Profile"
+              element={
+                <ProtectedRoute allowedRoles={['ORGANIZATION']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <ProfileOrg />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
 
 
 
 
-          {/* Root redirect - smart redirect based on auth state */}
-          <Route path="/" element={<AuthenticatedRedirect />} />
+            {/* Root redirect - smart redirect based on auth state */}
+            <Route path="/" element={<AuthenticatedRedirect />} />
 
-          {/* Catch all - redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+            {/* Catch all - redirect to login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </NotificationProvider>
       </AuthProvider>
     </>
   )

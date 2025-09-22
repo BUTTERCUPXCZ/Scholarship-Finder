@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import StudentNavbar from '../components/studentNavbar'
 import ScholarshipCard from '../components/ScholarshipCard'
-import { useScholarships } from '../hooks/useScholarshipQueries'
+import { useScholarships, type Scholarship as ScholarshipType } from '../hooks/useScholarshipQueries'
 import { Skeleton } from '../components/ui/skeleton'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -51,7 +51,7 @@ const Scholarship = () => {
     const filteredScholarships = useMemo(() => {
         if (!scholarships) return []
 
-        let filtered = scholarships.filter(scholarship => {
+        let filtered = scholarships.filter((scholarship: ScholarshipType) => {
             const matchesSearch = searchTerm === '' ||
                 scholarship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 scholarship.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,7 +64,7 @@ const Scholarship = () => {
         })
 
         // Sort scholarships
-        filtered.sort((a, b) => {
+        filtered.sort((a: ScholarshipType, b: ScholarshipType) => {
             switch (sortBy) {
                 case 'deadline':
                     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
@@ -84,7 +84,7 @@ const Scholarship = () => {
 
     const scholarshipTypes = useMemo(() => {
         if (!scholarships) return []
-        return [...new Set(scholarships.map(s => s.type))]
+        return [...new Set(scholarships.map((s: ScholarshipType) => s.type))]
     }, [scholarships])
 
     if (error) {
@@ -196,7 +196,7 @@ const Scholarship = () => {
                                                         className="w-full p-2 border border-gray-300 rounded-md text-sm"
                                                     >
                                                         <option value="all">All Types</option>
-                                                        {scholarshipTypes.map(type => (
+                                                        {scholarshipTypes.map((type: string) => (
                                                             <option key={type} value={type}>{type}</option>
                                                         ))}
                                                     </select>
@@ -308,7 +308,7 @@ const Scholarship = () => {
                     {/* Scholarships Grid */}
                     {!isLoading && filteredScholarships.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                            {filteredScholarships.map((scholarship) => (
+                            {filteredScholarships.map((scholarship: ScholarshipType) => (
                                 <div key={scholarship.id} className="w-full h-[400px] max-w-sm mx-auto">
                                     <ScholarshipCard
                                         scholarship={scholarship}

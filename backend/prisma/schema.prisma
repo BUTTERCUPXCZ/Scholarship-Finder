@@ -9,23 +9,24 @@ datasource db {
 }
 
 model User {
-  id                   String        @id @default(cuid())
+  id                   String         @id @default(uuid()) @db.Uuid
   fullname             String
-  email                String        @unique
+  email                String         @unique
   password             String
-  role                 Role          @default(STUDENT)
+  role                 Role           @default(STUDENT)
   applications         Application[]
-  archivedScholarships Archive[]     @relation("ArchivedScholarships")
-  scholarships         Scholarship[] @relation("ScholarshipOrg")
+  archivedScholarships Archive[]      @relation("ArchivedScholarships")
+  scholarships         Scholarship[]  @relation("ScholarshipOrg")
+  notifications        Notification[]
 
   @@index([email])
 }
 
 model Scholarship {
-  id           String            @id @default(cuid())
+  id           String            @id @default(uuid()) @db.Uuid
   title        String
   description  String
-  providerId   String
+  providerId   String            @db.Uuid
   deadline     DateTime
   location     String
   type         String
@@ -37,14 +38,17 @@ model Scholarship {
   applications Application[]
   provider     User              @relation("ScholarshipOrg", fields: [providerId], references: [id])
 
+  @@index([status, deadline])
+  @@index([deadline, status])
+  @@index([createdAt])
   @@index([providerId, status])
-  @@index([deadline])
+  @@index([status])
 }
 
 model Application {
-  id            String                @id @default(cuid())
-  userId        String
-  scholarshipId String
+  id            String                @id @default(uuid()) @db.Uuid
+  userId        String                @db.Uuid
+  scholarshipId String                @db.Uuid
   status        ApplicationStatus     @default(PENDING)
   submittedAt   DateTime              @default(now())
   Address       String
@@ -63,8 +67,8 @@ model Application {
 }
 
 model ApplicationDocument {
-  id            String      @id @default(cuid())
-  applicationId String
+  id            String      @id @default(uuid()) @db.Uuid
+  applicationId String      @db.Uuid
   filename      String
   contentType   String
   size          Int
@@ -77,11 +81,11 @@ model ApplicationDocument {
 }
 
 model Archive {
-  id                String            @id @default(cuid())
-  scholarshipId     String            @unique
+  id                String            @id @default(uuid()) @db.Uuid
+  scholarshipId     String            @unique @db.Uuid
   title             String
   description       String
-  providerId        String
+  providerId        String            @db.Uuid
   deadline          DateTime
   location          String
   type              String
@@ -89,13 +93,27 @@ model Archive {
   requirements      String
   originalStatus    ScholarshipStatus
   archivedAt        DateTime          @default(now())
-  archivedBy        String
+  archivedBy        String            @db.Uuid
   originalCreatedAt DateTime
   originalUpdatedAt DateTime
   provider          User              @relation("ArchivedScholarships", fields: [providerId], references: [id])
 
   @@index([providerId])
   @@index([archivedAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  message   String
+  type      NotificationType @default(INFO)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum Role {
@@ -115,4 +133,11 @@ enum ApplicationStatus {
   UNDER_REVIEW
   ACCEPTED
   REJECTED
+}
+
+enum NotificationType {
+  INFO
+  SCHOLARSHIP_ACCEPTED
+  SCHOLARSHIP_REJECTED
+  SCHOLARSHIP_UPDATE
 }

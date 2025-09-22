@@ -28,6 +28,10 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
         setOpen(false)
     }
 
+    const handleprofile = () => {
+        navigate('/Profile');
+    }
+
     const getUserDisplayName = () => {
         return user?.fullname || user?.email || 'User'
     }
@@ -91,7 +95,7 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
                             </svg>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem onClick={handleprofile} className="cursor-pointer">
                                 <span>Profile</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">

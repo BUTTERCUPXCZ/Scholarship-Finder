@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { getDownloadUrl, getDownloadUrlFromBackend } from '../services/supabaseStorage'
 import {
     getScholarshipApplications,
@@ -172,65 +173,37 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
             // First, try to get signed URL using the backend endpoint (more reliable)
             let signedUrl = await getDownloadUrlFromBackend(documentFile.storagePath)
 
-
             if (!signedUrl) {
                 console.log('Backend download failed, trying direct Supabase client...')
-                signedUrl = await getDownloadUrl(documentFile.storagePath, 3600) // 
+                signedUrl = await getDownloadUrl(documentFile.storagePath)
             }
 
             if (!signedUrl) {
-                console.error('Failed to get download URL for:', documentFile.filename)
-                console.error('Storage path:', documentFile.storagePath)
-
-
+                console.log('Both methods failed, trying public URL...')
+                // Fallback: try using the fileUrl directly if available
                 if (documentFile.fileUrl) {
-                    console.log('Trying final fallback with fileUrl:', documentFile.fileUrl)
-                    const link = window.document.createElement('a')
-                    link.href = documentFile.fileUrl
-                    link.download = documentFile.filename
-                    link.target = '_blank'
-                    window.document.body.appendChild(link)
-                    link.click()
-                    window.document.body.removeChild(link)
-                    return
+                    signedUrl = documentFile.fileUrl
+                } else {
+                    throw new Error('No download URL available')
                 }
-
-                alert('Failed to download document. Please try again or contact support.')
-                return
             }
 
-
+            // Create download link
             const link = window.document.createElement('a')
             link.href = signedUrl
             link.download = documentFile.filename
             link.target = '_blank'
 
-
+            // Trigger download
             window.document.body.appendChild(link)
             link.click()
             window.document.body.removeChild(link)
 
+            toast.success(`Downloaded ${documentFile.filename}`)
+
         } catch (error) {
             console.error('Error downloading document:', error)
-
-            // Fallback: try using the fileUrl directly if available
-            if (documentFile.fileUrl) {
-                console.log('Using fileUrl fallback due to error:', documentFile.fileUrl)
-                try {
-                    const link = window.document.createElement('a')
-                    link.href = documentFile.fileUrl
-                    link.download = documentFile.filename
-                    link.target = '_blank'
-                    window.document.body.appendChild(link)
-                    link.click()
-                    window.document.body.removeChild(link)
-                    return
-                } catch (fallbackError) {
-                    console.error('Fallback download also failed:', fallbackError)
-                }
-            }
-
-            alert('Failed to download document. Please try again or contact support.')
+            toast.error('Failed to download document. Please try again or contact support.')
         }
     }
 

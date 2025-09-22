@@ -53,15 +53,17 @@ export const updateExpiredScholarships = async () => {
     try {
         const now = new Date();
 
+        // Use a more efficient query with proper indexing
         const result = await prisma.scholarship.updateMany({
             where: {
-                deadline: {
-                    lt: now
-                },
-                status: ScholarshipStatus.ACTIVE
+                AND: [
+                    { deadline: { lt: now } },
+                    { status: ScholarshipStatus.ACTIVE }
+                ]
             },
             data: {
-                status: ScholarshipStatus.EXPIRED
+                status: ScholarshipStatus.EXPIRED,
+                updatedAt: now
             }
         });
 
@@ -73,20 +75,95 @@ export const updateExpiredScholarships = async () => {
     }
 }
 
+// New endpoint for manually triggering expired scholarship updates
+export const updateExpiredScholarshipsEndpoint = async (req: Request, res: Response) => {
+    try {
+        const result = await updateExpiredScholarships();
+        return res.status(200).json({
+            success: true,
+            message: `Updated ${result.count} expired scholarships`,
+            count: result.count
+        });
+    } catch (error) {
+        console.error("Error updating expired scholarships:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
 
 export const getAllScholars = async (req: Request, res: Response) => {
     try {
-        // First, update any expired scholarships
-        await updateExpiredScholarships();
+        // Parse query parameters for pagination and filtering
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // Max 100 items per page
+        const status = req.query.status as string;
+        const type = req.query.type as string;
+        const search = req.query.search as string;
 
-        // Then fetch all scholarships with updated statuses
-        const scholars = await prisma.scholarship.findMany({
-            orderBy: {
-                createdAt: 'desc'
+        const skip = (page - 1) * limit;
+
+        // Build where condition efficiently
+        const whereCondition: any = {};
+
+        if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
+            whereCondition.status = status as ScholarshipStatus;
+        }
+
+        if (type) {
+            whereCondition.type = {
+                contains: type,
+                mode: 'insensitive'
+            };
+        }
+
+        if (search) {
+            whereCondition.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { location: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        // Use efficient query with proper indexing
+        const [scholars, totalCount] = await Promise.all([
+            prisma.scholarship.findMany({
+                where: whereCondition,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    deadline: true,
+                    location: true,
+                    type: true,
+                    benefits: true,
+                    requirements: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    providerId: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip,
+                take: limit
+            }),
+            prisma.scholarship.count({ where: whereCondition })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return res.status(200).json({
+            success: true,
+            data: scholars,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCount,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
             }
         });
-
-        return res.status(200).json({ success: true, data: scholars });
     } catch (error) {
         console.error("Error fetching scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
@@ -278,6 +355,39 @@ export const ArchiveScholarship = async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error("Error archiving scholarship:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const getOrganizationScholarships = async (req: Request, res: Response) => {
+    try {
+        const providerId = req.userId as string | undefined;
+
+        if (!providerId) {
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
+        }
+
+        const scholarships = await prisma.scholarship.findMany({
+            where: {
+                providerId: providerId
+            },
+            orderBy: { createdAt: "desc" },
+            include: {
+                applications: {
+                    select: {
+                        id: true,
+                        status: true
+                    }
+                }
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: scholarships,
+        });
+    } catch (error) {
+        console.error("Error fetching organization scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };

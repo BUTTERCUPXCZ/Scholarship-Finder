@@ -7,8 +7,8 @@ declare namespace NodeJS {
         DATABASE_URL?: string;
         DIRECT_URL?: string;
         NODE_ENV?: "development" | "production" | "test";
-        SUPABASE_URL?: string;
-        SUPABASE_SERVICE_ROLE_KEY?: string;
+        SUPABASE_URL: string;
+        SUPABASE_SERVICE_ROLE_KEY: string;
     }
 }
 

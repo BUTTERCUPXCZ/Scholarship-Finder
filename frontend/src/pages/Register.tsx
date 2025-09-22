@@ -60,9 +60,9 @@ const Register = () => {
             // Role-based redirect after registration
             const role = data?.user?.role?.toString?.() ?? '';
             if (role === 'ORGANIZATION') {
-                navigate('/orgdashboard');
+                navigate('/login');
             } else {
-                navigate('/home');
+                navigate('/login');
             }
         },
         onError: (error: Error) => {

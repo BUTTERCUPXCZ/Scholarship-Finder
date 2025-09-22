@@ -8,8 +8,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { ChevronDown, LogOut, User, FileText } from 'lucide-react'
-import { Bell } from 'lucide-react'
+import { ChevronDown, LogOut, User, FileText, Bell } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
 const StudentNavbar = () => {
     const [open, setOpen] = useState(false)
@@ -56,18 +56,7 @@ const StudentNavbar = () => {
 
                 {/* Notification Bell (visible only when user is logged in) */}
                 {user && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger className="relative px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
-                            <Bell className="w-5 h-5 text-gray-600" />
-                            {/* Unread badge (hardcoded 0 for now) */}
-                            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium leading-none text-white bg-red-600 rounded-full">0</span>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72">
-                            <div className="px-3 py-2 text-sm font-medium">Notifications</div>
-                            <DropdownMenuSeparator />
-                            <div className="px-3 py-2 text-sm text-gray-600">No new notifications</div>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <NotificationBell />
                 )}
 
                 {/* User Dropdown or Login Button */}

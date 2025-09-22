@@ -6,16 +6,8 @@ interface PublicRouteProps {
 }
 
 const PublicRoute = ({ children }: PublicRouteProps) => {
-    const { user, isAuthenticated, isLoading } = useAuth();
+    const { user, isAuthenticated } = useAuth();
 
-    // Show loading while checking auth state
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500"></div>
-            </div>
-        );
-    }
 
     // If authenticated, redirect to appropriate dashboard
     if (isAuthenticated && user) {

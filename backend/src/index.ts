@@ -8,9 +8,11 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes';
 import { startScholarshipJobs } from './controllers/job/scholarshipJobs';
+import { startExpiredScholarshipJob } from './jobs/expiredScholarshipJob';
 import scholarRoutes from './routes/scholar.routes';
 import applicationRoutes from './routes/application.routes';
 import uploadRoutes from './routes/upload.routes';
+import notificationRoutes from './routes/notification.routes';
 
 
 dotenv.config();
@@ -32,6 +34,7 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 startScholarshipJobs();
+startExpiredScholarshipJob(); // Start the background job for expired scholarships
 app.use(helmet());
 app.use(morgan('combined'));
 
@@ -53,6 +56,7 @@ app.use('/users', userRoutes);
 app.use('/scholar', scholarRoutes);
 app.use('/applications', applicationRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/notifications', notificationRoutes);
 
 const server = http.createServer(app);
 

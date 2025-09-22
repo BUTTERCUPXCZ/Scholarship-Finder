@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { submitApplicationSchema } from '../Validators/Application';
 import { prisma } from '../lib/db';
+import { createNotification } from '../services/notification';
 
-// Interface for application document from frontend
+
 interface ApplicationDocumentData {
     filename: string;
     contentType: string;
@@ -11,10 +12,10 @@ interface ApplicationDocumentData {
     storagePath: string;
 }
 
-// Interface for application submission
+
 interface ApplicationSubmissionData {
     scholarshipId: string;
-    // Prisma Application model requires applicant fields
+
     Firstname: string;
     Middlename?: string;
     Lastname: string;
@@ -22,7 +23,7 @@ interface ApplicationSubmissionData {
     Phone: string;
     Address: string;
     City: string;
-    // personalStatement is not stored in Prisma Application model; accept but ignore
+
     personalStatement?: string;
     documents?: ApplicationDocumentData[];
 }
@@ -324,6 +325,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
             where: { id },
             include: {
                 scholarship: true,
+                user: true
             }
         });
 
@@ -342,6 +344,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
             data: { status },
             include: {
                 documents: true,
+                scholarship: true,
                 user: {
                     select: {
                         id: true,
@@ -350,6 +353,36 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
                     }
                 }
             }
+        });
+
+        // Create notification for the applicant
+        let notificationMessage = '';
+        let notificationType: 'SCHOLARSHIP_ACCEPTED' | 'SCHOLARSHIP_REJECTED' | 'SCHOLARSHIP_UPDATE' = 'SCHOLARSHIP_UPDATE';
+
+        switch (status) {
+            case 'ACCEPTED':
+                notificationMessage = `Congratulations! Your application for "${application.scholarship.title}" has been accepted.`;
+                notificationType = 'SCHOLARSHIP_ACCEPTED';
+                break;
+            case 'REJECTED':
+                notificationMessage = `Thank you for your interest. Your application for "${application.scholarship.title}" was not selected this time.`;
+                notificationType = 'SCHOLARSHIP_REJECTED';
+                break;
+            case 'UNDER_REVIEW':
+                notificationMessage = `Your application for "${application.scholarship.title}" is now under review.`;
+                notificationType = 'SCHOLARSHIP_UPDATE';
+                break;
+            case 'PENDING':
+                notificationMessage = `Your application for "${application.scholarship.title}" status has been updated to pending.`;
+                notificationType = 'SCHOLARSHIP_UPDATE';
+                break;
+        }
+
+        // Create the notification
+        await createNotification({
+            userId: application.userId,
+            message: notificationMessage,
+            type: notificationType
         });
 
         res.status(200).json({

@@ -15,8 +15,38 @@ interface Scholarship {
     applications?: any[]
 }
 
-export const getAllScholars = async (): Promise<Scholarship[]> => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/get-scholars`, {
+interface PaginationInfo {
+    currentPage: number
+    totalPages: number
+    totalCount: number
+    hasNext: boolean
+    hasPrev: boolean
+}
+
+interface ScholarshipResponse {
+    success: boolean
+    data: Scholarship[]
+    pagination?: PaginationInfo
+}
+
+interface ScholarshipFilters {
+    page?: number
+    limit?: number
+    status?: 'ACTIVE' | 'EXPIRED'
+    type?: string
+    search?: string
+}
+
+export const getAllScholars = async (filters: ScholarshipFilters = {}): Promise<ScholarshipResponse> => {
+    const queryParams = new URLSearchParams();
+
+    if (filters.page) queryParams.append('page', filters.page.toString());
+    if (filters.limit) queryParams.append('limit', filters.limit.toString());
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.type) queryParams.append('type', filters.type);
+    if (filters.search) queryParams.append('search', filters.search);
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/get-scholars?${queryParams}`, {
         method: 'GET',
         credentials: 'include', // Include cookies in request
         headers: {
@@ -36,7 +66,11 @@ export const getAllScholars = async (): Promise<Scholarship[]> => {
         throw new Error(`${response.status} ${errorMessage}`);
     }
 
-    const data = await response.json();
-    return data.data;
-}// Keep the old function for backward compatibility
-export const getScholarships = getAllScholars;
+    return await response.json();
+}
+
+// Keep the old function for backward compatibility (without filters)
+export const getScholarships = async (): Promise<Scholarship[]> => {
+    const response = await getAllScholars();
+    return response.data;
+}

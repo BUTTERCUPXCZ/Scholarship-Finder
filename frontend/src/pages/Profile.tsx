@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthProvider/AuthProvider'
+import { updateUserProfile } from '../services/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import StudentNavbar from '../components/studentNavbar'
+import toast from 'react-hot-toast'
 import {
     User,
     Mail,
@@ -13,7 +15,6 @@ import {
     Edit3,
     Save,
     X,
-    GraduationCap,
     MapPin,
     Phone,
     Camera,
@@ -23,8 +24,9 @@ import {
 } from 'lucide-react'
 
 const Profile = () => {
-    const { user } = useAuth()
+    const { user, refetchUser } = useAuth()
     const [isEditing, setIsEditing] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const [profileData, setProfileData] = useState({
         fullname: user?.fullname || '',
         email: user?.email || '',
@@ -37,6 +39,17 @@ const Profile = () => {
         bio: ''
     })
 
+    // Sync form data with user data changes
+    useEffect(() => {
+        if (user) {
+            setProfileData(prev => ({
+                ...prev,
+                fullname: user.fullname || '',
+                email: user.email || ''
+            }));
+        }
+    }, [user]);
+
     const handleInputChange = (field: string, value: string) => {
         setProfileData(prev => ({
             ...prev,
@@ -44,10 +57,30 @@ const Profile = () => {
         }))
     }
 
-    const handleSave = () => {
-        // TODO: Implement save functionality with API call
-        console.log('Saving profile data:', profileData)
-        setIsEditing(false)
+    const handleSave = async () => {
+        if (!profileData.fullname.trim() || !profileData.email.trim()) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await updateUserProfile({
+                fullname: profileData.fullname.trim(),
+                email: profileData.email.trim()
+            });
+
+            if (response.success) {
+                toast.success('Profile updated successfully!');
+                // Refresh user data in context
+                refetchUser();
+                setIsEditing(false);
+            }
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const handleCancel = () => {
@@ -110,15 +143,17 @@ const Profile = () => {
                                 <div className="flex gap-3">
                                     <Button
                                         onClick={handleSave}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                                        disabled={isLoading}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Save className="w-5 h-5 mr-2" />
-                                        Save Changes
+                                        {isLoading ? 'Saving...' : 'Save Changes'}
                                     </Button>
                                     <Button
                                         onClick={handleCancel}
+                                        disabled={isLoading}
                                         variant="outline"
-                                        className="border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-lg transition-all duration-200"
+                                        className="border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <X className="w-5 h-5 mr-2" />
                                         Cancel

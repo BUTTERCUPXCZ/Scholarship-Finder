@@ -40,3 +40,23 @@ export const registerUser = async (data: RegisterData) => {
     return res.json();
 };
 
+export interface UpdateProfileData {
+    fullname: string;
+    email: string;
+}
+
+export const updateUserProfile = async (data: UpdateProfileData) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
+        method: "PATCH",
+        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to update profile");
+    }
+    return res.json();
+};
+

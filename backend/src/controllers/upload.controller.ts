@@ -3,8 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import multer from 'multer';
 
 // Initialize Supabase client with service role key for server-side operations
-const supabaseUrl = (process.env as any).SUPABASE_URL || '';
-const supabaseServiceKey = (process.env as any).SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = (process.env as any).SUPABASE_URL as string;
+const supabaseServiceKey = (process.env as any).SUPABASE_SERVICE_ROLE_KEY as string;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing Supabase configuration. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+    throw new Error('Supabase configuration missing');
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
@@ -13,6 +18,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     }
 });
 
+// Storage bucket name - consistent with frontend
+const BUCKET_NAME = 'application-documents';
+
 // Configure multer for file uploads
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -20,11 +28,20 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req: any, file: any, cb: any) => {
-        // Allow only PDF files
-        if (file.mimetype === 'application/pdf') {
+        // Allow PDF, DOC, DOCX, and image files
+        const allowedMimeTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/png',
+            'image/jpg'
+        ];
+
+        if (allowedMimeTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only PDF files are allowed'));
+            cb(new Error('Only PDF, DOC, DOCX, and image files are allowed'));
         }
     }
 });
@@ -36,53 +53,116 @@ export const uploadMiddleware = upload.array('documents', 5); // Max 5 files
  */
 export const uploadFiles = async (req: Request, res: Response) => {
     try {
+        console.log('Upload files endpoint called');
+
         const userId = req.userId as string;
         if (!userId) {
+            console.error('No user ID found in request');
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
         const files = req.files as any[];
         if (!files || files.length === 0) {
+            console.error('No files provided in request');
             return res.status(400).json({ message: 'No files provided' });
         }
+
+        console.log(`Processing ${files.length} files for user ${userId}`);
 
         const uploadResults = [];
 
         for (const file of files) {
-            // Generate unique file path
-            const timestamp = Date.now();
-            const storagePath = `${userId}/temp-${timestamp}/${timestamp}-${file.originalname}`;
+            try {
+                console.log(`Uploading file: ${file.originalname}, Size: ${file.size}, Type: ${file.mimetype}`);
 
-            // Upload to Supabase storage
-            const { data, error } = await supabase.storage
-                .from('application-documents')
-                .upload(storagePath, file.buffer, {
+                // Generate unique file path
+                const timestamp = Date.now();
+                const randomId = Math.random().toString(36).substring(2, 8);
+                const storagePath = `${userId}/documents/${timestamp}-${randomId}-${file.originalname}`;
+
+                console.log(`Storage path: ${storagePath}`);
+
+                // Upload to Supabase storage
+                const { data, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .upload(storagePath, file.buffer, {
+                        contentType: file.mimetype,
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (error) {
+                    console.error('Supabase upload error for file', file.originalname, ':', error);
+
+                    // If bucket doesn't exist, try to create it
+                    if (error.message.includes('Bucket not found')) {
+                        console.log('Attempting to create bucket...');
+                        const { error: bucketError } = await supabase.storage.createBucket(BUCKET_NAME, {
+                            public: true,
+                            allowedMimeTypes: [
+                                'application/pdf',
+                                'application/msword',
+                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                'image/jpeg',
+                                'image/png',
+                                'image/jpg'
+                            ],
+                            fileSizeLimit: 10485760 // 10MB
+                        });
+
+                        if (bucketError) {
+                            console.error('Failed to create bucket:', bucketError);
+                            return res.status(500).json({
+                                message: `Storage bucket error: ${bucketError.message}`
+                            });
+                        }
+
+                        // Retry upload after creating bucket
+                        const { data: retryData, error: retryError } = await supabase.storage
+                            .from(BUCKET_NAME)
+                            .upload(storagePath, file.buffer, {
+                                contentType: file.mimetype,
+                                cacheControl: '3600',
+                                upsert: false
+                            });
+
+                        if (retryError) {
+                            console.error('Retry upload failed:', retryError);
+                            return res.status(500).json({
+                                message: `Failed to upload ${file.originalname}: ${retryError.message}`
+                            });
+                        }
+                    } else {
+                        return res.status(500).json({
+                            message: `Failed to upload ${file.originalname}: ${error.message}`
+                        });
+                    }
+                }
+
+                console.log(`Successfully uploaded file: ${file.originalname}`);
+
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from(BUCKET_NAME)
+                    .getPublicUrl(storagePath);
+
+                uploadResults.push({
+                    filename: file.originalname,
                     contentType: file.mimetype,
-                    cacheControl: '3600',
-                    upsert: false
+                    size: file.size,
+                    fileUrl: urlData.publicUrl,
+                    storagePath: storagePath
                 });
 
-            if (error) {
-                console.error('Supabase upload error:', error);
+            } catch (fileError) {
+                console.error(`Error processing file ${file.originalname}:`, fileError);
                 return res.status(500).json({
-                    message: `Failed to upload ${file.originalname}: ${error.message}`
+                    message: `Failed to process file ${file.originalname}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`
                 });
             }
-
-            // Get public URL
-            const { data: urlData } = supabase.storage
-                .from('application-documents')
-                .getPublicUrl(storagePath);
-
-            uploadResults.push({
-                filename: file.originalname,
-                contentType: file.mimetype,
-                size: file.size,
-                fileUrl: urlData.publicUrl,
-                storagePath: storagePath
-            });
         }
 
+        console.log(`Successfully uploaded ${uploadResults.length} files`);
         res.status(200).json({
             success: true,
             message: 'Files uploaded successfully',
@@ -90,8 +170,11 @@ export const uploadFiles = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Upload controller error:', error);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 };
 
@@ -116,7 +199,7 @@ export const downloadFile = async (req: Request, res: Response) => {
 
         // Get signed URL with service role key (has more permissions)
         const { data, error } = await supabase.storage
-            .from('application-documents')
+            .from(BUCKET_NAME)
             .createSignedUrl(storagePath, 3600); // 1 hour expiry
 
         if (error) {

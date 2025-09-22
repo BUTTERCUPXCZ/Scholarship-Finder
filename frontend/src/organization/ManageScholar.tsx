@@ -91,7 +91,8 @@ const ManageScholar = () => {
         queryKey: ['scholarships'],
         queryFn: async () => {
             try {
-                return await getAllScholars()
+                const response = await getAllScholars()
+                return response.data
             } catch (error: any) {
                 // Handle authentication errors
                 if (error?.message?.includes('UNAUTHORIZED')) {
@@ -275,7 +276,7 @@ const ManageScholar = () => {
     }
 
     // Filter and sort scholarships - updated for backend data
-    const filteredAndSortedScholarships = scholarships
+    const filteredAndSortedScholarships = (scholarships || [])
         .filter(scholarship => {
             const matchesSearch = scholarship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 scholarship.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -343,7 +344,7 @@ const ManageScholar = () => {
                                 // Applications View using the component
                                 <ApplicationManagement
                                     scholarshipId={viewingApplications}
-                                    scholarshipTitle={scholarships.find(s => s.id === viewingApplications)?.title || 'Unknown Scholarship'}
+                                    scholarshipTitle={(scholarships || []).find(s => s.id === viewingApplications)?.title || 'Unknown Scholarship'}
                                     onBack={handleBackToScholarships}
                                 />
                             ) : (
@@ -377,7 +378,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Active</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'ACTIVE').length}
+                                                        {(scholarships || []).filter(s => s.status === 'ACTIVE').length}
                                                     </p>
                                                 </div>
                                             </div>
@@ -391,7 +392,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'ACTIVE' && isDeadlineNear(s.deadline)).length}
+                                                        {(scholarships || []).filter(s => s.status === 'ACTIVE' && isDeadlineNear(s.deadline)).length}
                                                     </p>
                                                 </div>
                                             </div>
@@ -405,7 +406,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Total Applicants</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
+                                                        {(scholarships || []).reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -419,7 +420,7 @@ const ManageScholar = () => {
                                                 <div className="ml-4">
                                                     <p className="text-sm font-medium text-gray-600">Expired</p>
                                                     <p className="text-2xl font-bold text-gray-900">
-                                                        {scholarships.filter(s => s.status === 'EXPIRED').length}
+                                                        {(scholarships || []).filter(s => s.status === 'EXPIRED').length}
                                                     </p>
                                                 </div>
                                             </div>

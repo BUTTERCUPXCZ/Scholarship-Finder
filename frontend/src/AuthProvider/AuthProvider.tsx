@@ -1,6 +1,5 @@
 import { createContext, useState, useContext, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 
 interface User {
     id: string;
@@ -51,20 +50,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [initialCheckComplete, setInitialCheckComplete] = useState(false);
     const queryClient = useQueryClient();
-    const location = useLocation();
-
-    // Check if current route is a public page that doesn't require auth check
-    const isPublicPage = useMemo(() => {
-        const publicPaths = ["/login", "/register", "/home", "/scholarship"];
-        // Only the exact /scholarship path is public, not /scholarship/:id
-        return publicPaths.includes(location.pathname);
-    }, [location.pathname]);
 
     const { data: userData, isLoading: queryLoading, refetch, error } = useQuery({
         queryKey: ["auth", "currentUser"],
         queryFn: checkAuthStatus,
-        // ✅ Only run auth check on pages that actually need authentication
-        enabled: !isPublicPage,
+        // ✅ Always check auth status to maintain login state across all pages
+        enabled: true,
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
         retry: false,
@@ -81,13 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setInitialCheckComplete(true);
         }
     }, [userData, error]);
-
-    // On public pages, mark initial check as complete immediately
-    useEffect(() => {
-        if (isPublicPage) {
-            setInitialCheckComplete(true);
-        }
-    }, [isPublicPage]);
 
     const login = useCallback((user: User) => {
         setUser(user);
