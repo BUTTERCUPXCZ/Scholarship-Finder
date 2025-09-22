@@ -13,6 +13,8 @@ import scholarRoutes from './routes/scholar.routes';
 import applicationRoutes from './routes/application.routes';
 import uploadRoutes from './routes/upload.routes';
 import notificationRoutes from './routes/notification.routes';
+import rateLimit from 'express-rate-limit';
+import { initializeSocket } from './services/socketService';
 
 
 dotenv.config();
@@ -34,11 +36,11 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 startScholarshipJobs();
-startExpiredScholarshipJob(); // Start the background job for expired scholarships
+startExpiredScholarshipJob();
 app.use(helmet());
 app.use(morgan('combined'));
 
-// CORS configuration to allow credentials (cookies)
+
 app.use(cors({
     origin: [
         process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -60,13 +62,11 @@ app.use('/notifications', notificationRoutes);
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-    cors: {
-        origin: '*',
-    }
-});
+// Initialize Socket.IO with authentication
+const io = initializeSocket(server);
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Socket.IO server initialized for real-time notifications');
 });
 

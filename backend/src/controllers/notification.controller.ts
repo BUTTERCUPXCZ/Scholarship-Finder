@@ -13,10 +13,17 @@ export const fetchNotifications = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const notifications = await getUserNotifications(userId);
+        // Parse query parameters
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const onlyUnread = req.query.onlyUnread === 'true';
+
+        const result = await getUserNotifications(userId, { page, limit, onlyUnread });
+
         res.status(200).json({
             success: true,
-            data: notifications
+            data: result.notifications,
+            pagination: result.pagination
         });
     } catch (error) {
         console.error('Get notifications error:', error);

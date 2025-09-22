@@ -9,8 +9,17 @@ export interface Notification {
     createdAt: string;
 }
 
-export const getNotifications = async (): Promise<Notification[]> => {
-    const response = await fetch(`${API_BASE_URL}/notifications`, {
+export const getNotifications = async (options?: {
+    page?: number;
+    limit?: number;
+    onlyUnread?: boolean;
+}): Promise<Notification[]> => {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.onlyUnread) params.append('onlyUnread', 'true');
+
+    const response = await fetch(`${API_BASE_URL}/notifications?${params}`, {
         method: 'GET',
         credentials: 'include',
         headers: {

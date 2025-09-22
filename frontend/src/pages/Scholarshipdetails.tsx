@@ -27,6 +27,7 @@ import {
 import toast from 'react-hot-toast';
 import { submitApplication } from '../services/applications';
 import { useAuth } from '../AuthProvider/AuthProvider';
+import { Breadcrumbs } from '../components/ui/breadcrumbs';
 
 // Scholarship interface matching the backend
 interface Scholarship {
@@ -103,7 +104,6 @@ const Scholarshipdetails = () => {
     }
 
     // File upload state and handlers
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null)
     const [isDragOver, setIsDragOver] = useState(false)
     // Apply modal form state
     const [isApplyOpen, setIsApplyOpen] = useState(false)
@@ -115,18 +115,6 @@ const Scholarshipdetails = () => {
     const [address, setAddress] = useState('')
     const [city, setCity] = useState('')
     const [applyFile, setApplyFile] = useState<File | null>(null)
-
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (file) {
-            if (file.type === 'application/pdf') {
-                setUploadedFile(file)
-                toast.success('PDF file uploaded successfully!')
-            } else {
-                toast.error('Please upload a PDF file only.')
-            }
-        }
-    }
 
     const handleApplyFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
@@ -155,16 +143,11 @@ const Scholarshipdetails = () => {
         setIsDragOver(false)
         const file = e.dataTransfer.files[0]
         if (file && file.type === 'application/pdf') {
-            setUploadedFile(file)
+            setApplyFile(file)
             toast.success('PDF file uploaded successfully!')
         } else {
             toast.error('Please upload a PDF file only.')
         }
-    }
-
-    const removeFile = () => {
-        setUploadedFile(null)
-        toast.success('File removed.')
     }
 
     // Application submission mutation
@@ -205,32 +188,99 @@ const Scholarshipdetails = () => {
             <div className="min-h-screen bg-gray-50">
                 <StudentNavbar />
                 <div className="container mx-auto px-4 py-8">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Back Button Skeleton */}
                         <Skeleton className="h-10 w-40 mb-6 rounded-lg" />
-                        <div className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <Skeleton className="h-8 w-3/4 mb-3" />
-                                    <div className="flex gap-2">
-                                        <Skeleton className="h-6 w-24 rounded-full" />
-                                        <Skeleton className="h-6 w-24 rounded-full" />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                        <Skeleton className="h-20 w-full" />
-                                        <Skeleton className="h-20 w-full" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <Skeleton className="h-6 w-32" />
-                                </CardHeader>
-                                <CardContent>
-                                    <Skeleton className="h-20 w-full" />
-                                </CardContent>
-                            </Card>
+
+                        {/* Breadcrumbs Skeleton */}
+                        <div className="flex items-center space-x-2 mb-6">
+                            <Skeleton className="h-4 w-20" />
+                            <span className="text-gray-400">/</span>
+                            <Skeleton className="h-4 w-32" />
+                        </div>
+
+                        {/* Two-Column Layout Skeleton */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Main Content - Left Column */}
+                            <div className="lg:col-span-2 space-y-6">
+                                {/* Scholarship Header Skeleton */}
+                                <Card>
+                                    <CardContent className="p-6">
+                                        <Skeleton className="h-8 w-3/4 mb-4" />
+                                        <div className="flex gap-2 mb-4">
+                                            <Skeleton className="h-6 w-24 rounded-full" />
+                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                        </div>
+                                        <Skeleton className="h-4 w-full mb-2" />
+                                        <Skeleton className="h-4 w-5/6" />
+                                    </CardContent>
+                                </Card>
+
+                                {/* What You'll Get Section Skeleton */}
+                                <Card>
+                                    <CardHeader>
+                                        <Skeleton className="h-7 w-48" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Skeleton className="h-4 w-full mb-2" />
+                                        <Skeleton className="h-4 w-4/5 mb-2" />
+                                        <Skeleton className="h-4 w-3/4 mb-2" />
+                                        <Skeleton className="h-4 w-5/6" />
+                                    </CardContent>
+                                </Card>
+
+                                {/* Requirements Section Skeleton */}
+                                <Card>
+                                    <CardHeader>
+                                        <Skeleton className="h-7 w-36" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Skeleton className="h-4 w-full mb-2" />
+                                        <Skeleton className="h-4 w-4/5 mb-2" />
+                                        <Skeleton className="h-4 w-3/4" />
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Sidebar - Right Column */}
+                            <div className="lg:col-span-1">
+                                <div className="sticky top-8">
+                                    <Card className="shadow-lg">
+                                        <CardContent className="p-6">
+                                            {/* Scholarship Info Skeleton */}
+                                            <div className="text-center mb-6">
+                                                <Skeleton className="h-8 w-40 mx-auto mb-2" />
+                                                <Skeleton className="h-4 w-32 mx-auto" />
+                                            </div>
+
+                                            {/* Deadline Alert Skeleton */}
+                                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                                                <Skeleton className="h-4 w-32 mb-2" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+
+                                            {/* Apply Button Skeleton */}
+                                            <Skeleton className="h-12 w-full mb-4 rounded-lg" />
+
+                                            {/* Additional Info Skeleton */}
+                                            <Skeleton className="h-3 w-48 mx-auto mb-4" />
+
+                                            {/* Features List Skeleton */}
+                                            <div className="space-y-3 mb-6">
+                                                {[...Array(4)].map((_, i) => (
+                                                    <div key={i} className="flex items-center gap-2">
+                                                        <Skeleton className="w-2 h-2 rounded-full" />
+                                                        <Skeleton className="h-3 w-32" />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Back Button Skeleton */}
+                                            <Skeleton className="h-10 w-full rounded-lg" />
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -315,96 +365,111 @@ const Scholarshipdetails = () => {
         <div className="min-h-screen bg-gray-50">
             <StudentNavbar />
             <div className="container mx-auto px-4 py-8">
-                <div className="max-w-4xl mx-auto">
-                    {/* Back Button */}
-                    <Button
-                        variant="outline"
-                        onClick={handleBack}
-                        className="mb-6 flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Scholarships
-                    </Button>
+                <div className="max-w-7xl mx-auto">
 
-                    {/* Single Container for Scholarship Details */}
-                    <Card className="overflow-hidden">
-                        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                                <div className="flex-1">
-                                    <CardTitle className="text-2xl md:text-3xl font-bold mb-3 text-gray-900">
-                                        {scholarship.title}
-                                    </CardTitle>
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        <Badge variant="secondary" className="flex items-center gap-1">
-                                            <MapPin className="h-3 w-3" />
-                                            {scholarship.location}
-                                        </Badge>
-                                        <Badge variant="outline">
-                                            {scholarship.type}
-                                        </Badge>
-                                        <Badge className="bg-blue-100 text-blue-700 border-blue-200 border flex items-center gap-1">
-                                            <span>Deadline: </span>
-                                            {formatDate(scholarship.deadline)}
-                                        </Badge>
-                                    </div>
+                    {/* Breadcrumbs */}
+                    <Breadcrumbs
+                        className="mb-6"
+                        items={[
+                            { label: 'Scholarships', href: '/scholarship' },
+                            { label: scholarship?.title || 'Details', active: true }
+                        ]}
+                    />
+
+                    {/* Two-Column Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Main Content - Left Column */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Scholarship Header */}
+                            <div className="bg-white rounded-lg p-6 shadow-sm border">
+                                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                                    {scholarship.title}
+                                </h1>
+
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    <Badge variant="secondary" className="flex items-center gap-1">
+                                        <MapPin className="h-3 w-3" />
+                                        {scholarship.location}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                        {scholarship.type}
+                                    </Badge>
                                 </div>
-                            </div>
-                        </CardHeader>
 
-                        <CardContent className="p-0">
-                            {/* Description Section */}
-                            <div className="p-6 border-b">
-                                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                                    Description
-                                </h3>
-                                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                <p className="text-gray-600 text-lg leading-relaxed">
                                     {scholarship.description}
                                 </p>
                             </div>
 
-                            {/* Benefits and Requirements Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2">
-                                {/* Benefits */}
-                                <div className="p-6 border-b md:border-r">
-                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                                        Benefits
-                                    </h3>
-                                    <p className="text-gray-700 leading-relaxed">
-                                        {scholarship.benefits}
-                                    </p>
-                                </div>
+                            {/* What You'll Get Section */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-2xl font-bold text-gray-900">
+                                        What you'll get
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="prose prose-gray max-w-none">
+                                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                                            {scholarship.benefits}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                {/* Requirements */}
-                                <div className="p-6 border-b">
-                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                            {/* Requirements Section */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-2xl font-bold text-gray-900">
                                         Requirements
-                                    </h3>
-                                    <p className="text-gray-700 leading-relaxed">
-                                        {scholarship.requirements}
-                                    </p>
-                                </div>
-                            </div>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="prose prose-gray max-w-none">
+                                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                                            {scholarship.requirements}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                            {/* Apply Section */}
-                            <div className="p-6 bg-gray-50">
-                                <div className="text-center mb-6">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-3">
-                                        {isExpired ? 'Application Closed' : 'Ready to Apply?'}
-                                    </h3>
-                                    <p className="text-gray-600">
-                                        {isExpired
-                                            ? 'This scholarship application has closed. Check back for future opportunities.'
-                                            : 'Submit your school information in PDF format to apply for this scholarship.'}
-                                    </p>
-                                </div>
+                        {/* Sidebar - Right Column */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-8">
+                                <Card className="shadow-lg">
+                                    <CardContent className="p-6">
+                                        {/* Scholarship Info */}
+                                        <div className="text-center mb-6">
+                                            <div className="text-3xl font-bold text-gray-900 mb-2">
+                                                {scholarship.scholarshipValue || 'Full Scholarship'}
+                                            </div>
+                                            <div className="text-gray-600">
+                                                Available for {scholarship.eligibleStudents || 'eligible students'}
+                                            </div>
+                                        </div>
 
-                                {!isExpired && (
-                                    <div className="space-y-4">
-                                        <div className="flex justify-center">
+                                        {/* Deadline Alert */}
+                                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                                            <div className="flex items-center gap-2 text-orange-800">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <span className="font-medium">Application Deadline</span>
+                                            </div>
+                                            <div className="text-orange-700 mt-1">
+                                                {formatDate(scholarship.deadline)}
+                                            </div>
+                                        </div>
+
+                                        {/* Apply Button */}
+                                        {!isExpired ? (
                                             <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
                                                 <DialogTrigger asChild>
-                                                    <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                        Apply
+                                                    <Button
+                                                        size="lg"
+                                                        className="w-full bg-indigo-600 hover:bg-indigo-800 text-white text-lg py-3 mb-4"
+
+                                                    >
+                                                        Apply Now
                                                     </Button>
                                                 </DialogTrigger>
 
@@ -507,7 +572,6 @@ const Scholarshipdetails = () => {
                                                             />
                                                         </div>
 
-
                                                         {/* Drag-and-drop PDF upload area */}
                                                         <div>
                                                             <label className="text-sm font-medium text-gray-700 block mb-2">School document (PDF) <span className="text-red-500">*</span></label>
@@ -567,7 +631,7 @@ const Scholarshipdetails = () => {
                                                                 <Button variant="outline" disabled={applicationMutation.isPending}>Cancel</Button>
                                                             </DialogClose>
                                                             <Button
-                                                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                                className="bg-purple-600 hover:bg-purple-700 text-white"
                                                                 onClick={() => {
                                                                     // Inline validation before submitting
                                                                     if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !address.trim() || !city.trim()) {
@@ -610,38 +674,21 @@ const Scholarshipdetails = () => {
                                                     </DialogFooter>
                                                 </DialogContent>
                                             </Dialog>
-                                        </div>
+                                        ) : (
+                                            <div className="w-full bg-gray-200 text-gray-600 text-center py-3 rounded-lg text-lg">
+                                                Application Closed
+                                            </div>
+                                        )}
 
-                                        <div className="flex justify-center">
-                                            <Button
-                                                variant="outline"
-                                                size="lg"
-                                                onClick={handleBack}
-                                                className="flex items-center gap-2"
-                                            >
-                                                <ArrowLeft className="h-4 w-4" />
-                                                Back to Listings
-                                            </Button>
+                                        {/* Additional Info */}
+                                        <div className="text-center text-sm text-gray-600 mb-4">
+                                            Submit your school information in PDF format
                                         </div>
-                                    </div>
-                                )}
-
-                                {isExpired && (
-                                    <div className="flex justify-center">
-                                        <Button
-                                            variant="outline"
-                                            size="lg"
-                                            onClick={handleBack}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <ArrowLeft className="h-4 w-4" />
-                                            Back to Listings
-                                        </Button>
-                                    </div>
-                                )}
+                                    </CardContent>
+                                </Card>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

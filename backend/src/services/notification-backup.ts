@@ -1,7 +1,23 @@
 import { prisma } from '../lib/db';
-import { emitNotificationToUser, emitNotificationUpdate, emitNotificationDeleted } from './socketService';
+import { emitNotificationToUser } from './socketServicexport const deleteNotification = async (notificationId: string, userId: string) => {
+    try {
+        const deletedNotification = await prisma.notification.deleteMany({
+            where: {
+                id: notificationId,
+                userId: userId
+            }
+        });
 
-export interface CreateNotificationData {
+        // Emit deletion event via Socket.IO
+        const { emitNotificationDeleted } = require('./socketService');
+        emitNotificationDeleted(userId, notificationId);
+
+        return deletedNotification;
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        throw error;
+    }
+};nterface CreateNotificationData {
     userId: string;
     message: string;
     type: 'INFO' | 'SCHOLARSHIP_ACCEPTED' | 'SCHOLARSHIP_REJECTED' | 'SCHOLARSHIP_UPDATE';
@@ -20,54 +36,21 @@ export const createNotification = async (data: CreateNotificationData) => {
 
         // Emit real-time notification via Socket.IO
         emitNotificationToUser(data.userId, notification);
-
+        
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);
         throw error;
     }
-};
-
-export const getUserNotifications = async (userId: string, options?: { page?: number; limit?: number; onlyUnread?: boolean }) => {
+};export const getUserNotifications = async (userId: string) => {
     try {
-        const page = options?.page || 1;
-        const limit = Math.min(options?.limit || 20, 50); // Cap at 50
-        const skip = (page - 1) * limit;
+        const notifications = await prisma.notification.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 50 // Limit to recent 50 notifications
+        });
 
-        const where: any = { userId };
-        if (options?.onlyUnread) {
-            where.read = false;
-        }
-
-        const [notifications, totalCount] = await Promise.all([
-            prisma.notification.findMany({
-                where,
-                orderBy: { createdAt: 'desc' },
-                skip,
-                take: limit,
-                select: {
-                    id: true,
-                    userId: true,
-                    message: true,
-                    type: true,
-                    read: true,
-                    createdAt: true
-                }
-            }),
-            prisma.notification.count({ where })
-        ]);
-
-        return {
-            notifications,
-            pagination: {
-                page,
-                limit,
-                totalCount,
-                totalPages: Math.ceil(totalCount / limit),
-                hasNext: skip + limit < totalCount,
-                hasPrev: page > 1
-            }
-        };
+        return notifications;
     } catch (error) {
         console.error('Error fetching notifications:', error);
         throw error;
@@ -90,8 +73,9 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
         const updatedNotification = await prisma.notification.findFirst({
             where: { id: notificationId, userId }
         });
-
+        
         if (updatedNotification) {
+            const { emitNotificationUpdate } = require('./socketService');
             emitNotificationUpdate(userId, updatedNotification);
         }
 
@@ -123,19 +107,18 @@ export const markAllNotificationsAsRead = async (userId: string) => {
 
 export const deleteNotification = async (notificationId: string, userId: string) => {
     try {
-        const deletedNotification = await prisma.notification.deleteMany({
+        const notification = await prisma.notification.deleteMany({
             where: {
                 id: notificationId,
                 userId: userId
             }
         });
 
-        // Emit deletion event via Socket.IO
-        emitNotificationDeleted(userId, notificationId);
-
-        return deletedNotification;
+        return notification;
     } catch (error) {
         console.error('Error deleting notification:', error);
         throw error;
     }
 };
+
+
