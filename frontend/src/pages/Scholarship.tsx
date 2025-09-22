@@ -15,7 +15,6 @@ import {
     RotateCw,
     SlidersHorizontal
 } from 'lucide-react'
-import toast from 'react-hot-toast'
 
 const Scholarship = () => {
     const [searchTerm, setSearchTerm] = useState('')
@@ -32,11 +31,6 @@ const Scholarship = () => {
     } = useScholarships()
 
     // recent searches removed
-
-    const handleApply = (_scholarshipId: string) => {
-        toast.success('Application process started!')
-        // Add application logic here
-    }
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
@@ -312,7 +306,6 @@ const Scholarship = () => {
                                 <div key={scholarship.id} className="w-full h-[400px] max-w-sm mx-auto">
                                     <ScholarshipCard
                                         scholarship={scholarship}
-                                        onApply={handleApply}
                                     />
                                 </div>
                             ))}
