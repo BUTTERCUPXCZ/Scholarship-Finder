@@ -1,4 +1,5 @@
-import { ScholarshipStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Request, Response } from "express";
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
@@ -28,19 +29,19 @@ export const createScholar = async (req: Request, res: Response) => {
                 benefits,
                 deadline: deadlineDate,
                 provider: { connect: { id: providerId } },
-                status: ScholarshipStatus.ACTIVE
+                status: 'ACTIVE'
             }
         });
 
         return res.status(201).json({ success: true, message: "Scholarship Created", data: scholar });
 
-    } catch (error) {
+    } catch (error: any) {
 
         if (error instanceof ZodError) {
             return res.status(400).json({ message: "Validation error", errors: error.issues });
         }
 
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
             return res.status(400).json({ message: "Invalid providerId (foreign key failed)" });
         }
         console.error("Error Create Scholar:", error);
@@ -58,11 +59,11 @@ export const updateExpiredScholarships = async () => {
             where: {
                 AND: [
                     { deadline: { lt: now } },
-                    { status: ScholarshipStatus.ACTIVE }
+                    { status: 'ACTIVE' }
                 ]
             },
             data: {
-                status: ScholarshipStatus.EXPIRED,
+                status: 'EXPIRED',
                 updatedAt: now
             }
         });
@@ -106,7 +107,7 @@ export const getAllScholars = async (req: Request, res: Response) => {
         const whereCondition: any = {};
 
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
-            whereCondition.status = status as ScholarshipStatus;
+            whereCondition.status = status as 'ACTIVE' | 'EXPIRED';
         }
 
         if (type) {
@@ -344,7 +345,7 @@ export const ArchiveScholarship = async (req: Request, res: Response) => {
         // Mark original scholarship as archived
         await prisma.scholarship.update({
             where: { id },
-            data: { status: ScholarshipStatus.EXPIRED }
+            data: { status: "EXPIRED" }
         });
 
         return res.status(200).json({
