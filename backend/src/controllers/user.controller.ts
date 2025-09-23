@@ -74,12 +74,14 @@ export const userLogin = async (req: Request, res: Response) => {
         });
 
         // Set HTTP-only cookie (secure token storage)
+        // For cross-site requests (frontend hosted on a different origin),
+        // browsers require SameSite=None and Secure to include cookies.
         res.cookie('authToken', result.token, {
-            httpOnly: true,          // Cannot be accessed by JavaScript
+            httpOnly: true, // Cannot be accessed by JavaScript
             secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'lax',         // Allow cross-site requests for login flows
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // None in prod for cross-site
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'                // Available for all routes
+            path: '/' // Available for all routes
         });
 
         // Don't send token in response body for security
@@ -111,7 +113,7 @@ export const userLogout = async (req: Request, res: Response) => {
         res.clearCookie('authToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             path: '/'
         });
 
