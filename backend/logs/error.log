@@ -1,0 +1,70 @@
+2025-09-23 09:00 +08:00: Error: Cannot find module 'C:\Users\ivane\Desktop\Chat\backend\dist\index.js'
+2025-09-23 09:00 +08:00:     at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+2025-09-23 09:00 +08:00:     at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+2025-09-23 09:00 +08:00:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1211:37)
+2025-09-23 09:00 +08:00:     at Object.<anonymous> (C:\Users\ivane\Desktop\Chat\backend\node_modules\pm2\lib\ProcessContainerFork.js:33:23)
+2025-09-23 09:00 +08:00:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+2025-09-23 09:00 +08:00:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+2025-09-23 09:00 +08:00:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+2025-09-23 09:00 +08:00:     at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+2025-09-23 09:00 +08:00:   code: 'MODULE_NOT_FOUND',
+2025-09-23 09:00 +08:00:   requireStack: []
+2025-09-23 09:00 +08:00: }
+2025-09-23 09:00 +08:00: Error: Cannot find module 'C:\Users\ivane\Desktop\Chat\backend\dist\index.js'
+2025-09-23 09:00 +08:00:     at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+2025-09-23 09:00 +08:00:     at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+2025-09-23 09:00 +08:00:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1211:37)
+2025-09-23 09:00 +08:00:     at Object.<anonymous> (C:\Users\ivane\Desktop\Chat\backend\node_modules\pm2\lib\ProcessContainerFork.js:33:23)
+2025-09-23 09:00 +08:00:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+2025-09-23 09:00 +08:00:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+2025-09-23 09:00 +08:00:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+2025-09-23 09:00 +08:00:     at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+2025-09-23 09:00 +08:00:   code: 'MODULE_NOT_FOUND',
+2025-09-23 09:00 +08:00:   requireStack: []
+2025-09-23 09:00 +08:00: }
+2025-09-23 09:00 +08:00: Error: Cannot find module 'C:\Users\ivane\Desktop\Chat\backend\dist\index.js'
+2025-09-23 09:00 +08:00:     at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+2025-09-23 09:00 +08:00:     at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+2025-09-23 09:00 +08:00:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1211:37)
+2025-09-23 09:00 +08:00:     at Object.<anonymous> (C:\Users\ivane\Desktop\Chat\backend\node_modules\pm2\lib\ProcessContainerFork.js:33:23)
+2025-09-23 09:00 +08:00:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+2025-09-23 09:00 +08:00:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+2025-09-23 09:00 +08:00:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+2025-09-23 09:00 +08:00:     at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+2025-09-23 09:00 +08:00:   code: 'MODULE_NOT_FOUND',
+2025-09-23 09:00 +08:00:   requireStack: []
+2025-09-23 09:00 +08:00: }
+2025-09-23 09:00 +08:00: Error: Cannot find module 'C:\Users\ivane\Desktop\Chat\backend\dist\index.js'
+2025-09-23 09:00 +08:00:     at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+2025-09-23 09:00 +08:00:     at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+2025-09-23 09:00 +08:00:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1211:37)
+2025-09-23 09:00 +08:00:     at Object.<anonymous> (C:\Users\ivane\Desktop\Chat\backend\node_modules\pm2\lib\ProcessContainerFork.js:33:23)
+2025-09-23 09:00 +08:00:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+2025-09-23 09:00 +08:00:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+2025-09-23 09:00 +08:00:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+2025-09-23 09:00 +08:00:     at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+2025-09-23 09:00 +08:00:   code: 'MODULE_NOT_FOUND',
+2025-09-23 09:00 +08:00:   requireStack: []
+2025-09-23 09:00 +08:00: }
+2025-09-23 09:00 +08:00: Error: Cannot find module 'C:\Users\ivane\Desktop\Chat\backend\dist\index.js'
+2025-09-23 09:00 +08:00:     at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+2025-09-23 09:00 +08:00:     at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+2025-09-23 09:00 +08:00:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1211:37)
+2025-09-23 09:00 +08:00:     at Object.<anonymous> (C:\Users\ivane\Desktop\Chat\backend\node_modules\pm2\lib\ProcessContainerFork.js:33:23)
+2025-09-23 09:00 +08:00:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+2025-09-23 09:00 +08:00:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+2025-09-23 09:00 +08:00:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+2025-09-23 09:00 +08:00:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+2025-09-23 09:00 +08:00:     at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+2025-09-23 09:00 +08:00:   code: 'MODULE_NOT_FOUND',
+2025-09-23 09:00 +08:00:   requireStack: []
+2025-09-23 09:00 +08:00: }

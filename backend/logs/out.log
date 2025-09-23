@@ -1,0 +1,11 @@
+2025-09-23 08:32 +08:00: [dotenv@17.2.2] injecting env (7) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+2025-09-23 08:32 +08:00: [dotenv@17.2.2] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+2025-09-23 08:32 +08:00: [dotenv@17.2.2] injecting env (0) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+2025-09-23 08:32 +08:00: Starting expired scholarship background job...
+2025-09-23 08:32 +08:00: Server is running on port 3000
+2025-09-23 08:32 +08:00: Socket.IO server initialized for real-time notifications
+2025-09-23 08:32 +08:00: ✅ Database connected successfully
+2025-09-23 08:32 +08:00: prisma:query BEGIN
+2025-09-23 08:32 +08:00: prisma:query UPDATE "public"."Scholarship" SET "status" = CAST($1::text AS "public"."ScholarshipStatus"), "updatedAt" = $2 WHERE ("public"."Scholarship"."deadline" < $3 AND "public"."Scholarship"."status" = CAST($4::text AS "public"."ScholarshipStatus"))
+2025-09-23 08:32 +08:00: prisma:query COMMIT
+2025-09-23 08:32 +08:00: Updated 0 expired scholarships

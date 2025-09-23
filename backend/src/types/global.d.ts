@@ -19,4 +19,15 @@ declare global {
     }
 }
 
+// Augment Express Request to include multer files and custom userId property
+declare module 'express-serve-static-core' {
+    interface Request {
+        // Multer may attach files as an array when using upload.array()
+        files?: Express.Multer.File[] | any[];
+
+        // Custom property set by your auth middleware - allow string or number
+        userId?: string | number;
+    }
+}
+
 
