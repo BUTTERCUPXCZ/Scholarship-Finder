@@ -53,50 +53,22 @@ if (NODE_ENV === 'production') {
 
 // ✅ Enhanced CORS setup for production deployment
 const corsOrigins =
-    NODE_ENV === 'production'
-        ? [
-            process.env.FRONTEND_URL!,
-            // Add fallback patterns for Render deployments
-            'https://*.onrender.com',
-            // Allow your specific frontend domain
-            'https://frontend-finder.onrender.com',
-            ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [])
-        ].filter(Boolean)
-        : [
-            process.env.FRONTEND_URL || 'http://localhost:5173',
-            'http://localhost:5174'
-        ];
+    NODE_ENV === "production"
+        ? [process.env.FRONTEND_URL!]
+        : ["http://localhost:5173", "http://localhost:5174"];
 
 app.use(
     cors({
-        origin: (origin, callback) => {
-            // Allow requests with no origin (mobile apps, Postman, etc.)
-            if (!origin) return callback(null, true);
-
-            // Check if origin is in allowed origins
-            const isAllowed = corsOrigins.some(allowedOrigin => {
-                if (allowedOrigin.includes('*')) {
-                    // Handle wildcard patterns
-                    const regex = new RegExp(allowedOrigin.replace('*', '.*'));
-                    return regex.test(origin);
-                }
-                return allowedOrigin === origin;
-            });
-
-            if (isAllowed) {
-                callback(null, true);
-            } else {
-                console.warn(`CORS blocked origin: ${origin}`);
-                console.warn(`Allowed origins: ${corsOrigins.join(', ')}`);
-                callback(new Error('Not allowed by CORS'), false);
-            }
-        },
+        origin: corsOrigins,
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-        exposedHeaders: ['Set-Cookie']
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        exposedHeaders: ["Set-Cookie"],
     })
 );
+
+// Handle preflight requests
+app.options("*", cors());
 
 app.use(cookieParser());
 app.use(express.json());

@@ -39,42 +39,56 @@ if (NODE_ENV === 'production') {
     });
     app.use(limiter);
 }
-const corsOrigins = NODE_ENV === 'production'
+const defaultDevOrigins = [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://localhost:5174'];
+const corsOrigins = (NODE_ENV === 'production'
     ? [
-        process.env.FRONTEND_URL,
-        'https://*.onrender.com',
+        ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+        process.env.FRONTEND_URL || '',
         'https://frontend-finder.onrender.com',
-        ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [])
-    ].filter(Boolean)
-    : [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        'http://localhost:5174'
-    ];
+        'https://*.onrender.com'
+    ]
+    : defaultDevOrigins).filter(Boolean);
+const isOriginAllowed = (origin) => {
+    if (!origin)
+        return true;
+    return corsOrigins.some(allowed => {
+        if (allowed.includes('*')) {
+            const pattern = allowed.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+            const regex = new RegExp(`^${pattern}$`);
+            return regex.test(origin);
+        }
+        return allowed === origin;
+    });
+};
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (!origin)
-            return callback(null, true);
-        const isAllowed = corsOrigins.some(allowedOrigin => {
-            if (allowedOrigin.includes('*')) {
-                const regex = new RegExp(allowedOrigin.replace('*', '.*'));
-                return regex.test(origin);
-            }
-            return allowedOrigin === origin;
-        });
-        if (isAllowed) {
-            callback(null, true);
-        }
-        else {
+        try {
+            if (isOriginAllowed(origin))
+                return callback(null, true);
             console.warn(`CORS blocked origin: ${origin}`);
             console.warn(`Allowed origins: ${corsOrigins.join(', ')}`);
-            callback(new Error('Not allowed by CORS'), false);
+            return callback(new Error('Not allowed by CORS'), false);
+        }
+        catch (err) {
+            return callback(err);
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
     exposedHeaders: ['Set-Cookie']
 }));
+app.options('*', (req, res) => {
+    const origin = req.header('Origin');
+    if (isOriginAllowed(origin)) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Cookie,X-Requested-With');
+        return res.sendStatus(204);
+    }
+    return res.sendStatus(403);
+});
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.get('/health', (req, res) => {
