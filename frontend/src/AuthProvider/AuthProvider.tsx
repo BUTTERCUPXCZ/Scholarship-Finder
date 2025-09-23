@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../lib/supabase';
 
 interface User {
     id: string;
@@ -113,6 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [queryClient]);
 
     const logout = useCallback(async () => {
+        // 1) Attempt server-side logout (clear http-only cookie)
         try {
             await fetch(`${import.meta.env.VITE_API_URL}/users/logout`, {
                 method: "POST",
@@ -121,13 +123,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
         } catch (err) {
             console.error("Logout request failed:", err);
-        } finally {
-            setUser(null);
-            setInitialCheckComplete(false);
-            queryClient.removeQueries({ queryKey: ["auth"] });
-            localStorage.removeItem("auth");
-            localStorage.removeItem("token");
         }
+
+        // 2) Try to sign out Supabase client session (if used)
+        try {
+            // supabase.auth may be undefined in some builds, guard for safety
+            if (supabase && typeof supabase.auth?.signOut === 'function') {
+                await supabase.auth.signOut();
+            }
+        } catch (err) {
+            console.warn('Supabase signOut failed:', err);
+        }
+
+        // 3) Clear react-query cache and cancel running queries
+        try {
+            await queryClient.cancelQueries();
+            queryClient.removeQueries();
+            queryClient.clear();
+        } catch (err) {
+            console.warn('Failed to fully clear query client:', err);
+        }
+
+        // 4) Clear local storage keys related to auth and any tokens
+        try {
+            localStorage.removeItem('auth');
+            localStorage.removeItem('token');
+            // remove any other keys your app may persist
+            // localStorage.removeItem('persisted-react-query');
+        } catch (err) {
+            /* ignore */
+        }
+
+        // 5) Broadcast logout to other tabs/windows so they can clear UI state too
+        try {
+            if ('BroadcastChannel' in window) {
+                const bc = new BroadcastChannel('auth');
+                bc.postMessage({ type: 'logout' });
+                bc.close();
+            } else {
+                // fallback: write a short-lived timestamp to localStorage which other tabs can listen for
+                localStorage.setItem('auth-logout', String(Date.now()));
+            }
+        } catch (err) {
+            /* ignore */
+        }
+
+        // 6) Finally update local UI state
+        setUser(null);
+        setInitialCheckComplete(false);
     }, [queryClient]);
 
     const refetchUser = useCallback(() => {
