@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Request, Response } from "express";
+import jwt from 'jsonwebtoken';
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
@@ -106,6 +107,30 @@ export const getAllScholars = async (req: Request, res: Response) => {
 
         // Build where condition efficiently
         const whereCondition: any = {};
+
+        // If a valid JWT is provided (cookie or Authorization header), decode it
+        // and filter scholarships to only those provided by that organization.
+        // This keeps the endpoint public (no required auth) but enables
+        // organization pages to automatically receive only their scholarships
+        // when they include the auth token.
+        try {
+            const token = req.cookies?.authToken || (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ') ? req.headers['authorization']!.split(' ')[1] : undefined);
+            if (token) {
+                const secret = process.env.JWT_SECRET;
+                if (secret) {
+                    const decoded = jwt.verify(token, secret) as any;
+                    const providerIdFromToken = decoded?.userId as string | number | undefined;
+                    if (providerIdFromToken !== undefined && providerIdFromToken !== null) {
+                        // Ensure we store a string providerId (Prisma schema may use string IDs)
+                        whereCondition.providerId = String(providerIdFromToken);
+                    }
+                }
+            }
+        } catch (err) {
+            // If token is invalid or verification fails, ignore and continue
+            // returning public list of scholarships. Do not block the request.
+            console.log('Optional token decode failed in getAllScholars:', (err as any)?.message || err);
+        }
 
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
             whereCondition.status = status as 'ACTIVE' | 'EXPIRED';
@@ -415,5 +440,77 @@ export const getArchivedScholarships = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error fetching archived scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
+// Public endpoint for students to browse scholarships
+export const getPublicScholars = async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+        const type = req.query.type as string;
+        const search = req.query.search as string;
+
+        const skip = (page - 1) * limit;
+
+        const whereCondition: any = {
+            status: 'ACTIVE' // only active scholarships for students by default
+        };
+
+        if (type) {
+            whereCondition.type = {
+                contains: type,
+                mode: 'insensitive'
+            };
+        }
+
+        if (search) {
+            whereCondition.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { location: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const [scholars, totalCount] = await Promise.all([
+            prisma.scholarship.findMany({
+                where: whereCondition,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    deadline: true,
+                    location: true,
+                    type: true,
+                    benefits: true,
+                    requirements: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    providerId: true
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.scholarship.count({ where: whereCondition })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return res.status(200).json({
+            success: true,
+            data: scholars,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCount,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching public scholarships:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 }

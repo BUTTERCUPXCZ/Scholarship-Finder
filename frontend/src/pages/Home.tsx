@@ -1,6 +1,7 @@
 import StudentNavbar from '../components/studentNavbar'
-import { Button } from '../components/ui/button'
+
 import { BookOpen, Users, Award } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const Home = () => {
     return (
@@ -31,14 +32,14 @@ const Home = () => {
                             </div>
                         </div>
 
-                        {/* CTA Button */}
+                        {/* CTA Link */}
                         <div>
-                            <Button
-                                size="lg"
+                            <Link
+                                to="/scholarship"
                                 className="bg-indigo-600 hover:bg-indigo-800 text-white px-8 py-4 rounded-xl text-lg font-medium"
                             >
                                 Get Free Scholarships
-                            </Button>
+                            </Link>
                         </div>
                     </div>
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardFooter } from './ui/card'
 import { Button } from './ui/button'
-import { Calendar, MapPin, Award } from 'lucide-react'
+import { Calendar, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 
@@ -10,7 +10,6 @@ interface Scholarship {
     title: string
     description: string
     location: string
-    benefits: string
     deadline: string
     type: string
     requirements: string
@@ -57,6 +56,10 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
 
     const daysLeft = getDaysUntilDeadline(scholarship.deadline)
 
+    const buttonClass = isExpired
+        ? 'flex-1 border-none bg-gray-300 text-gray-700 cursor-not-allowed opacity-80 shadow-none'
+        : 'flex-1 border-none bg-[#4F39F6] hover:bg-[#3D2DB8] text-white hover:text-white transition-colors duration-200 shadow-md cursor-pointer'
+
     const getStatusText = () => {
         if (isExpired) return 'Expired'
         if (daysLeft !== null && daysLeft <= 7) return `${daysLeft} days left`
@@ -70,7 +73,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     }
 
     return (
-        <Card className="h-full w-full flex flex-col hover:shadow-lg transition-all duration-200 border border-gray-200 rounded-lg overflow-hidden">
+        <Card className="h-full w-full flex flex-col hover:shadow-lg transition-all duration-200 border border-gray-200  overflow-hidden">
             {/* Header Section */}
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -88,7 +91,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
+                <p className="text-gray-600 text-xs mb-4 line-clamp-3 flex-grow">
                     {scholarship.description}
                 </p>
 
@@ -105,24 +108,18 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                     </div>
                 </div>
 
-                {/* Benefits */}
-                <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Award className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-sm text-blue-900">Benefits</span>
-                    </div>
-                    <p className="text-sm text-blue-700 line-clamp-2">
-                        {scholarship.benefits}
-                    </p>
-                </div>
+
             </CardContent>
 
             <CardFooter className="p-4 pt-0 flex-shrink-0">
                 <div className="flex gap-2 w-full">
                     <Button
                         variant="outline"
-                        className="flex-1 border-none bg-[#4F39F6] hover:bg-[#3D2DB8] text-white hover:text-white transition-colors duration-200 shadow-md cursor-pointer"
+                        className={buttonClass}
+                        disabled={isExpired}
                         onClick={() => {
+                            if (isExpired) return
+
                             // If parent passed handler, use it. Otherwise, only allow navigation to details when authenticated.
                             if (onViewDetails) {
                                 onViewDetails(scholarship.id)
@@ -138,8 +135,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                             navigate(`/scholarship/${scholarship.id}`)
                         }}
                     >
-
-                        View Details
+                        {isExpired ? 'Scholarship expired' : 'View Details'}
                     </Button>
                 </div>
             </CardFooter>

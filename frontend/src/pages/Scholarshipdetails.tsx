@@ -396,7 +396,7 @@ const Scholarshipdetails = () => {
                                     </Badge>
                                 </div>
 
-                                <p className="text-gray-600 text-lg leading-relaxed">
+                                <p className="text-gray-600 text-sm leading-relaxed">
                                     {scholarship.description}
                                 </p>
                             </div>
@@ -410,7 +410,7 @@ const Scholarshipdetails = () => {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="prose prose-gray max-w-none">
-                                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                                        <div className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
                                             {scholarship.benefits}
                                         </div>
                                     </div>
@@ -426,7 +426,7 @@ const Scholarshipdetails = () => {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="prose prose-gray max-w-none">
-                                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                                        <div className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
                                             {scholarship.requirements}
                                         </div>
                                     </div>
@@ -631,7 +631,7 @@ const Scholarshipdetails = () => {
                                                                 <Button variant="outline" disabled={applicationMutation.isPending}>Cancel</Button>
                                                             </DialogClose>
                                                             <Button
-                                                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                                                 onClick={() => {
                                                                     // Inline validation before submitting
                                                                     if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !address.trim() || !city.trim()) {

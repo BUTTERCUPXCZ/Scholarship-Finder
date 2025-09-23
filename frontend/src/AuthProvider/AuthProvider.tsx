@@ -47,8 +47,21 @@ const checkAuthStatus = async (): Promise<User | null> => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [initialCheckComplete, setInitialCheckComplete] = useState(false);
+    // Try to hydrate from a cached user to avoid a flash-logout on reload.
+    const cachedUser: User | null = (() => {
+        try {
+            const raw = localStorage.getItem('auth');
+            return raw ? (JSON.parse(raw) as User) : null;
+        } catch (e) {
+            console.warn('Failed to parse cached auth user', e);
+            return null;
+        }
+    })();
+
+    const [user, setUser] = useState<User | null>(() => cachedUser);
+    // If we have a cached user, consider the initial check 'complete' for UI purposes
+    // so we don't show a logged-out flash while the real check runs in the background.
+    const [initialCheckComplete, setInitialCheckComplete] = useState<boolean>(() => Boolean(cachedUser));
     const queryClient = useQueryClient();
 
     const { data: userData, isLoading: queryLoading, refetch, error } = useQuery({
@@ -56,6 +69,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         queryFn: checkAuthStatus,
         // ✅ Always check auth status to maintain login state across all pages
         enabled: true,
+        // Use cached user so the UI stays authenticated instantly on reload while
+        // the real request validates the session in the background.
+        initialData: cachedUser ?? undefined,
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
         retry: false,
@@ -64,11 +80,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Sync user state with query and mark initial check as complete
     useEffect(() => {
+        // When the server responds, sync state and the cached copy.
         if (userData) {
             setUser(userData);
+            try {
+                localStorage.setItem('auth', JSON.stringify(userData));
+            } catch (e) {
+                console.warn('Failed to cache auth user', e);
+            }
             setInitialCheckComplete(true);
         } else if (error || userData === null) {
+            // Server says unauthenticated -> clear cache and show logged out state.
             setUser(null);
+            try {
+                localStorage.removeItem('auth');
+            } catch (e) {
+                /* ignore */
+            }
             setInitialCheckComplete(true);
         }
     }, [userData, error]);
@@ -76,6 +104,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = useCallback((user: User) => {
         setUser(user);
         queryClient.setQueryData(["auth", "currentUser"], user);
+        try {
+            localStorage.setItem('auth', JSON.stringify(user));
+        } catch (e) {
+            console.warn('Failed to persist auth user', e);
+        }
         setInitialCheckComplete(true);
     }, [queryClient]);
 

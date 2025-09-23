@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { getAllScholars } from '../services/getScholarships'
+import { getAllScholars, getPublicScholars } from '../services/getScholarships'
 import { deleteScholarship } from '../services/deleteScholarship'
 import { archiveScholarship } from '../services/Archive'
 import { updateExpiredScholarships } from '../services/updateExpiredScholarships'
@@ -71,7 +71,8 @@ export const useScholarships = (filters: ScholarshipFilters = {}) => {
     return useQuery<Scholarship[], Error>({
         queryKey: scholarshipKeys.list(filters),
         queryFn: async () => {
-            const response = await getAllScholars()
+            // Student-facing pages should use the public endpoint which returns only ACTIVE scholarships
+            const response = await getPublicScholars(filters)
             return response.data
         },
         // ✅ Optimized caching strategy

@@ -11,16 +11,12 @@ import {
     User,
     Mail,
     Calendar,
-    Award,
     Edit3,
     Save,
     X,
     MapPin,
     Phone,
-    Camera,
-    CheckCircle,
-    Clock,
-    XCircle
+    Camera
 } from 'lucide-react'
 
 const Profile = () => {
@@ -312,51 +308,6 @@ const Profile = () => {
                                 </CardContent>
                             </Card>
 
-
-                            {/* Scholarship Activity */}
-                            <Card className="border border-gray-300 bg-white/80 backdrop-blur-sm">
-                                <CardHeader className="pb-4">
-                                    <CardTitle className="flex items-center gap-3 text-xl">
-
-                                        Scholarship Activity
-                                    </CardTitle>
-                                    <CardDescription className="text-gray-600">
-                                        Track your scholarship application progress
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                                        <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Award className="w-6 h-6 text-blue-600" />
-                                            </div>
-                                            <p className="text-3xl font-bold text-blue-600 mb-1">0</p>
-                                            <p className="text-sm text-gray-600 font-medium">Total Applications</p>
-                                        </div>
-                                        <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
-                                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <CheckCircle className="w-6 h-6 text-green-600" />
-                                            </div>
-                                            <p className="text-3xl font-bold text-green-600 mb-1">0</p>
-                                            <p className="text-sm text-gray-600 font-medium">Approved</p>
-                                        </div>
-                                        <div className="text-center p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl">
-                                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Clock className="w-6 h-6 text-yellow-600" />
-                                            </div>
-                                            <p className="text-3xl font-bold text-yellow-600 mb-1">0</p>
-                                            <p className="text-sm text-gray-600 font-medium">Pending</p>
-                                        </div>
-                                        <div className="text-center p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-xl">
-                                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <XCircle className="w-6 h-6 text-red-600" />
-                                            </div>
-                                            <p className="text-3xl font-bold text-red-600 mb-1">0</p>
-                                            <p className="text-sm text-gray-600 font-medium">Rejected</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
                         </div>
                     </div>
                 </div>
