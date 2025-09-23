@@ -20,10 +20,6 @@
     "declaration": false,
     "sourceMap": false,
     "baseUrl": ".",
-    "types": [
-      "node",
-      "express"
-    ], // ✅ keep only what you need
     "allowJs": true
   },
   "include": [
