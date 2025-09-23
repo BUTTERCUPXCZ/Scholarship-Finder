@@ -11,7 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "type-check": "tsc --noEmit",
-    "render-build": "npm install --include=dev && npm run prisma:generate && npm run build"
+    "render-build": "npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build"
   },
   "keywords": [],
   "author": "",
