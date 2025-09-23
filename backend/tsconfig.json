@@ -1,53 +1,43 @@
-  {
-    "compilerOptions": {
-      "target": "ES2022",
-      "module": "CommonJS",
-      "lib": [
-        "ES2022"
-      ],
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "strict": true,
-      "esModuleInterop": true,
-      "allowSyntheticDefaultImports": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true,
-      "moduleResolution": "node",
-      "resolveJsonModule": true,
-      "isolatedModules": true,
-      "noEmitOnError": false,
-      "removeComments": true,
-      "declaration": false,
-      "sourceMap": false,
-      "baseUrl": ".",
-      "paths": {
-        "*": [
-          "node_modules/@types/*",
-          "src/types/*"
-        ]
-      },
-      "typeRoots": [
-        "./node_modules/@types",
-        "./src/types"
-      ],
-      "types": [
-        "node",
-        "express"
-      ],
-      "allowJs": true
-    },
-    "include": [
-      "src/**/*",
-      "src/types/global.d.ts"
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": [
+      "ES2022"
     ],
-    "exclude": [
-      "node_modules",
-      "dist",
-      "**/*.test.ts",
-      "**/*.spec.ts"
-    ],
-    "ts-node": {
-      "files": true,
-      "transpileOnly": true
-    }
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmitOnError": false,
+    "removeComments": true,
+    "declaration": false,
+    "sourceMap": false,
+    "baseUrl": ".",
+    "types": [
+      "node",
+      "express"
+    ], // ✅ keep only what you need
+    "allowJs": true
+  },
+  "include": [
+    "src/**/*",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "ts-node": {
+    "files": true,
+    "transpileOnly": true
   }
+}
