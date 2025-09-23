@@ -6,7 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "npm run clean && tsc",
     "build:safe": "npm run clean:fallback && npm run ensure-types && tsc --skipLibCheck",
-    "build:render": "npm install && npx prisma generate && npm run ensure-types && tsc",
+    "build:render": "npm install --include=dev && npx prisma generate && tsc",
     "clean": "npx rimraf dist",
     "clean:fallback": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true});\"",
     "start": "node dist/index.js",
@@ -15,7 +15,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:deploy": "prisma migrate deploy",
     "type-check": "tsc --noEmit",
-    "ensure-types": "npm list @types/express || npm install @types/express"
+    "ensure-types": "npm install --save-dev @types/express @types/jsonwebtoken @types/node"
   },
   "keywords": [],
   "author": "",
