@@ -13,7 +13,6 @@ const createNotification = async (data) => {
                 read: false
             }
         });
-        // Emit real-time notification via Socket.IO
         (0, socketService_1.emitNotificationToUser)(data.userId, notification);
         return notification;
     }
@@ -26,7 +25,7 @@ exports.createNotification = createNotification;
 const getUserNotifications = async (userId, options) => {
     try {
         const page = options?.page || 1;
-        const limit = Math.min(options?.limit || 20, 50); // Cap at 50
+        const limit = Math.min(options?.limit || 20, 50);
         const skip = (page - 1) * limit;
         const where = { userId };
         if (options?.onlyUnread) {
@@ -78,7 +77,6 @@ const markNotificationAsRead = async (notificationId, userId) => {
                 read: true
             }
         });
-        // Get the updated notification and emit via Socket.IO
         const updatedNotification = await db_1.prisma.notification.findFirst({
             where: { id: notificationId, userId }
         });
@@ -120,7 +118,6 @@ const deleteNotification = async (notificationId, userId) => {
                 userId: userId
             }
         });
-        // Emit deletion event via Socket.IO
         (0, socketService_1.emitNotificationDeleted)(userId, notificationId);
         return deletedNotification;
     }

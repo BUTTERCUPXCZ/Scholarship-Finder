@@ -1,3 +1,5 @@
+/// <reference path="./types/global.d.ts" />
+
 import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -16,36 +18,49 @@ import notificationRoutes from './routes/notification.routes';
 import rateLimit from 'express-rate-limit';
 import { initializeSocket } from './services/socketService';
 
-
+// Load environment variables
 dotenv.config();
 
-declare global {
-    namespace NodeJS {
-        interface ProcessEnv {
-            PORT?: string;
-            JWT_SECRET: string;
-            JWT_EXPIRES_IN?: string;
-            DATABASE_URL?: string;
-            FRONTEND_URL?: string;
-            NODE_ENV?: "development" | "production" | "test";
-        }
-    }
-}
-
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
+
+// Initialize background jobs
 startScholarshipJobs();
 startExpiredScholarshipJob();
-app.use(helmet());
-app.use(morgan('combined'));
+
+// Security middleware
+app.use(helmet({
+    contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
+}));
+
+// Logging middleware
+app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Rate limiting for production
+if (NODE_ENV === 'production') {
+    const limiter = rateLimit({
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+        message: 'Too many requests from this IP, please try again later.',
+        standardHeaders: true,
+        legacyHeaders: false,
+    });
+    app.use(limiter);
+}
 
 
-app.use(cors({
-    origin: [
+// CORS configuration
+const corsOrigins = NODE_ENV === 'production'
+    ? (process.env.CORS_ORIGINS?.split(',') || [process.env.FRONTEND_URL || 'https://yourdomain.com'])
+    : [
         process.env.FRONTEND_URL || 'http://localhost:5173',
         'http://localhost:5174' // Allow both development ports
-    ],
+    ];
+
+app.use(cors({
+    origin: corsOrigins,
     credentials: true, // Allow cookies to be sent
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -54,6 +69,17 @@ app.use(cors({
 app.use(cookieParser()); // Parse cookies
 app.use(express.json());
 
+// Health check endpoint for Docker and monitoring
+app.get('/health', (req: Request, res: Response) => {
+    res.status(200).json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: NODE_ENV,
+        version: '1.0.0'
+    });
+});
+
+// API routes
 app.use('/users', userRoutes);
 app.use('/scholar', scholarRoutes);
 app.use('/applications', applicationRoutes);

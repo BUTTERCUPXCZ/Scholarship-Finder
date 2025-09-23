@@ -4,9 +4,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
+    "build": "npm run clean && tsc",
+    "clean": "rimraf dist",
     "start": "node dist/index.js",
-    "postinstall": "npm run build & npx prisma generate"
+    "start:prod": "npm run build && npm run start",
+    "postinstall": "npm run build && npx prisma generate",
+    "prisma:generate": "npx prisma generate",
+    "prisma:deploy": "npx prisma migrate deploy",
+    "db:reset": "npx prisma migrate reset --force",
+    "db:seed": "npx prisma db seed",
+    "lint": "echo 'No linting configured'",
+    "test": "echo 'No tests configured'"
   },
   "keywords": [],
   "author": "",
@@ -41,6 +49,7 @@
     "@types/node": "^24.3.1",
     "@types/node-cron": "^3.0.11",
     "nodemon": "^3.1.10",
+    "rimraf": "^5.0.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"

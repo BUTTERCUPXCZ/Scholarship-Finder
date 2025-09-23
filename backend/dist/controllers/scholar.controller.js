@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getArchivedScholarships = exports.getOrganizationScholarships = exports.ArchiveScholarship = exports.deleteScholarship = exports.updateScholar = exports.getScholarshipById = exports.getAllScholars = exports.updateExpiredScholarshipsEndpoint = exports.updateExpiredScholarships = exports.createScholar = void 0;
-const client_1 = require("@prisma/client");
+const library_1 = require("@prisma/client/runtime/library");
 const CreateScholar_1 = require("../Validators/CreateScholar");
 const zod_1 = require("zod");
 const db_1 = require("../lib/db");
@@ -24,7 +24,7 @@ const createScholar = async (req, res) => {
                 benefits,
                 deadline: deadlineDate,
                 provider: { connect: { id: providerId } },
-                status: client_1.ScholarshipStatus.ACTIVE
+                status: 'ACTIVE'
             }
         });
         return res.status(201).json({ success: true, message: "Scholarship Created", data: scholar });
@@ -33,7 +33,7 @@ const createScholar = async (req, res) => {
         if (error instanceof zod_1.ZodError) {
             return res.status(400).json({ message: "Validation error", errors: error.issues });
         }
-        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        if (error instanceof library_1.PrismaClientKnownRequestError && error.code === 'P2003') {
             return res.status(400).json({ message: "Invalid providerId (foreign key failed)" });
         }
         console.error("Error Create Scholar:", error);
@@ -44,16 +44,15 @@ exports.createScholar = createScholar;
 const updateExpiredScholarships = async () => {
     try {
         const now = new Date();
-        // Use a more efficient query with proper indexing
         const result = await db_1.prisma.scholarship.updateMany({
             where: {
                 AND: [
                     { deadline: { lt: now } },
-                    { status: client_1.ScholarshipStatus.ACTIVE }
+                    { status: 'ACTIVE' }
                 ]
             },
             data: {
-                status: client_1.ScholarshipStatus.EXPIRED,
+                status: 'EXPIRED',
                 updatedAt: now
             }
         });
@@ -66,7 +65,6 @@ const updateExpiredScholarships = async () => {
     }
 };
 exports.updateExpiredScholarships = updateExpiredScholarships;
-// New endpoint for manually triggering expired scholarship updates
 const updateExpiredScholarshipsEndpoint = async (req, res) => {
     try {
         const result = await (0, exports.updateExpiredScholarships)();
@@ -84,14 +82,12 @@ const updateExpiredScholarshipsEndpoint = async (req, res) => {
 exports.updateExpiredScholarshipsEndpoint = updateExpiredScholarshipsEndpoint;
 const getAllScholars = async (req, res) => {
     try {
-        // Parse query parameters for pagination and filtering
         const page = parseInt(req.query.page) || 1;
-        const limit = Math.min(parseInt(req.query.limit) || 20, 100); // Max 100 items per page
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
         const status = req.query.status;
         const type = req.query.type;
         const search = req.query.search;
         const skip = (page - 1) * limit;
-        // Build where condition efficiently
         const whereCondition = {};
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
             whereCondition.status = status;
@@ -109,7 +105,6 @@ const getAllScholars = async (req, res) => {
                 { location: { contains: search, mode: 'insensitive' } }
             ];
         }
-        // Use efficient query with proper indexing
         const [scholars, totalCount] = await Promise.all([
             db_1.prisma.scholarship.findMany({
                 where: whereCondition,
@@ -160,9 +155,7 @@ const getScholarshipById = async (req, res) => {
         if (!id) {
             return res.status(400).json({ success: false, message: "Scholarship ID is required" });
         }
-        // First, update any expired scholarships
         await (0, exports.updateExpiredScholarships)();
-        // Then fetch the specific scholarship
         const scholarship = await db_1.prisma.scholarship.findUnique({
             where: { id }
         });
@@ -188,9 +181,7 @@ const updateScholar = async (req, res) => {
         if (!scholarshipId) {
             return res.status(400).json({ success: false, message: "Scholarship id is required" });
         }
-        // Parse request body (you might want to add Zod validation here too)
         const { title, type, description, location, requirements, benefits, deadline } = req.body;
-        // Check if scholarship exists and belongs to the provider
         const existingScholarship = await db_1.prisma.scholarship.findUnique({
             where: { id: scholarshipId }
         });
@@ -200,9 +191,7 @@ const updateScholar = async (req, res) => {
         if (existingScholarship.providerId !== providerId) {
             return res.status(403).json({ success: false, message: "Forbidden: You can only update your own scholarships" });
         }
-        // Convert deadline to Date object
         const deadlineDate = new Date(deadline);
-        // Update the scholarship
         const updatedScholarship = await db_1.prisma.scholarship.update({
             where: { id: scholarshipId },
             data: {
@@ -267,7 +256,6 @@ const ArchiveScholarship = async (req, res) => {
         if (!scholarshipId) {
             return res.status(400).json({ success: false, message: "Invalid scholarship id" });
         }
-        // Check scholarship existence
         const scholarship = await db_1.prisma.scholarship.findUnique({
             where: { id: scholarshipId }
         });
@@ -277,7 +265,6 @@ const ArchiveScholarship = async (req, res) => {
         if (scholarship.providerId !== providerId) {
             return res.status(403).json({ success: false, message: "Forbidden: You can only archive your own scholarships" });
         }
-        // Create archive record
         const archivedScholarship = await db_1.prisma.archive.create({
             data: {
                 scholarshipId: scholarship.id,
@@ -295,10 +282,9 @@ const ArchiveScholarship = async (req, res) => {
                 originalUpdatedAt: scholarship.updatedAt,
             },
         });
-        // Mark original scholarship as archived
         await db_1.prisma.scholarship.update({
             where: { id },
-            data: { status: client_1.ScholarshipStatus.EXPIRED }
+            data: { status: "EXPIRED" }
         });
         return res.status(200).json({
             success: true,

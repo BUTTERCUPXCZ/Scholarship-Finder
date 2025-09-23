@@ -7,15 +7,13 @@ const db_1 = require("./db");
 class DatabaseHealthCheck {
     static isConnected = false;
     static lastHealthCheck = 0;
-    static HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+    static HEALTH_CHECK_INTERVAL = 30000;
     static async checkConnection() {
         const now = Date.now();
-        // Skip frequent health checks
         if (this.isConnected && (now - this.lastHealthCheck) < this.HEALTH_CHECK_INTERVAL) {
             return true;
         }
         try {
-            // Simple query to test connection
             await db_1.prisma.$queryRaw `SELECT 1`;
             this.isConnected = true;
             this.lastHealthCheck = now;
@@ -45,7 +43,6 @@ class DatabaseHealthCheck {
                 if (attempt === maxRetries) {
                     break;
                 }
-                // Exponential backoff
                 const delay = delayMs * Math.pow(2, attempt - 1);
                 console.log(`Retrying in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -58,11 +55,9 @@ class DatabaseHealthCheck {
     }
 }
 exports.DatabaseHealthCheck = DatabaseHealthCheck;
-// Wrapper function for database operations with retry logic
 async function withDatabaseRetry(operation, maxRetries = 3) {
     return DatabaseHealthCheck.retryOperation(operation, maxRetries);
 }
-// Helper for handling database errors
 function handleDatabaseError(error, context) {
     if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
         console.error(`${context}: Database connection failed`, error);

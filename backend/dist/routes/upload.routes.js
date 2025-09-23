@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const upload_controller_1 = require("../controllers/upload.controller");
 const auth_1 = require("../middleware/auth");
 const router = express_1.default.Router();
-// Error handling middleware for multer
 const handleMulterError = (err, req, res, next) => {
     if (err) {
         console.error('Multer error:', err);
@@ -21,8 +20,6 @@ const handleMulterError = (err, req, res, next) => {
     }
     next();
 };
-// Upload files endpoint
 router.post('/files', auth_1.authenticate, upload_controller_1.uploadMiddleware, handleMulterError, upload_controller_1.uploadFiles);
-// Download file endpoint - using POST to handle complex paths in request body
 router.post('/download', auth_1.authenticate, upload_controller_1.downloadFile);
 exports.default = router;

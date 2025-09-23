@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.startScholarshipJobs = void 0;
 const node_cron_1 = __importDefault(require("node-cron"));
 const scholar_controller_1 = require("../scholar.controller");
-// Run every day at midnight to check for expired scholarships
 const startScholarshipJobs = () => {
     node_cron_1.default.schedule('0 0 * * *', async () => {
         console.log('Running scholarship expiration check...');

@@ -8,7 +8,6 @@ const fetchNotifications = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        // Parse query parameters
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const onlyUnread = req.query.onlyUnread === 'true';

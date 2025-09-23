@@ -12,7 +12,6 @@ exports.applicationDocumentSchema = zod_1.z.object({
 exports.submitApplicationSchema = zod_1.z.object({
     scholarshipId: zod_1.z.string().min(1, "Scholarship ID is required"),
     Firstname: zod_1.z.string().min(1, "Firstname is required"),
-    // Middlename is optional; allow empty string or undefined
     Middlename: zod_1.z.string().optional(),
     Lastname: zod_1.z.string().min(1, "Lastname is required"),
     Email: zod_1.z.string().email("Invalid email address"),

@@ -16,7 +16,6 @@ const initializeSocket = (server) => {
             credentials: true
         }
     });
-    // Socket authentication middleware
     io.use((socket, next) => {
         try {
             const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
@@ -33,9 +32,7 @@ const initializeSocket = (server) => {
     });
     io.on('connection', (socket) => {
         console.log(`User ${socket.userId} connected to notifications`);
-        // Join user to their personal notification room
         socket.join(`user_${socket.userId}`);
-        // Handle ping for connection health
         socket.on('ping', () => {
             socket.emit('pong');
         });

@@ -4,23 +4,18 @@ exports.updateApplicationStatus = exports.getScholarshipApplications = exports.w
 const Application_1 = require("../Validators/Application");
 const db_1 = require("../lib/db");
 const notification_1 = require("../services/notification");
-/**
- * Submit an application for a scholarship
- */
 const submitApplication = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        // Validate request body using Zod
         const parseResult = Application_1.submitApplicationSchema.safeParse(req.body);
         if (!parseResult.success) {
             const formatted = parseResult.error.format();
             return res.status(400).json({ message: 'Invalid request data', errors: formatted });
         }
         const { scholarshipId, documents = [], Firstname, Middlename, Lastname, Email, Phone, Address, City } = parseResult.data;
-        // Check if user already applied
         const existingApplication = await db_1.prisma.application.findFirst({
             where: {
                 userId,
@@ -30,12 +25,10 @@ const submitApplication = async (req, res) => {
         if (existingApplication) {
             return res.status(400).json({ message: 'You have already applied for this scholarship' });
         }
-        // Create application with documents
         const application = await db_1.prisma.application.create({
             data: {
                 userId,
                 scholarshipId,
-                // Map applicant personal fields required by schema
                 Firstname,
                 Middlename: Middlename || '',
                 Lastname,
@@ -83,9 +76,6 @@ const submitApplication = async (req, res) => {
     }
 };
 exports.submitApplication = submitApplication;
-/**
- * Get user's applications
- */
 const getUserApplications = async (req, res) => {
     try {
         const userId = req.userId;
@@ -123,9 +113,6 @@ const getUserApplications = async (req, res) => {
     }
 };
 exports.getUserApplications = getUserApplications;
-/**
- * Get application by ID
- */
 const getApplicationById = async (req, res) => {
     try {
         const userId = req.userId;
@@ -136,7 +123,7 @@ const getApplicationById = async (req, res) => {
         const application = await db_1.prisma.application.findFirst({
             where: {
                 id,
-                userId, // Ensure user can only access their own applications
+                userId,
             },
             include: {
                 documents: true,
@@ -169,9 +156,6 @@ const getApplicationById = async (req, res) => {
     }
 };
 exports.getApplicationById = getApplicationById;
-/**
- * Withdraw application
- */
 const withdrawApplication = async (req, res) => {
     try {
         const userId = req.userId;
@@ -193,7 +177,6 @@ const withdrawApplication = async (req, res) => {
                 message: 'Cannot withdraw an application that has been processed'
             });
         }
-        // Delete the application and associated documents
         await db_1.prisma.application.delete({
             where: { id },
         });
@@ -208,9 +191,6 @@ const withdrawApplication = async (req, res) => {
     }
 };
 exports.withdrawApplication = withdrawApplication;
-/**
- * Get applications for a scholarship (for organization)
- */
 const getScholarshipApplications = async (req, res) => {
     try {
         const userId = req.userId;
@@ -218,7 +198,6 @@ const getScholarshipApplications = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        // Verify that the scholarship belongs to the requesting organization
         const scholarship = await db_1.prisma.scholarship.findFirst({
             where: {
                 id: scholarshipId,
@@ -255,9 +234,6 @@ const getScholarshipApplications = async (req, res) => {
     }
 };
 exports.getScholarshipApplications = getScholarshipApplications;
-/**
- * Update application status (for organization)
- */
 const updateApplicationStatus = async (req, res) => {
     try {
         const userId = req.userId;
@@ -269,7 +245,6 @@ const updateApplicationStatus = async (req, res) => {
         if (!['PENDING', 'UNDER_REVIEW', 'ACCEPTED', 'REJECTED'].includes(status)) {
             return res.status(400).json({ message: 'Invalid status' });
         }
-        // Verify that the application's scholarship belongs to the requesting organization
         const application = await db_1.prisma.application.findUnique({
             where: { id },
             include: {
@@ -300,7 +275,6 @@ const updateApplicationStatus = async (req, res) => {
                 }
             }
         });
-        // Create notification for the applicant
         let notificationMessage = '';
         let notificationType = 'SCHOLARSHIP_UPDATE';
         switch (status) {
@@ -321,7 +295,6 @@ const updateApplicationStatus = async (req, res) => {
                 notificationType = 'SCHOLARSHIP_UPDATE';
                 break;
         }
-        // Create the notification
         await (0, notification_1.createNotification)({
             userId: application.userId,
             message: notificationMessage,

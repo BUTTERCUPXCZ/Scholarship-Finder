@@ -14,7 +14,6 @@ const userRegister = async (req, res) => {
         if (!fullname || !email || !password || !role) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        // Use database retry logic
         await (0, databaseHealth_1.withDatabaseRetry)(async () => {
             const existingUser = await db_1.prisma.user.findUnique({ where: { email } });
             if (existingUser) {
@@ -55,19 +54,15 @@ const userLogin = async (req, res) => {
             if (!isPasswordValid) {
                 throw new Error("INVALID_CREDENTIALS");
             }
-            // Exclude sensitive fields
             const { password: _, ...safeUser } = user;
-            // Generate token
             const token = (0, auth_1.signToken)({ id: user.id, email: user.email, role: user.role });
-            // Set HTTP-only cookie (secure token storage)
             res.cookie('authToken', token, {
-                httpOnly: true, // Cannot be accessed by JavaScript
-                secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-                sameSite: 'lax', // Allow cross-site requests for login flows
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                path: '/' // Available for all routes
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000,
+                path: '/'
             });
-            // Don't send token in response body for security
             res.status(200).json({
                 success: true,
                 user: safeUser,
@@ -88,10 +83,8 @@ const userLogin = async (req, res) => {
     }
 };
 exports.userLogin = userLogin;
-// Logout endpoint to clear the HTTP-only cookie
 const userLogout = async (req, res) => {
     try {
-        // Clear the auth cookie
         res.clearCookie('authToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -109,7 +102,6 @@ const userLogout = async (req, res) => {
     }
 };
 exports.userLogout = userLogout;
-// Get current user profile (for authentication check)
 const getCurrentUser = async (req, res) => {
     try {
         const userId = req.userId;
@@ -145,7 +137,6 @@ const getCurrentUser = async (req, res) => {
     }
 };
 exports.getCurrentUser = getCurrentUser;
-// Update user profile
 const updateUserProfile = async (req, res) => {
     try {
         const userId = req.userId;
@@ -156,7 +147,6 @@ const updateUserProfile = async (req, res) => {
         if (!fullname || !email) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        // Check if email is already taken by another user
         const existingUser = await db_1.prisma.user.findFirst({
             where: {
                 email,
@@ -187,14 +177,12 @@ const updateUserProfile = async (req, res) => {
     }
 };
 exports.updateUserProfile = updateUserProfile;
-// Get organization statistics
 const getOrganizationStats = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        // Verify user is an organization
         const user = await db_1.prisma.user.findUnique({
             where: { id: String(userId) },
             select: { role: true }
@@ -202,7 +190,6 @@ const getOrganizationStats = async (req, res) => {
         if (!user || user.role !== 'ORGANIZATION') {
             return res.status(403).json({ message: "Access denied. Organizations only." });
         }
-        // Get scholarship statistics
         const [totalScholarships, activeScholarships, archivedScholarships] = await Promise.all([
             db_1.prisma.scholarship.count({
                 where: { providerId: String(userId) }
@@ -217,7 +204,6 @@ const getOrganizationStats = async (req, res) => {
                 where: { providerId: String(userId) }
             })
         ]);
-        // Get total applications for all scholarships by this organization
         const totalApplications = await db_1.prisma.application.count({
             where: {
                 scholarship: {

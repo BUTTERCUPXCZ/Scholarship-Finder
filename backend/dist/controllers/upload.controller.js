@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadFile = exports.uploadFiles = exports.uploadMiddleware = void 0;
 const supabase_js_1 = require("@supabase/supabase-js");
 const multer_1 = __importDefault(require("multer"));
-// Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseServiceKey) {
@@ -19,16 +18,13 @@ const supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceKey
         persistSession: false
     }
 });
-// Storage bucket name - consistent with frontend
 const BUCKET_NAME = 'application-documents';
-// Configure multer for file uploads
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 10 * 1024 * 1024,
     },
     fileFilter: (req, file, cb) => {
-        // Allow PDF, DOC, DOCX, and image files
         const allowedMimeTypes = [
             'application/pdf',
             'application/msword',
@@ -45,10 +41,7 @@ const upload = (0, multer_1.default)({
         }
     }
 });
-exports.uploadMiddleware = upload.array('documents', 5); // Max 5 files
-/**
- * Upload files to Supabase storage
- */
+exports.uploadMiddleware = upload.array('documents', 5);
 const uploadFiles = async (req, res) => {
     try {
         console.log('Upload files endpoint called');
@@ -67,12 +60,10 @@ const uploadFiles = async (req, res) => {
         for (const file of files) {
             try {
                 console.log(`Uploading file: ${file.originalname}, Size: ${file.size}, Type: ${file.mimetype}`);
-                // Generate unique file path
                 const timestamp = Date.now();
                 const randomId = Math.random().toString(36).substring(2, 8);
                 const storagePath = `${userId}/documents/${timestamp}-${randomId}-${file.originalname}`;
                 console.log(`Storage path: ${storagePath}`);
-                // Upload to Supabase storage
                 const { data, error } = await supabase.storage
                     .from(BUCKET_NAME)
                     .upload(storagePath, file.buffer, {
@@ -82,7 +73,6 @@ const uploadFiles = async (req, res) => {
                 });
                 if (error) {
                     console.error('Supabase upload error for file', file.originalname, ':', error);
-                    // If bucket doesn't exist, try to create it
                     if (error.message.includes('Bucket not found')) {
                         console.log('Attempting to create bucket...');
                         const { error: bucketError } = await supabase.storage.createBucket(BUCKET_NAME, {
@@ -95,7 +85,7 @@ const uploadFiles = async (req, res) => {
                                 'image/png',
                                 'image/jpg'
                             ],
-                            fileSizeLimit: 10485760 // 10MB
+                            fileSizeLimit: 10485760
                         });
                         if (bucketError) {
                             console.error('Failed to create bucket:', bucketError);
@@ -103,7 +93,6 @@ const uploadFiles = async (req, res) => {
                                 message: `Storage bucket error: ${bucketError.message}`
                             });
                         }
-                        // Retry upload after creating bucket
                         const { data: retryData, error: retryError } = await supabase.storage
                             .from(BUCKET_NAME)
                             .upload(storagePath, file.buffer, {
@@ -125,7 +114,6 @@ const uploadFiles = async (req, res) => {
                     }
                 }
                 console.log(`Successfully uploaded file: ${file.originalname}`);
-                // Get public URL
                 const { data: urlData } = supabase.storage
                     .from(BUCKET_NAME)
                     .getPublicUrl(storagePath);
@@ -160,12 +148,8 @@ const uploadFiles = async (req, res) => {
     }
 };
 exports.uploadFiles = uploadFiles;
-/**
- * Download a file from Supabase storage with proper authentication
- */
 const downloadFile = async (req, res) => {
     try {
-        // Extract the storage path from the request body
         const { storagePath } = req.body;
         const userId = req.userId;
         if (!userId) {
@@ -175,10 +159,9 @@ const downloadFile = async (req, res) => {
             return res.status(400).json({ message: 'Storage path is required in request body' });
         }
         console.log('Downloading file from path:', storagePath);
-        // Get signed URL with service role key (has more permissions)
         const { data, error } = await supabase.storage
             .from(BUCKET_NAME)
-            .createSignedUrl(storagePath, 3600); // 1 hour expiry
+            .createSignedUrl(storagePath, 3600);
         if (error) {
             console.error('Error creating signed URL:', error);
             return res.status(404).json({
@@ -190,7 +173,6 @@ const downloadFile = async (req, res) => {
             return res.status(404).json({ message: 'Could not generate download URL' });
         }
         console.log('Successfully created signed URL');
-        // Return the signed URL
         res.json({ downloadUrl: data.signedUrl });
     }
     catch (error) {
