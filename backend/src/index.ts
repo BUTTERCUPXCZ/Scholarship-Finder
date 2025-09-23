@@ -26,18 +26,20 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
 
-
+// Start background jobs
 startScholarshipJobs();
 startExpiredScholarshipJob();
 
-app.use(helmet({
-    contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
-}));
-
+// Security middleware
+app.use(
+    helmet({
+        contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
+    })
+);
 
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-
+// Rate limiter (only production)
 if (NODE_ENV === 'production') {
     const limiter = rateLimit({
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
@@ -49,32 +51,34 @@ if (NODE_ENV === 'production') {
     app.use(limiter);
 }
 
+// ✅ Simplified & strict CORS setup
+const allowedOrigins =
+    NODE_ENV === 'production'
+        ? [process.env.FRONTEND_URL!]
+        : [
+            process.env.FRONTEND_URL || 'http://localhost:5173',
+            'http://localhost:5174',
+        ];
 
-// CORS configuration
-const corsOrigins = NODE_ENV === 'production'
-    ? (process.env.CORS_ORIGINS?.split(',') || [process.env.FRONTEND_URL || 'https://yourdomain.com'])
-    : [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        'http://localhost:5174' // Allow both development ports
-    ];
+app.use(
+    cors({
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
 
-app.use(cors({
-    origin: corsOrigins,
-    credentials: true, // Allow cookies to be sent
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.use(cookieParser()); // Parse cookies
+app.use(cookieParser());
 app.use(express.json());
 
-// Health check endpoint for Docker and monitoring
+// Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),
         environment: NODE_ENV,
-        version: '1.0.0'
+        version: '1.0.0',
     });
 });
 
@@ -87,11 +91,10 @@ app.use('/notifications', notificationRoutes);
 
 const server = http.createServer(app);
 
-// Initialize Socket.IO with authentication
+// Initialize Socket.IO
 const io = initializeSocket(server);
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log('Socket.IO server initialized for real-time notifications');
 });
-

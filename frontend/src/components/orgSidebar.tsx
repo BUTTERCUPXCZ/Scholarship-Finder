@@ -16,6 +16,7 @@ import {
     Settings,
     GraduationCap,
     Archive,
+    MessageCircle,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -50,6 +51,22 @@ const OrgSidebar = () => {
                                     <Link to="/orgdashboard" className="flex items-center gap-2">
                                         <BarChart3 className="size-4" />
                                         <span>Dashboard & Insights</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Communication</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link to="/chat" className="flex items-center gap-2">
+                                        <MessageCircle className="size-4" />
+                                        <span>Messages</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

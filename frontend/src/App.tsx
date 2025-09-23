@@ -6,6 +6,7 @@ import Scholarship from './pages/Scholarship'
 import Scholarshipdetails from './pages/Scholarshipdetails'
 import Profile from './pages/Profile'
 import ApplicationStudent from './pages/ApplicationStudent'
+import ChatPage from './pages/Chat'
 import Orgdashboard from './organization/orgdashboard'
 import ManageScholar from './organization/ManageScholar'
 import Archive from './organization/Archive'
@@ -107,6 +108,18 @@ function App() {
                 <ProtectedRoute allowedRoles={['STUDENT']}>
                   <div className={!isOnline ? 'pt-16' : ''}>
                     <ApplicationStudent />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Chat route - accessible to both students and organizations */}
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'ORGANIZATION']}>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <ChatPage />
                   </div>
                 </ProtectedRoute>
               }

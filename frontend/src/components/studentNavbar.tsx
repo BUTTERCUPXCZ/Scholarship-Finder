@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { ChevronDown, LogOut, User, FileText, Bell } from 'lucide-react'
+import { ChevronDown, LogOut, User, FileText, Bell, MessageCircle } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 const StudentNavbar = () => {
@@ -53,6 +53,14 @@ const StudentNavbar = () => {
                 <Link to="/scholarship" className="text-gray-700 hover:text-indigo-600 transition-colors">
                     Scholarship
                 </Link>
+
+                {/* Chat Link (visible only when user is logged in) */}
+                {user && (
+                    <Link to="/chat" className="text-gray-700 hover:text-indigo-600 transition-colors flex items-center gap-1">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Messages</span>
+                    </Link>
+                )}
 
                 {/* Notification Bell (visible only when user is logged in) */}
                 {user && (
@@ -127,6 +135,10 @@ const StudentNavbar = () => {
                 <div className="w-full mt-2">
                     {user ? (
                         <>
+                            <Link to="/chat" className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded">
+                                <MessageCircle className="h-4 w-4" />
+                                Messages
+                            </Link>
                             <Link to="/notifications" className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded">
                                 <div className="relative">
                                     <Bell className="h-4 w-4" />

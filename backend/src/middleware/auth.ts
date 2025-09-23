@@ -60,13 +60,21 @@ export const authenticate = (
     }
 
     if (!token) {
-        return res.status(401).json({ message: "No token provided" });
+        console.log('Authentication failed: No token provided');
+        return res.status(401).json({
+            message: "No token provided",
+            error: "MISSING_TOKEN"
+        });
     }
 
     const secret = process.env.JWT_SECRET;
 
     if (!secret) {
-        return res.status(500).json({ message: "JWT_SECRET not configured" });
+        console.error('JWT_SECRET not configured in environment variables');
+        return res.status(500).json({
+            message: "Server configuration error",
+            error: "JWT_SECRET_MISSING"
+        });
     }
 
     try {
@@ -75,7 +83,24 @@ export const authenticate = (
         req.user = { id: decoded.userId };
         req.userId = decoded.userId;
         next();
-    } catch (err) {
-        return res.status(401).json({ message: "Invalid or expired token" });
+    } catch (err: any) {
+        console.log('Authentication failed:', err.message);
+
+        // Provide more specific error messages
+        let errorMessage = "Invalid or expired token";
+        let errorCode = "INVALID_TOKEN";
+
+        if (err.name === 'TokenExpiredError') {
+            errorMessage = "Token has expired";
+            errorCode = "TOKEN_EXPIRED";
+        } else if (err.name === 'JsonWebTokenError') {
+            errorMessage = "Invalid token format";
+            errorCode = "MALFORMED_TOKEN";
+        }
+
+        return res.status(401).json({
+            message: errorMessage,
+            error: errorCode
+        });
     }
 };
