@@ -22,13 +22,11 @@
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"
-    ],
-    "types": [
-      "node"
     ]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "src/types/global.d.ts"
   ],
   "exclude": [
     "node_modules",

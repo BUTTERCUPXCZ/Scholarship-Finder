@@ -26,23 +26,22 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
 
-// Initialize background jobs
+
 startScholarshipJobs();
 startExpiredScholarshipJob();
 
-// Security middleware
 app.use(helmet({
     contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
 }));
 
-// Logging middleware
+
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Rate limiting for production
+
 if (NODE_ENV === 'production') {
     const limiter = rateLimit({
-        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
         message: 'Too many requests from this IP, please try again later.',
         standardHeaders: true,
         legacyHeaders: false,
