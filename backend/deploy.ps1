@@ -15,7 +15,15 @@ if (-not (Test-Path ".env.production")) {
 try {
     # Build the application
     Write-Host "📦 Building application..." -ForegroundColor Blue
-    npm run build
+    
+    # Try normal build first, fallback to safe build if it fails
+    try {
+        npm run build
+    }
+    catch {
+        Write-Host "⚠️ Normal build failed, trying fallback method..." -ForegroundColor Yellow
+        npm run build:safe
+    }
 
     # Run database migrations
     Write-Host "🗄️ Running database migrations..." -ForegroundColor Blue

@@ -98,12 +98,43 @@ Before deploying to production, ensure you have:
 ## 📊 Available Scripts
 
 - `npm run dev` - Start development server with hot reload
-- `npm run build` - Build the TypeScript application for production
+- `npm run build` - Build the TypeScript application for production (standard)
+- `npm run build:safe` - Build using fallback method (if rimraf issues occur)
+- `npm run clean` - Clean the build directory (using npx rimraf)
+- `npm run clean:fallback` - Clean using Node.js fs (fallback method)
 - `npm run start` - Start the production server
 - `npm run start:prod` - Build and start in one command
-- `npm run clean` - Clean the build directory
 - `npm run prisma:generate` - Generate Prisma client
 - `npm run prisma:deploy` - Deploy database migrations to production
+
+### 🔧 Build Troubleshooting
+
+If you encounter build issues, you can:
+
+1. **Use the build checker:**
+   ```powershell
+   # Windows
+   .\build-check.ps1
+   
+   # Linux/Mac  
+   chmod +x build-check.sh
+   ./build-check.sh
+   ```
+
+2. **Use the safe build method:**
+   ```bash
+   npm run build:safe
+   ```
+
+3. **Manual troubleshooting:**
+   ```bash
+   # Clear node_modules and reinstall
+   rm -rf node_modules package-lock.json
+   npm install
+   
+   # Try compilation directly
+   npx tsc
+   ```
 
 ## 🔍 Health Monitoring
 

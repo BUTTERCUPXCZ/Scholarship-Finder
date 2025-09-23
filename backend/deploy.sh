@@ -16,7 +16,10 @@ fi
 
 # Build the application
 echo "📦 Building application..."
-npm run build
+if ! npm run build; then
+    echo "⚠️ Normal build failed, trying fallback method..."
+    npm run build:safe
+fi
 
 # Run database migrations
 echo "🗄️ Running database migrations..."
