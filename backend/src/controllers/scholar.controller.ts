@@ -5,6 +5,7 @@ import { createScholarSchema, CreateScholarInput } from "../Validators/CreateSch
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
 
+
 export const createScholar = async (req: Request, res: Response) => {
     try {
 

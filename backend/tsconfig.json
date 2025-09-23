@@ -30,9 +30,6 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "types": [
-      "node"
-    ],
     "allowJs": true
   },
   "include": [
