@@ -14,17 +14,17 @@ const userRegister = async (req, res) => {
         if (!fullname || !email || !password || !role) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        await (0, databaseHealth_1.withDatabaseRetry)(async () => {
+        const response = await (0, databaseHealth_1.withDatabaseRetry)(async () => {
             const existingUser = await db_1.prisma.user.findUnique({ where: { email } });
             if (existingUser) {
                 throw new Error("USER_EXISTS");
             }
             const hashPassword = await bcrypt_1.default.hash(password, 10);
-            const response = await db_1.prisma.user.create({
+            return await db_1.prisma.user.create({
                 data: { fullname, email, password: hashPassword, role }
             });
-            res.status(201).json({ success: true, user: response });
         });
+        return res.status(201).json({ success: true, user: response });
     }
     catch (error) {
         console.log("Error User Registration: ", error);
@@ -32,7 +32,7 @@ const userRegister = async (req, res) => {
             return res.status(400).json({ message: "User already exists" });
         }
         const dbError = (0, databaseHealth_1.handleDatabaseError)(error, "User Registration");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });
@@ -45,7 +45,7 @@ const userLogin = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        await (0, databaseHealth_1.withDatabaseRetry)(async () => {
+        const result = await (0, databaseHealth_1.withDatabaseRetry)(async () => {
             const user = await db_1.prisma.user.findUnique({ where: { email } });
             if (!user) {
                 throw new Error("INVALID_CREDENTIALS");
@@ -56,18 +56,19 @@ const userLogin = async (req, res) => {
             }
             const { password: _, ...safeUser } = user;
             const token = (0, auth_1.signToken)({ id: user.id, email: user.email, role: user.role });
-            res.cookie('authToken', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                maxAge: 24 * 60 * 60 * 1000,
-                path: '/'
-            });
-            res.status(200).json({
-                success: true,
-                user: safeUser,
-                message: "Login successful"
-            });
+            return { safeUser, token };
+        });
+        res.cookie('authToken', result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
+        });
+        return res.status(200).json({
+            success: true,
+            user: result.safeUser,
+            message: "Login successful"
         });
     }
     catch (error) {
@@ -76,7 +77,7 @@ const userLogin = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
         const dbError = (0, databaseHealth_1.handleDatabaseError)(error, "User Login");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });
@@ -108,8 +109,8 @@ const getCurrentUser = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        await (0, databaseHealth_1.withDatabaseRetry)(async () => {
-            const user = await db_1.prisma.user.findUnique({
+        const user = await (0, databaseHealth_1.withDatabaseRetry)(async () => {
+            return await db_1.prisma.user.findUnique({
                 where: { id: String(userId) },
                 select: {
                     id: true,
@@ -118,19 +119,19 @@ const getCurrentUser = async (req, res) => {
                     role: true
                 }
             });
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            }
-            res.status(200).json({
-                success: true,
-                user: user
-            });
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({
+            success: true,
+            user: user
         });
     }
     catch (error) {
         console.log("Error Get Current User: ", error);
         const dbError = (0, databaseHealth_1.handleDatabaseError)(error, "Get Current User");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });

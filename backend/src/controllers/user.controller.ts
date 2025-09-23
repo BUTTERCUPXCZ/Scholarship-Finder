@@ -13,7 +13,7 @@ export const userRegister = async (req: Request, res: Response) => {
         }
 
         // Use database retry logic
-        await withDatabaseRetry(async () => {
+        const response = await withDatabaseRetry(async () => {
             const existingUser = await prisma.user.findUnique({ where: { email } });
 
             if (existingUser) {
@@ -22,12 +22,12 @@ export const userRegister = async (req: Request, res: Response) => {
 
             const hashPassword = await bcrypt.hash(password, 10);
 
-            const response = await prisma.user.create({
+            return await prisma.user.create({
                 data: { fullname, email, password: hashPassword, role }
             });
-
-            res.status(201).json({ success: true, user: response });
         });
+
+        return res.status(201).json({ success: true, user: response });
 
     } catch (error: any) {
         console.log("Error User Registration: ", error);
@@ -37,7 +37,7 @@ export const userRegister = async (req: Request, res: Response) => {
         }
 
         const dbError = handleDatabaseError(error, "User Registration");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });
@@ -53,7 +53,7 @@ export const userLogin = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        await withDatabaseRetry(async () => {
+        const result = await withDatabaseRetry(async () => {
             const user = await prisma.user.findUnique({ where: { email } });
             if (!user) {
                 throw new Error("INVALID_CREDENTIALS");
@@ -70,21 +70,23 @@ export const userLogin = async (req: Request, res: Response) => {
             // Generate token
             const token = signToken({ id: user.id, email: user.email, role: user.role });
 
-            // Set HTTP-only cookie (secure token storage)
-            res.cookie('authToken', token, {
-                httpOnly: true,          // Cannot be accessed by JavaScript
-                secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-                sameSite: 'lax',         // Allow cross-site requests for login flows
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                path: '/'                // Available for all routes
-            });
+            return { safeUser, token };
+        });
 
-            // Don't send token in response body for security
-            res.status(200).json({
-                success: true,
-                user: safeUser,
-                message: "Login successful"
-            });
+        // Set HTTP-only cookie (secure token storage)
+        res.cookie('authToken', result.token, {
+            httpOnly: true,          // Cannot be accessed by JavaScript
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+            sameSite: 'lax',         // Allow cross-site requests for login flows
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'                // Available for all routes
+        });
+
+        // Don't send token in response body for security
+        return res.status(200).json({
+            success: true,
+            user: result.safeUser,
+            message: "Login successful"
         });
 
     } catch (error: any) {
@@ -95,7 +97,7 @@ export const userLogin = async (req: Request, res: Response) => {
         }
 
         const dbError = handleDatabaseError(error, "User Login");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });
@@ -132,8 +134,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        await withDatabaseRetry(async () => {
-            const user = await prisma.user.findUnique({
+        const user = await withDatabaseRetry(async () => {
+            return await prisma.user.findUnique({
                 where: { id: String(userId) },
                 select: {
                     id: true,
@@ -142,22 +144,22 @@ export const getCurrentUser = async (req: Request, res: Response) => {
                     role: true
                 }
             });
+        });
 
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            }
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-            res.status(200).json({
-                success: true,
-                user: user
-            });
+        return res.status(200).json({
+            success: true,
+            user: user
         });
 
     } catch (error: any) {
         console.log("Error Get Current User: ", error);
 
         const dbError = handleDatabaseError(error, "Get Current User");
-        res.status(500).json({
+        return res.status(500).json({
             message: dbError.message,
             retryable: dbError.retryable
         });
