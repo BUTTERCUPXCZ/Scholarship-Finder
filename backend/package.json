@@ -4,10 +4,17 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "npm run clean && tsc",
+    "build:safe": "npm run clean:fallback && tsc --skipLibCheck",
+    "build:render": "npm install && npx prisma generate && tsc",
+    "clean": "npx rimraf dist",
+    "clean:fallback": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true});\"",
     "start": "node dist/index.js",
+    "start:prod": "npm run build && npm run start",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy"
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:deploy": "prisma migrate deploy",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
