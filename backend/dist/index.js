@@ -40,16 +40,40 @@ if (NODE_ENV === 'production') {
     app.use(limiter);
 }
 const corsOrigins = NODE_ENV === 'production'
-    ? (process.env.CORS_ORIGINS?.split(',') || [process.env.FRONTEND_URL || 'https://yourdomain.com'])
+    ? [
+        process.env.FRONTEND_URL,
+        'https://*.onrender.com',
+        'https://frontend-finder.onrender.com',
+        ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [])
+    ].filter(Boolean)
     : [
         process.env.FRONTEND_URL || 'http://localhost:5173',
         'http://localhost:5174'
     ];
 app.use((0, cors_1.default)({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+        if (!origin)
+            return callback(null, true);
+        const isAllowed = corsOrigins.some(allowedOrigin => {
+            if (allowedOrigin.includes('*')) {
+                const regex = new RegExp(allowedOrigin.replace('*', '.*'));
+                return regex.test(origin);
+            }
+            return allowedOrigin === origin;
+        });
+        if (isAllowed) {
+            callback(null, true);
+        }
+        else {
+            console.warn(`CORS blocked origin: ${origin}`);
+            console.warn(`Allowed origins: ${corsOrigins.join(', ')}`);
+            callback(new Error('Not allowed by CORS'), false);
+        }
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie']
 }));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
@@ -58,7 +82,7 @@ app.get('/health', (req, res) => {
         status: 'OK',
         timestamp: new Date().toISOString(),
         environment: NODE_ENV,
-        version: '1.0.0'
+        version: '1.0.0',
     });
 });
 app.use('/users', user_routes_1.default);

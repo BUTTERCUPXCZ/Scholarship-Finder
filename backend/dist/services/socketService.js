@@ -10,67 +10,82 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 let io = null;
 const initializeSocket = (server) => {
+    const allowedOrigins = [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+    ].filter(Boolean);
     io = new socket_io_1.Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-            credentials: true
-        }
+            origin: (origin, callback) => {
+                if (!origin)
+                    return callback(null, true);
+                if (allowedOrigins.includes(origin))
+                    return callback(null, true);
+                console.warn(`🚫 Socket.IO CORS blocked origin: ${origin}`);
+                return callback(new Error('Not allowed by CORS'));
+            },
+            credentials: true,
+        },
     });
     io.use((socket, next) => {
         try {
-            const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
+            const token = socket.handshake.auth.token ||
+                socket.handshake.headers.authorization?.replace('Bearer ', '') ||
+                socket.handshake.headers.cookie
+                    ?.split('authToken=')[1]
+                    ?.split(';')[0];
             if (!token) {
-                return next(new Error('Authentication error'));
+                console.log('❌ Socket auth failed: No token provided');
+                return next(new Error('Authentication error: No token provided'));
             }
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+            const secret = process.env.JWT_SECRET;
+            if (!secret) {
+                console.error('❌ JWT_SECRET not configured');
+                return next(new Error('Server configuration error'));
+            }
+            const decoded = jsonwebtoken_1.default.verify(token, secret);
             socket.userId = decoded.userId;
+            console.log(`✅ Socket authenticated: user ${decoded.userId}`);
             next();
         }
         catch (err) {
-            next(new Error('Authentication error'));
+            console.log('❌ Socket auth failed:', err.message);
+            next(new Error('Authentication error: Invalid token'));
         }
     });
     io.on('connection', (socket) => {
-        console.log(`User ${socket.userId} connected to notifications`);
+        console.log(`🔌 User ${socket.userId} connected`);
         socket.join(`user_${socket.userId}`);
         socket.on('ping', () => {
             socket.emit('pong');
         });
         socket.on('disconnect', () => {
-            console.log(`User ${socket.userId} disconnected from notifications`);
+            console.log(`🔌 User ${socket.userId} disconnected`);
         });
     });
     return io;
 };
 exports.initializeSocket = initializeSocket;
-const getSocketIO = () => {
-    return io;
-};
+const getSocketIO = () => io;
 exports.getSocketIO = getSocketIO;
 const emitNotificationToUser = (userId, notification) => {
-    if (!io) {
-        console.warn('Socket.IO not initialized');
-        return;
-    }
-    console.log(`Emitting notification to user ${userId}`);
+    if (!io)
+        return console.warn('⚠️ Socket.IO not initialized');
+    console.log(`📢 Emit new notification → user ${userId}`);
     io.to(`user_${userId}`).emit('new_notification', notification);
 };
 exports.emitNotificationToUser = emitNotificationToUser;
 const emitNotificationUpdate = (userId, notification) => {
-    if (!io) {
-        console.warn('Socket.IO not initialized');
-        return;
-    }
-    console.log(`Emitting notification update to user ${userId}`);
+    if (!io)
+        return console.warn('⚠️ Socket.IO not initialized');
+    console.log(`📢 Emit notification update → user ${userId}`);
     io.to(`user_${userId}`).emit('notification_updated', notification);
 };
 exports.emitNotificationUpdate = emitNotificationUpdate;
 const emitNotificationDeleted = (userId, notificationId) => {
-    if (!io) {
-        console.warn('Socket.IO not initialized');
-        return;
-    }
-    console.log(`Emitting notification deletion to user ${userId}`);
+    if (!io)
+        return console.warn('⚠️ Socket.IO not initialized');
+    console.log(`📢 Emit notification deletion → user ${userId}`);
     io.to(`user_${userId}`).emit('notification_deleted', { notificationId });
 };
 exports.emitNotificationDeleted = emitNotificationDeleted;
