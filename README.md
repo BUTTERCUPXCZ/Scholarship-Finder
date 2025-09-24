@@ -1,4 +1,4 @@
-📌 ScholarSphere – Scholarship Finder Platform
+ScholarSphere – Scholarship Finder Platform
 
 Description:
 ScholarSphere is a full-stack web application designed to help students discover, apply for, and track scholarships offered by government agencies, private organizations, and universities. It streamlines the scholarship application process by providing personalized recommendations, real-time notifications, and an application tracking system similar to modern job portals.
