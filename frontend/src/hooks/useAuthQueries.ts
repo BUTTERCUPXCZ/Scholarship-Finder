@@ -67,7 +67,7 @@ export const useLogin = () => {
             // Cancel any outgoing refetches
             await queryClient.cancelQueries({ queryKey: authKeys.currentUser() })
         },
-        onSuccess: async (data) => {
+        onSuccess: async (data: any) => {
             // ✅ Update the user cache optimistically
             queryClient.setQueryData(authKeys.currentUser(), data.user)
 
@@ -92,14 +92,13 @@ export const useRegister = () => {
 
     return useMutation({
         mutationFn: registerUser,
-        onSuccess: async (data) => {
-            // ✅ Update the user cache after successful registration
-            queryClient.setQueryData(authKeys.currentUser(), data.user)
-
-            // Small delay to ensure cookie is set
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            toast.success('Registration successful!')
+        onSuccess: async () => {
+            // Registration shouldn't log the user in automatically because the
+            // server only creates a verification token and does not set the
+            // http-only auth cookie until email verification completes.
+            // Avoid setting the auth cache here to prevent protected-hooks
+            // from running and forcing redirects.
+            toast.success('Registration successful! Please check your email to verify your account.')
         },
         onError: (error: Error) => {
             toast.error(error.message || 'Registration failed')

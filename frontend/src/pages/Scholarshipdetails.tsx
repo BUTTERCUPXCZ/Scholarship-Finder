@@ -207,7 +207,7 @@ const ScholarshipDetails = () => {
     const handleApplicationSubmit = () => {
         const { firstName, middleName, lastName, email, phone, address, city } = applicationData;
 
-        if (!firstName || !lastName || !email || !phone || !address || !city) {
+        if (!firstName || !middleName || !lastName || !email || !phone || !address || !city) {
             toast.error('Please fill in all required fields');
             return;
         }
@@ -221,6 +221,7 @@ const ScholarshipDetails = () => {
             scholarshipId: scholarship!.id,
             documents: [applyFile],
             Firstname: firstName.trim(),
+            MiddleName: middleName.trim(),
             Lastname: lastName.trim(),
             Email: email.trim(),
             Phone: phone.trim(),
@@ -505,7 +506,7 @@ const ScholarshipDetails = () => {
 
                                                     <div className="space-y-6">
                                                         {/* Personal Information */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                             <div className="space-y-2">
                                                                 <label className="text-sm font-medium">First name *</label>
                                                                 <input
@@ -516,6 +517,18 @@ const ScholarshipDetails = () => {
                                                                     }))}
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                                                     placeholder="Enter your first name"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <label className="text-sm font-medium">Middle name *</label>
+                                                                <input
+                                                                    value={applicationData.middleName}
+                                                                    onChange={(e) => setApplicationData(prev => ({
+                                                                        ...prev,
+                                                                        middleName: e.target.value
+                                                                    }))}
+                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                    placeholder="Enter your middle name"
                                                                 />
                                                             </div>
                                                             <div className="space-y-2">

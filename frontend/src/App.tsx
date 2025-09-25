@@ -20,6 +20,7 @@ import { Toaster } from 'react-hot-toast'
 import { useNetworkStatus } from './hooks/useNetworkStatus'
 import { NetworkStatusBanner } from './components/NetworkStatusBanner'
 import ProfileOrg from './organization/ProfileOrg'
+import EmailVerify from './pages/EmailVerify'
 
 function App() {
   const { isOnline } = useNetworkStatus()
@@ -70,6 +71,16 @@ function App() {
                 <PublicRoute>
                   <div className={!isOnline ? 'pt-16' : ''}>
                     <ForgotPass />
+                  </div>
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/verify"
+              element={
+                <PublicRoute>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <EmailVerify />
                   </div>
                 </PublicRoute>
               }

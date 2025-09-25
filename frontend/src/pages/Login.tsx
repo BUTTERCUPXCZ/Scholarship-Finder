@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { loginUser, type LoginData } from '../services/auth';
 import { useAuth } from '../AuthProvider/AuthProvider';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
     const [form, setForm] = useState<LoginData>({ email: "", password: "" });
@@ -37,6 +38,17 @@ const Login = () => {
         },
         onError: (error: Error) => {
             setError(error.message);
+            const err: any = error;
+            const serverMsg = err?.response?.data?.message || err?.message || String(err);
+
+            const notVerified = serverMsg === 'EMAIL_NOT_VERIFIED' || / not verified/i.test(serverMsg) || /email.*verify/i.test(serverMsg);
+
+            if (notVerified) {
+                return null
+            } else {
+                toast.error(serverMsg);
+            }
+            setError(serverMsg);
         },
     });
 

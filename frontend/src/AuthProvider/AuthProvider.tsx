@@ -52,8 +52,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const cachedUser: User | null = (() => {
         try {
             const raw = localStorage.getItem('auth');
-            return raw ? (JSON.parse(raw) as User) : null;
+
+            // Guard against non-JSON values being stored (e.g. the literal string "undefined")
+            if (!raw) return null;
+            const trimmed = raw.trim();
+            if (trimmed === 'undefined' || trimmed === 'null' || trimmed === '') {
+                try { localStorage.removeItem('auth'); } catch (e) { /* ignore */ }
+                return null;
+            }
+
+            return JSON.parse(raw) as User;
         } catch (e) {
+            // If parsing fails, remove the corrupt value so we don't repeatedly throw
+            try { localStorage.removeItem('auth'); } catch (err) { /* ignore */ }
             console.warn('Failed to parse cached auth user', e);
             return null;
         }
@@ -85,7 +96,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (userData) {
             setUser(userData);
             try {
-                localStorage.setItem('auth', JSON.stringify(userData));
+                const serialized = JSON.stringify(userData);
+                // Avoid writing undefined/null literal strings into storage
+                if (typeof serialized === 'string' && serialized !== 'undefined') {
+                    localStorage.setItem('auth', serialized);
+                } else {
+                    try { localStorage.removeItem('auth'); } catch (e) { /* ignore */ }
+                }
             } catch (e) {
                 console.warn('Failed to cache auth user', e);
             }
@@ -106,7 +123,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(user);
         queryClient.setQueryData(["auth", "currentUser"], user);
         try {
-            localStorage.setItem('auth', JSON.stringify(user));
+            const serialized = JSON.stringify(user);
+            if (typeof serialized === 'string' && serialized !== 'undefined') {
+                localStorage.setItem('auth', serialized);
+            }
         } catch (e) {
             console.warn('Failed to persist auth user', e);
         }

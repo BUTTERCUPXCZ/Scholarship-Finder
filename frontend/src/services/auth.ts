@@ -60,3 +60,18 @@ export const updateUserProfile = async (data: UpdateProfileData) => {
     return res.json();
 };
 
+export const resendVerificationEmail = async (email: string) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/resend-verification`, {
+        method: "POST",
+        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to resend verification email");
+    }
+    return res.json();
+};
+

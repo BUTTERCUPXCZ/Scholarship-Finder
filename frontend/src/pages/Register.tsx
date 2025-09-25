@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { registerUser, type RegisterData } from '../services/auth'
-import { useAuth } from '../AuthProvider/AuthProvider'
 
 
 
@@ -19,7 +18,6 @@ const Register = () => {
     // ✅ Use Set for O(1) lookups/removals
     const [errorFields, setErrorFields] = useState<Set<string>>(new Set());
     const navigate = useNavigate();
-    const { login } = useAuth();
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -51,19 +49,12 @@ const Register = () => {
 
     const mutation = useMutation({
         mutationFn: (data: RegisterData) => registerUser(data),
-        onSuccess: (data) => {
+        onSuccess: () => {
             setError(null);
 
-            // Use AuthProvider login method (no token needed with cookies)
-            login(data.user);
-
-            // Role-based redirect after registration
-            const role = data?.user?.role?.toString?.() ?? '';
-            if (role === 'ORGANIZATION') {
-                navigate('/login');
-            } else {
-                navigate('/login');
-            }
+            // Don't log the user in automatically after registration
+            // Instead, redirect to email verification page
+            navigate('/verify?status=pending&email=' + encodeURIComponent(form.email));
         },
         onError: (error: Error) => {
             setError(error.message);
@@ -77,7 +68,7 @@ const Register = () => {
         const trimmedFullname = fullname.trim();
         const trimmedEmail = email.trim();
 
-        // ✅ Single-pass validation
+
         const missing = Object.entries({
             fullname: trimmedFullname,
             email: trimmedEmail,
