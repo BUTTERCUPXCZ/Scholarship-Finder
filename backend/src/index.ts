@@ -30,7 +30,7 @@ const app = express();
 startScholarshipJobs();
 startExpiredScholarshipJob();
 
-app.use(express.static(path.join(__dirname, "../frontend/dist")))
+app.use(express.static(path.join(__dirname, "../../frontend/dist")))
 
 
 app.use(
@@ -101,7 +101,7 @@ app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
 
 app.get("*", (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
 });
 
 const server = http.createServer(app);
