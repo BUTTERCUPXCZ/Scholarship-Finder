@@ -30,9 +30,6 @@ const app = express();
 startScholarshipJobs();
 startExpiredScholarshipJob();
 
-app.use(express.static(path.join(__dirname, "../../frontend/dist")))
-
-
 app.use(
     helmet({
         contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
@@ -100,9 +97,6 @@ app.use('/applications', applicationRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
 
-app.get("*", (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
-});
 
 const server = http.createServer(app);
 
