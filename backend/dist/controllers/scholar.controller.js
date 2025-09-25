@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getArchivedScholarships = exports.getOrganizationScholarships = exports.ArchiveScholarship = exports.deleteScholarship = exports.updateScholar = exports.getScholarshipById = exports.getAllScholars = exports.updateExpiredScholarshipsEndpoint = exports.updateExpiredScholarships = exports.createScholar = void 0;
+exports.getPublicScholars = exports.getArchivedScholarships = exports.getOrganizationScholarships = exports.ArchiveScholarship = exports.deleteScholarship = exports.updateScholar = exports.getScholarshipById = exports.getAllScholars = exports.updateExpiredScholarshipsEndpoint = exports.updateExpiredScholarships = exports.createScholar = void 0;
 const library_1 = require("@prisma/client/runtime/library");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const CreateScholar_1 = require("../Validators/CreateScholar");
 const zod_1 = require("zod");
 const db_1 = require("../lib/db");
@@ -89,6 +93,22 @@ const getAllScholars = async (req, res) => {
         const search = req.query.search;
         const skip = (page - 1) * limit;
         const whereCondition = {};
+        try {
+            const token = req.cookies?.authToken || (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ') ? req.headers['authorization'].split(' ')[1] : undefined);
+            if (token) {
+                const secret = process.env.JWT_SECRET;
+                if (secret) {
+                    const decoded = jsonwebtoken_1.default.verify(token, secret);
+                    const providerIdFromToken = decoded?.userId;
+                    if (providerIdFromToken !== undefined && providerIdFromToken !== null) {
+                        whereCondition.providerId = String(providerIdFromToken);
+                    }
+                }
+            }
+        }
+        catch (err) {
+            console.log('Optional token decode failed in getAllScholars:', err?.message || err);
+        }
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
             whereCondition.status = status;
         }
@@ -350,3 +370,68 @@ const getArchivedScholarships = async (req, res) => {
     }
 };
 exports.getArchivedScholarships = getArchivedScholarships;
+const getPublicScholars = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        const type = req.query.type;
+        const search = req.query.search;
+        const skip = (page - 1) * limit;
+        const whereCondition = {
+            status: 'ACTIVE'
+        };
+        if (type) {
+            whereCondition.type = {
+                contains: type,
+                mode: 'insensitive'
+            };
+        }
+        if (search) {
+            whereCondition.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { location: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        const [scholars, totalCount] = await Promise.all([
+            db_1.prisma.scholarship.findMany({
+                where: whereCondition,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    deadline: true,
+                    location: true,
+                    type: true,
+                    benefits: true,
+                    requirements: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    providerId: true
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            db_1.prisma.scholarship.count({ where: whereCondition })
+        ]);
+        const totalPages = Math.ceil(totalCount / limit);
+        return res.status(200).json({
+            success: true,
+            data: scholars,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCount,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error fetching public scholarships:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+exports.getPublicScholars = getPublicScholars;

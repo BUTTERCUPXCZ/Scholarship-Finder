@@ -10,6 +10,7 @@ const scholar_controller_2 = require("../controllers/scholar.controller");
 const router = express_1.default.Router();
 router.post('/create-scholar', auth_1.authenticate, scholar_controller_1.createScholar);
 router.get('/get-scholars', scholar_controller_1.getAllScholars);
+router.get('/public', scholar_controller_1.getPublicScholars);
 router.get('/organization', auth_1.authenticate, scholar_controller_1.getOrganizationScholarships);
 router.get('/get-scholarship/:id', auth_1.authenticate, scholar_controller_1.getScholarshipById);
 router.put('/update-scholar/:id', auth_1.authenticate, scholar_controller_1.updateScholar);

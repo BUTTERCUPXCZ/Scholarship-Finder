@@ -13,4 +13,6 @@ router.post('/logout', user_controller_1.userLogout);
 router.get('/me', auth_1.authenticate, user_controller_1.getCurrentUser);
 router.patch('/profile', auth_1.authenticate, user_controller_1.updateUserProfile);
 router.get('/organization/stats', auth_1.authenticate, user_controller_1.getOrganizationStats);
+router.post('/resend-verification', user_controller_1.resendVerificationEmail);
+router.get('/verify', user_controller_1.verifyEmail);
 exports.default = router;
