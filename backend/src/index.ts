@@ -17,8 +17,8 @@ import uploadRoutes from './routes/upload.routes';
 import notificationRoutes from './routes/notification.routes';
 import rateLimit from 'express-rate-limit';
 import { initializeSocket } from './services/socketService';
+import path from 'path';
 
-// Load environment variables
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
@@ -26,11 +26,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
 
-// Start background jobs
+
 startScholarshipJobs();
 startExpiredScholarshipJob();
 
-// Security middleware
+app.use(express.static(path.join(__dirname, "../frontend/dist")))
+
+
 app.use(
     helmet({
         contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
@@ -39,7 +41,7 @@ app.use(
 
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Rate limiter (only production)
+
 if (NODE_ENV === 'production') {
     const limiter = rateLimit({
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
@@ -51,7 +53,7 @@ if (NODE_ENV === 'production') {
     app.use(limiter);
 }
 
-// ✅ Enhanced CORS setup for production deployment
+
 const corsOrigins =
     NODE_ENV === "production"
         ? [process.env.FRONTEND_URL!]
@@ -60,7 +62,7 @@ const corsOrigins =
 app.use(
     cors({
         origin: (origin, callback) => {
-            if (!origin) return callback(null, true); // allow Postman & curl
+            if (!origin) return callback(null, true);
             if (corsOrigins.includes(origin)) {
                 callback(null, true);
             } else {
@@ -75,7 +77,7 @@ app.use(
     })
 );
 
-// Handle preflight requests
+
 app.options("*", cors());
 
 app.use(cookieParser());
@@ -97,6 +99,10 @@ app.use('/scholar', scholarRoutes);
 app.use('/applications', applicationRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
+
+app.get("*", (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
+});
 
 const server = http.createServer(app);
 

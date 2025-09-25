@@ -1,5 +1,6 @@
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPass from './pages/ForgotPass'
 import { Route, Routes, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Scholarship from './pages/Scholarship'
@@ -59,6 +60,16 @@ function App() {
                 <PublicRoute>
                   <div className={!isOnline ? 'pt-16' : ''}>
                     <Register />
+                  </div>
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <PublicRoute>
+                  <div className={!isOnline ? 'pt-16' : ''}>
+                    <ForgotPass />
                   </div>
                 </PublicRoute>
               }

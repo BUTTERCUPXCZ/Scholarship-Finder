@@ -202,7 +202,7 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                 name="eligibilityRequirements"
                                 value={formData.eligibilityRequirements}
                                 onChange={handleInputChange}
-                                placeholder="List the eligibility criteria and requirements..."
+                                placeholder="Enter each requirement on a new line (one per line). You may start lines with -, • or * if you prefer."
                                 rows={4}
                                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.eligibilityRequirements ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                                     }`}
@@ -258,7 +258,7 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                 name="benefits"
                                 value={formData.benefits}
                                 onChange={handleInputChange}
-                                placeholder="Describe the scholarship benefits, amount, and what it covers..."
+                                placeholder="List benefits one per line (e.g., Tuition waiver, Monthly stipend). You can also start lines with -, • or *."
                                 rows={3}
                                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.benefits ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                                     }`}
