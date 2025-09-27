@@ -3,12 +3,10 @@ import bcrypt from "bcrypt";
 import { signToken } from "../middleware/auth";
 import { prisma } from "../lib/db";
 import { withDatabaseRetry, handleDatabaseError } from "../lib/databaseHealth";
-import { Resend } from "resend";
 import crypto from "crypto";
 import { buildVerificationEmail } from "../Email/design.controller";
+import { sendEmail } from "../lib/mailer";
 
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const generateToken = () => {
     return crypto.randomBytes(32).toString('hex');
@@ -50,13 +48,8 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
         const verifyUrl = `${backendUrl}/users/verify?token=${token}`;
 
         const msg = buildVerificationEmail(user.fullname, verifyUrl);
-        await resend.emails.send({
-            from: "onboarding@resend.dev",
-            to: email,
-            subject: "Verify your email",
-            html: msg.html,
-            text: msg.text
-        });
+        await sendEmail(user.email, "Verify your email", msg.text ? msg : { html: msg.html, text: msg.text });
+
 
         return res.status(200).json({ message: "Verification email resent" });
     } catch (error) {
@@ -77,7 +70,9 @@ export const verifyEmail = async (req: Request, res: Response) => {
         });
 
         if (!dbToken || dbToken.expiresAt < new Date()) {
-            return res.status(400).json({ message: "Invalid or expired token" });
+            // Redirect to frontend verify page so the user sees a friendly UI message
+            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+            return res.redirect(`${clientUrl}/verify?status=error`);
         }
 
         // Mark user verified and fetch their id/email/role so we can sign an auth token
@@ -153,13 +148,7 @@ export const userRegister = async (req: Request, res: Response) => {
         const verifyUrl2 = `${backendUrl2}/users/verify?token=${token}`;
 
         const msg2 = buildVerificationEmail(fullname, verifyUrl2);
-        await resend.emails.send({
-            from: "onboarding@resend.dev",
-            to: email,
-            subject: "Verify your email",
-            html: msg2.html,
-            text: msg2.text
-        });
+        await sendEmail(email, "Verify your email", msg2);
 
         return res.status(201).json({
             success: true,

@@ -41,7 +41,7 @@ const StudentNavbar = () => {
                     </svg>
                 </span>
                 <h1 className=" md:text-2xl font-extrabold text-gray-900 tracking-tight group-hover:scale-105 transition-transform duration-200">
-                    ScholarSpere
+                    ScholarSphere
                 </h1>
             </Link>
 
