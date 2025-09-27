@@ -75,3 +75,50 @@ export const resendVerificationEmail = async (email: string) => {
     return res.json();
 };
 
+export const requestPasswordReset = async (email: string) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/request-password-reset`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to request password reset' }));
+        throw new Error(err.message || 'Failed to request password reset');
+    }
+
+    return res.json();
+};
+
+export const verifyPasswordOtp = async (email: string, otp: string) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/verify-password-otp`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to verify OTP' }));
+        throw new Error(err.message || 'Failed to verify OTP');
+    }
+
+    return res.json();
+};
+
+export const resetPassword = async (email: string, otp: string, newPassword: string) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/reset-password`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword }),
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to reset password' }));
+        throw new Error(err.message || 'Failed to reset password');
+    }
+
+    return res.json();
+};

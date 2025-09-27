@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { requestPasswordReset, verifyPasswordOtp, resetPassword } from '@/services/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -40,7 +41,7 @@ const ForgotPass = () => {
 
     // Handle email submission
     const handleEmailSubmit = useCallback(
-        (e: React.FormEvent<HTMLFormElement>) => {
+        async (e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             setError(null);
             setSuccess(null);
@@ -57,21 +58,22 @@ const ForgotPass = () => {
             }
 
             setIsLoading(true);
-
-            // TODO: Implement API call to send verification code
-            // For now, simulate the API call
-            setTimeout(() => {
-                setIsLoading(false);
-                setCurrentStep('verification');
+            try {
+                await requestPasswordReset(email);
                 setSuccess(`Verification code sent to ${email}`);
-            }, 2000);
+                setCurrentStep('verification');
+            } catch (err: any) {
+                setError(err?.message || 'Failed to send verification code');
+            } finally {
+                setIsLoading(false);
+            }
         },
         [form.email]
     );
 
     // Handle verification code submission
     const handleVerificationSubmit = useCallback(
-        (e: React.FormEvent<HTMLFormElement>) => {
+        async (e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             setError(null);
             setSuccess(null);
@@ -88,21 +90,22 @@ const ForgotPass = () => {
             }
 
             setIsLoading(true);
-
-            // TODO: Implement API call to verify code
-            // For now, simulate the API call
-            setTimeout(() => {
-                setIsLoading(false);
+            try {
+                await verifyPasswordOtp(form.email.trim(), code);
+                setSuccess('Code verified successfully');
                 setCurrentStep('reset');
-                setSuccess("Code verified successfully");
-            }, 1500);
+            } catch (err: any) {
+                setError(err?.message || 'Failed to verify code');
+            } finally {
+                setIsLoading(false);
+            }
         },
         [form.verificationCode]
     );
 
     // Handle password reset submission
     const handlePasswordResetSubmit = useCallback(
-        (e: React.FormEvent<HTMLFormElement>) => {
+        async (e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             setError(null);
             setSuccess(null);
@@ -125,12 +128,9 @@ const ForgotPass = () => {
             }
 
             setIsLoading(true);
-
-            // TODO: Implement API call to reset password
-            // For now, simulate the API call
-            setTimeout(() => {
-                setIsLoading(false);
-                setSuccess("Password reset successfully! You can now login with your new password.");
+            try {
+                await resetPassword(form.email.trim(), form.verificationCode.trim(), form.newPassword);
+                setSuccess('Password reset successfully! You can now login with your new password.');
                 // Reset form
                 setForm({
                     email: '',
@@ -138,11 +138,15 @@ const ForgotPass = () => {
                     newPassword: '',
                     confirmPassword: ''
                 });
-                // Optionally redirect to login after a delay
+                // Redirect to login after a short delay
                 setTimeout(() => {
                     window.location.href = '/login';
-                }, 3000);
-            }, 2000);
+                }, 2000);
+            } catch (err: any) {
+                setError(err?.message || 'Failed to reset password');
+            } finally {
+                setIsLoading(false);
+            }
         },
         [form]
     );
