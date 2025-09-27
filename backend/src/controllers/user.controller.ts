@@ -4,7 +4,7 @@ import { signToken } from "../middleware/auth";
 import { prisma } from "../lib/db";
 import { withDatabaseRetry, handleDatabaseError } from "../lib/databaseHealth";
 import crypto from "crypto";
-import { buildVerificationEmail } from "../Email/design.controller";
+import { buildVerificationEmail, buildPasswordResetEmail } from "../Email/design.controller";
 import { sendEmail } from "../lib/mailer";
 
 
@@ -72,10 +72,7 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
             },
         });
 
-        const msg = {
-            html: `<p>Hello ${user.fullname},</p><p>Your password reset OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`,
-            text: `Your password reset OTP is ${otp}. It expires in 10 minutes.`,
-        };
+        const msg = buildPasswordResetEmail(user.fullname, otp);
 
         await sendEmail(user.email, "Password Reset OTP", msg);
 
@@ -208,9 +205,13 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
         // Redirect user to the frontend verify page so the UI can show a success message
         const clientUrl2 = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+
         const safeClientUrl2 = typeof clientUrl2 === 'string' && clientUrl2.length > 0 ? clientUrl2 : 'http://localhost:5173';
+
         const redirectUrl = `${safeClientUrl2}/verify?status=success&email=${encodeURIComponent(updatedUser?.email || '')}`;
         return res.redirect(redirectUrl);
+
+
     } catch (error) {
         console.log("Error Verify Email: ", error);
         const fallbackClient = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
