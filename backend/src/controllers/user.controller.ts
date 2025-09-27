@@ -48,7 +48,11 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
         const verifyUrl = `${backendUrl}/users/verify?token=${token}`;
 
         const msg = buildVerificationEmail(user.fullname, verifyUrl);
-        await sendEmail(user.email, "Verify your email", msg.text ? msg : { html: msg.html, text: msg.text });
+        // Send email in background so a slow SMTP server doesn't block the HTTP response
+        // We intentionally do NOT await this promise; failures are logged.
+        sendEmail(user.email, "Verify your email", msg.text ? msg : { html: msg.html, text: msg.text })
+            .then(() => console.log(`Verification email (resend) queued for ${user.email}`))
+            .catch(err => console.error('Failed to send verification email (resend):', err));
 
 
         return res.status(200).json({ message: "Verification email resent" });
@@ -143,12 +147,15 @@ export const userRegister = async (req: Request, res: Response) => {
             }
         });
 
-        // Build backend verify URL (so clicking the link hits the server to validate the token)
+
         const backendUrl2 = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
         const verifyUrl2 = `${backendUrl2}/users/verify?token=${token}`;
 
         const msg2 = buildVerificationEmail(fullname, verifyUrl2);
-        await sendEmail(email, "Verify your email", msg2);
+        // Fire-and-forget: don't block user creation on email delivery latency
+        sendEmail(email, "Verify your email", msg2)
+            .then(() => console.log(`Verification email queued for ${email}`))
+            .catch(err => console.error('Failed to send verification email (registration):', err));
 
         return res.status(201).json({
             success: true,
