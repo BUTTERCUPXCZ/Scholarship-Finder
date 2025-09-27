@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes';
+import { warmUpTransport } from './lib/mailer';
 import { startScholarshipJobs } from './controllers/job/scholarshipJobs';
 import { startExpiredScholarshipJob } from './jobs/expiredScholarshipJob';
 import scholarRoutes from './routes/scholar.routes';
@@ -102,6 +103,9 @@ const server = http.createServer(app);
 
 // Initialize Socket.IO
 const io = initializeSocket(server);
+
+// Warm up SMTP transport to avoid first-email latency (fire-and-forget)
+warmUpTransport().catch(err => console.error('Warm up transport error:', err));
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
