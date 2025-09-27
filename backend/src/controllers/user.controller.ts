@@ -152,7 +152,7 @@ export const userRegister = async (req: Request, res: Response) => {
         const verifyUrl2 = `${backendUrl2}/users/verify?token=${token}`;
 
         const msg2 = buildVerificationEmail(fullname, verifyUrl2);
-        // Fire-and-forget: don't block user creation on email delivery latency
+
         sendEmail(email, "Verify your email", msg2)
             .then(() => console.log(`Verification email queued for ${email}`))
             .catch(err => console.error('Failed to send verification email (registration):', err));
