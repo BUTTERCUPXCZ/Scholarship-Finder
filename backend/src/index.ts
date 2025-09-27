@@ -27,6 +27,9 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
 
+// If behind a proxy (like Vercel, Heroku), trust the proxy so req.protocol and req.hostname are correct
+app.set('trust proxy', 1);
+
 
 startScholarshipJobs();
 startExpiredScholarshipJob();
@@ -55,7 +58,7 @@ if (NODE_ENV === 'production') {
 const corsOrigins =
     NODE_ENV === "production"
         ? [process.env.FRONTEND_URL!]
-        : ["http://localhost:5173", "http://    localhost:5174"];
+        : ["http://localhost:5173", "http://localhost:5174"];
 
 app.use(
     cors({

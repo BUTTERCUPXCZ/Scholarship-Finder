@@ -42,9 +42,9 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
             }
         });
 
-        // Send user to the backend verify endpoint which will validate the token
-        // and then redirect to the frontend with the result (status=success|error).
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        // Prefer explicit BACKEND_URL in env (production). If missing, build from the incoming request
+        // so emails generated in production behind a proxy still contain the correct domain.
+        const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const verifyUrl = `${backendUrl}/users/verify?token=${token}`;
 
         const msg = buildVerificationEmail(user.fullname, verifyUrl);
@@ -75,8 +75,11 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
         if (!dbToken || dbToken.expiresAt < new Date()) {
             // Redirect to frontend verify page so the user sees a friendly UI message
-            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-            return res.redirect(`${clientUrl}/verify?status=error`);
+            // Prefer configured CLIENT_URL or FRONTEND_URL in production (e.g. your Vercel domain).
+            // If missing, try to build a URL from the incoming request so redirects still work when behind a proxy.
+            const clientUrl = (process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+            const safeClientUrl = typeof clientUrl === 'string' && clientUrl.length > 0 ? clientUrl : 'http://localhost:5173';
+            return res.redirect(`${safeClientUrl}/verify?status=error`);
         }
 
         // Mark user verified and fetch their id/email/role so we can sign an auth token
@@ -107,12 +110,15 @@ export const verifyEmail = async (req: Request, res: Response) => {
         }
 
         // Redirect user to the frontend verify page so the UI can show a success message
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-        const redirectUrl = `${clientUrl}/verify?status=success&email=${encodeURIComponent(updatedUser?.email || '')}`;
+        const clientUrl2 = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+        const safeClientUrl2 = typeof clientUrl2 === 'string' && clientUrl2.length > 0 ? clientUrl2 : 'http://localhost:5173';
+        const redirectUrl = `${safeClientUrl2}/verify?status=success&email=${encodeURIComponent(updatedUser?.email || '')}`;
         return res.redirect(redirectUrl);
     } catch (error) {
         console.log("Error Verify Email: ", error);
-        return res.redirect(`${process.env.CLIENT_URL}/verify?status=error`);
+        const fallbackClient = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+        const safeFallback = typeof fallbackClient === 'string' && fallbackClient.length > 0 ? fallbackClient : 'http://localhost:5173';
+        return res.redirect(`${safeFallback}/verify?status=error`);
     }
 }
 
@@ -148,7 +154,7 @@ export const userRegister = async (req: Request, res: Response) => {
         });
 
 
-        const backendUrl2 = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl2 = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const verifyUrl2 = `${backendUrl2}/users/verify?token=${token}`;
 
         const msg2 = buildVerificationEmail(fullname, verifyUrl2);
