@@ -59,11 +59,16 @@ model Scholarship {
   applications Application[]
   provider     User              @relation("ScholarshipOrg", fields: [providerId], references: [id])
 
+  // Your existing indexes (keep these)
   @@index([status, deadline])
   @@index([deadline, status])
   @@index([createdAt])
   @@index([providerId, status])
   @@index([status])
+  // NEW INDEXES (add these)
+  @@index([status, createdAt(sort: Desc)])
+  @@index([status, type])
+  @@index([status, type, createdAt(sort: Desc)])
 }
 
 model Application {

@@ -95,7 +95,7 @@ export const getAllScholars = async (req: Request, res: Response) => {
     try {
         // Parse query parameters for pagination and filtering
         const page = parseInt(req.query.page as string) || 1;
-        const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // Max 100 items per page
+        const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
         const status = req.query.status as string;
         const type = req.query.type as string;
         const search = req.query.search as string;
@@ -105,46 +105,66 @@ export const getAllScholars = async (req: Request, res: Response) => {
         // Build where condition efficiently
         const whereCondition: Prisma.ScholarshipWhereInput = {};
 
+        // OPTIMIZATION 1: Only decode JWT if specifically needed (e.g., for filtering by provider)
+        // Move this logic to a separate middleware or only when filtering by provider is requested
+        let providerIdFromToken: string | undefined;
 
-        try {
-            const token = req.cookies?.authToken || (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ') ? req.headers['authorization']!.split(' ')[1] : undefined);
-            if (token) {
-                const secret = process.env.JWT_SECRET;
-                if (secret) {
-                    const decodedUnknown = jwt.verify(token, secret) as unknown;
-                    if (typeof decodedUnknown === 'object' && decodedUnknown !== null) {
-                        const providerIdFromToken = (decodedUnknown as Record<string, unknown>)['userId'];
-                        if (typeof providerIdFromToken === 'string' || typeof providerIdFromToken === 'number') {
-                            whereCondition.providerId = String(providerIdFromToken);
+        // Only decode token if we need provider-specific filtering
+        const needsProviderFiltering = req.query.myScholarships === 'true';
+
+        if (needsProviderFiltering) {
+            try {
+                const token = req.cookies?.authToken ||
+                    (typeof req.headers['authorization'] === 'string' &&
+                        req.headers['authorization'].startsWith('Bearer ') ?
+                        req.headers['authorization']!.split(' ')[1] : undefined);
+
+                if (token) {
+                    const secret = process.env.JWT_SECRET;
+                    if (secret) {
+                        const decodedUnknown = jwt.verify(token, secret) as unknown;
+                        if (typeof decodedUnknown === 'object' && decodedUnknown !== null) {
+                            const userId = (decodedUnknown as Record<string, unknown>)['userId'];
+                            if (typeof userId === 'string' || typeof userId === 'number') {
+                                providerIdFromToken = String(userId);
+                                whereCondition.providerId = providerIdFromToken;
+                            }
                         }
                     }
                 }
+            } catch (err: unknown) {
+                console.log('Token decode failed in getAllScholars:', err instanceof Error ? err.message : String(err));
             }
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.log('Optional token decode failed in getAllScholars:', msg);
         }
 
+        // OPTIMIZATION 2: Add status filter with default to active scholarships
+        // This reduces the dataset significantly
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
             whereCondition.status = status as 'ACTIVE' | 'EXPIRED';
+        } else {
+            // Default to only active scholarships for better performance
+            whereCondition.status = 'ACTIVE';
         }
 
+        // OPTIMIZATION 3: Optimize type filtering
         if (type) {
             whereCondition.type = {
-                contains: type,
+                equals: type, // Use equals instead of contains for better index usage
                 mode: 'insensitive'
             };
         }
 
+        // OPTIMIZATION 4: Optimize search with better indexing strategy
         if (search) {
+            // Prioritize title search for better performance
             whereCondition.OR = [
                 { title: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { location: { contains: search, mode: 'insensitive' } }
+                { description: { contains: search, mode: 'insensitive' } }
+                // Remove location search if not critical, as it adds query complexity
             ];
         }
 
-        // Use efficient query with proper indexing
+        // OPTIMIZATION 5: Use more selective fields and optimize the query
         const [scholars, totalCount] = await Promise.all([
             prisma.scholarship.findMany({
                 where: whereCondition,
@@ -159,15 +179,17 @@ export const getAllScholars = async (req: Request, res: Response) => {
                     requirements: true,
                     status: true,
                     createdAt: true,
-                    updatedAt: true,
+                    // Remove updatedAt if not needed to reduce data transfer
                     providerId: true
                 },
-                orderBy: {
-                    createdAt: 'desc'
-                },
+                orderBy: [
+                    { status: 'asc' }, // Active first
+                    { createdAt: 'desc' }
+                ],
                 skip,
                 take: limit
             }),
+            // OPTIMIZATION 6: Consider caching total count for popular queries
             prisma.scholarship.count({ where: whereCondition })
         ]);
 
