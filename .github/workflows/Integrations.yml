@@ -26,6 +26,12 @@ jobs:
           - name: Install dependencies
             run: npm install
 
+          - name: Run build
+            run: npm run build
+
+          - name: Run tests
+            run: npm test -- --watchAll=false
+
         
     backend:
         name: Build backend
@@ -45,6 +51,12 @@ jobs:
          
           - name: Install dependencies
             run: npm install
+
+          - name: Run lint
+            run: npm run lint
+
+          - name: Run tests
+            run: npm test
 
           
 
