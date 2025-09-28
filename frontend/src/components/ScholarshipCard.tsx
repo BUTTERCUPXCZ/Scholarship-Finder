@@ -63,7 +63,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     const getStatusText = () => {
         if (isExpired) return 'Expired'
         if (daysLeft !== null && daysLeft <= 7) return `${daysLeft} days left`
-        return 'Ready'
+        return null
     }
 
     const getStatusColor = () => {
@@ -78,9 +78,20 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">{scholarship.type}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor()}`}>
-                        {getStatusText()}
-                    </span>
+                    {/* Only render the status badge when there's text to show. This
+                        prevents an empty green pill from appearing when the status
+                        is neither expired nor near-deadline. */}
+                    {(() => {
+                        const statusText = getStatusText()
+                        const statusColor = getStatusColor()
+                        return (
+                            statusText && (
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColor}`}>
+                                    {statusText}
+                                </span>
+                            )
+                        )
+                    })()}
                 </div>
             </div>
 
