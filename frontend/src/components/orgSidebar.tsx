@@ -8,12 +8,10 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarGroupContent,
-    SidebarFooter,
 } from './ui/sidebar'
 import {
     Building2,
     BarChart3,
-    Settings,
     GraduationCap,
     Archive,
     MessageCircle,
@@ -99,18 +97,7 @@ const OrgSidebar = () => {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <Link to="/ProfileOrg" className="flex items-center gap-2">
-                                <Settings className="size-4" />
-                                <span>Profile</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
+
         </Sidebar>
     )
 }

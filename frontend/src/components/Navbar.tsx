@@ -22,14 +22,37 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    const handleLogout = () => {
-        logout()
+    const handleLogout = async () => {
+        try {
+            // logout may be async
+            await logout()
+        } catch (err) {
+            // ignore logout errors but log for debugging
+            // eslint-disable-next-line no-console
+            console.error('Logout error', err)
+        }
         navigate('/login')
         setOpen(false)
     }
 
-    const handleprofile = () => {
-        navigate('/Profile');
+    const handleProfileClick = () => {
+        // Route to the appropriate profile page depending on role
+        if (user?.role === 'ORGANIZATION') {
+            navigate('/Profile-organization')
+        } else {
+            navigate('/profile')
+        }
+        setOpen(false)
+    }
+
+    const handleSettingsClick = () => {
+        // Default settings route; can be adjusted if organization has a separate settings page
+        if (user?.role === 'ORGANIZATION') {
+            navigate('/organization/settings')
+        } else {
+            navigate('/settings')
+        }
+        setOpen(false)
     }
 
     const getUserDisplayName = () => {
@@ -95,10 +118,10 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
                             </svg>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={handleprofile} className="cursor-pointer">
+                            <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
                                 <span>Profile</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
                                 <span>Settings</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -149,10 +172,10 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
                                 </div>
                                 <span className="text-sm font-medium">{getUserDisplayName()}</span>
                             </div>
-                            <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded">
+                            <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded" onClick={handleProfileClick}>
                                 Profile
                             </button>
-                            <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded">
+                            <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded" onClick={handleSettingsClick}>
                                 Settings
                             </button>
                             <button

@@ -181,7 +181,7 @@ function App() {
             />
 
             <Route
-              path="/Profile"
+              path="/Profile-organization"
               element={
                 <ProtectedRoute allowedRoles={['ORGANIZATION']}>
                   <div className={!isOnline ? 'pt-16' : ''}>
