@@ -8,14 +8,23 @@ import { deleteScholarship } from '../controllers/scholar.controller';
 const router = express.Router();
 
 router.post('/create-scholar', authenticate, createScholar);
+
 router.get('/get-scholars', getAllScholars); // Remove authentication - allow public access
-router.get('/public', getPublicScholars); // Public endpoint for students to browse active scholarships
-router.get('/organization', authenticate, getOrganizationScholarships); // Get scholarships for authenticated organization
+
+router.get('/public', getPublicScholars);
+
+router.get('/organization', authenticate, getOrganizationScholarships);
+
 router.get('/get-scholarship/:id', authenticate, getScholarshipById);
+
 router.put('/update-scholar/:id', authenticate, updateScholar);
+
 router.delete('/delete-scholar/:id', authenticate, deleteScholarship);
+
 router.post('/archive-scholar/:id', authenticate, ArchiveScholarship);
-router.post('/update-expired', authenticate, updateExpiredScholarshipsEndpoint); // Updated to use new endpoint
+
+router.post('/update-expired', authenticate, updateExpiredScholarshipsEndpoint);
+
 router.post('/get-archived', authenticate, getArchivedScholarships);
 
 

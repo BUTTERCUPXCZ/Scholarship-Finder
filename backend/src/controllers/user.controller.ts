@@ -18,11 +18,13 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 export const resetPassword = async (req: Request, res: Response) => {
     try {
         const { email, otp, newPassword } = req.body;
+
         if (!email || !otp || !newPassword) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
+
         if (!user) return res.status(404).json({ message: "User not found" });
 
         const tokenEntry = await prisma.passwordResetToken.findFirst({

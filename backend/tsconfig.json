@@ -20,7 +20,11 @@
     "declaration": false,
     "sourceMap": false,
     "baseUrl": ".",
-    "allowJs": true
+    "allowJs": true,
+    "types": [
+      "node",
+      "jest"
+    ],
   },
   "include": [
     "src/**/*",

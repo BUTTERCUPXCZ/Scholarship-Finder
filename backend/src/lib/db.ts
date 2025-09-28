@@ -45,11 +45,13 @@ async function connectWithRetry(retries = 5, delay = 2000): Promise<void> {
     }
 }
 
-// Initialize connection with retry logic
-connectWithRetry().catch(error => {
-    console.error('💥 Critical: Could not establish database connection:', error)
-    // Don't exit the process, let the app handle gracefully
-})
+// ✅ Only connect if not running tests
+if (process.env.NODE_ENV !== 'test') {
+    connectWithRetry().catch(error => {
+        console.error('💥 Critical: Could not establish database connection:', error)
+        // Don't exit the process, let the app handle gracefully
+    })
+}
 
 // Graceful shutdown
 const gracefulShutdown = async () => {
