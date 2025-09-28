@@ -34,7 +34,7 @@ export const getUserNotifications = async (userId: string, options?: { page?: nu
         const limit = Math.min(options?.limit || 20, 50); // Cap at 50
         const skip = (page - 1) * limit;
 
-        const where: any = { userId };
+        const where: { userId: string; read?: boolean } = { userId };
         if (options?.onlyUnread) {
             where.read = false;
         }
@@ -68,7 +68,7 @@ export const getUserNotifications = async (userId: string, options?: { page?: nu
                 hasPrev: page > 1
             }
         };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error fetching notifications:', error);
         throw error;
     }
@@ -96,7 +96,7 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
         }
 
         return notification;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error marking notification as read:', error);
         throw error;
     }
@@ -115,7 +115,7 @@ export const markAllNotificationsAsRead = async (userId: string) => {
         });
 
         return notifications;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error marking all notifications as read:', error);
         throw error;
     }
@@ -134,7 +134,7 @@ export const deleteNotification = async (notificationId: string, userId: string)
         emitNotificationDeleted(userId, notificationId);
 
         return deletedNotification;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error deleting notification:', error);
         throw error;
     }

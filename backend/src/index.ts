@@ -1,8 +1,5 @@
-/// <reference path="./types/global.d.ts" />
-
 import express, { Request, Response } from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -18,7 +15,6 @@ import uploadRoutes from './routes/upload.routes';
 import notificationRoutes from './routes/notification.routes';
 import rateLimit from 'express-rate-limit';
 import { initializeSocket } from './services/socketService';
-import path from 'path';
 
 dotenv.config();
 
@@ -104,8 +100,8 @@ app.use('/notifications', notificationRoutes);
 
 const server = http.createServer(app);
 
-// Initialize Socket.IO
-const io = initializeSocket(server);
+// Initialize Socket.IO (we don't need the returned instance here)
+initializeSocket(server);
 
 // Warm up SMTP transport to avoid first-email latency (fire-and-forget)
 warmUpTransport().catch(err => console.error('Warm up transport error:', err));

@@ -66,7 +66,7 @@ export class DatabaseHealthCheck {
     }
 }
 
-// Wrapper function for database operations with retry logic
+
 export async function withDatabaseRetry<T>(
     operation: () => Promise<T>,
     maxRetries = 3
@@ -74,24 +74,31 @@ export async function withDatabaseRetry<T>(
     return DatabaseHealthCheck.retryOperation(operation, maxRetries);
 }
 
-// Helper for handling database errors
-export function handleDatabaseError(error: any, context: string) {
-    if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
-        console.error(`${context}: Database connection failed`, error);
-        return {
-            error: 'DATABASE_CONNECTION_FAILED',
-            message: 'Unable to connect to database. Please try again later.',
-            retryable: true
-        };
-    }
 
-    if (error.code === 'P2002') {
-        console.error(`${context}: Unique constraint violation`, error);
-        return {
-            error: 'UNIQUE_CONSTRAINT_VIOLATION',
-            message: 'A record with this information already exists.',
-            retryable: false
-        };
+export function handleDatabaseError(error: unknown, context: string) {
+    // Narrow unknown to an object that may include Prisma error properties
+    const isPrismaError = (err: unknown): err is { code?: string; message?: string } => {
+        return typeof err === 'object' && err !== null && ('code' in err || 'message' in err);
+    };
+
+    if (isPrismaError(error)) {
+        if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
+            console.error(`${context}: Database connection failed`, error);
+            return {
+                error: 'DATABASE_CONNECTION_FAILED',
+                message: 'Unable to connect to database. Please try again later.',
+                retryable: true
+            };
+        }
+
+        if (error.code === 'P2002') {
+            console.error(`${context}: Unique constraint violation`, error);
+            return {
+                error: 'UNIQUE_CONSTRAINT_VIOLATION',
+                message: 'A record with this information already exists.',
+                retryable: false
+            };
+        }
     }
 
     console.error(`${context}: Unexpected database error`, error);

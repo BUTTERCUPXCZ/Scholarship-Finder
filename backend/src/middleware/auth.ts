@@ -1,22 +1,13 @@
-/// <reference path="../types/global.d.ts" />
-import jwt, { SignOptions } from "jsonwebtoken";
+import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Request, Response, NextFunction } from "express";
 
 dotenv.config();
 
-// Extend Express Request interface to include user and userId
-declare module "express-serve-static-core" {
-    interface Request {
-        user?: any;
-        userId?: string | number;
-    }
-}
-
 // User object we accept for signing
 interface JwtUser {
     id: string | number;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 // Shape of payload we embed in the token
@@ -24,6 +15,14 @@ interface JwtPayload {
     userId: string | number;
     iat?: number;
     exp?: number;
+}
+
+// Extend Express Request interface to include user and userId
+declare module "express-serve-static-core" {
+    interface Request {
+        user?: JwtUser;
+        userId?: string | number;
+    }
 }
 
 // Generate JWT token for a user
@@ -35,10 +34,17 @@ export const signToken = (user: JwtUser): string => {
         throw new Error("JWT_SECRET is not defined in environment variables.");
     }
 
+    const expiresEnv = process.env.JWT_EXPIRES_IN;
+    const expiresInValue: number | string = expiresEnv && !Number.isNaN(Number(expiresEnv))
+        ? Number(expiresEnv)
+        : (expiresEnv || "1d");
+
+    const signOptions: SignOptions = { expiresIn: expiresInValue as SignOptions['expiresIn'] };
+
     return jwt.sign(
         payload,
-        secret,
-        { expiresIn: (process.env.JWT_EXPIRES_IN || "1d") as any }
+        secret as Secret,
+        signOptions
     );
 };
 
@@ -47,7 +53,7 @@ export const authenticate = (
     req: Request,
     res: Response,
     next: NextFunction
-): Response<any, Record<string, any>> | void => {
+): Response | void => {
     // First try to get token from cookie (HTTP-only cookie method)
     let token = req.cookies?.authToken;
 
@@ -83,24 +89,36 @@ export const authenticate = (
         req.user = { id: decoded.userId };
         req.userId = decoded.userId;
         next();
-    } catch (err: any) {
-        console.log('Authentication failed:', err.message);
+    } catch (err: unknown) {
+        const isJwtError = (e: unknown): e is { name?: string; message?: string } =>
+            typeof e === 'object' && e !== null && ('name' in e || 'message' in e);
 
-        // Provide more specific error messages
-        let errorMessage = "Invalid or expired token";
-        let errorCode = "INVALID_TOKEN";
+        if (isJwtError(err)) {
+            console.log('Authentication failed:', err.message);
 
-        if (err.name === 'TokenExpiredError') {
-            errorMessage = "Token has expired";
-            errorCode = "TOKEN_EXPIRED";
-        } else if (err.name === 'JsonWebTokenError') {
-            errorMessage = "Invalid token format";
-            errorCode = "MALFORMED_TOKEN";
+            // Provide more specific error messages
+            let errorMessage = "Invalid or expired token";
+            let errorCode = "INVALID_TOKEN";
+
+            if (err.name === 'TokenExpiredError') {
+                errorMessage = "Token has expired";
+                errorCode = "TOKEN_EXPIRED";
+            } else if (err.name === 'JsonWebTokenError') {
+                errorMessage = "Invalid token format";
+                errorCode = "MALFORMED_TOKEN";
+            }
+
+            return res.status(401).json({
+                message: errorMessage,
+                error: errorCode
+            });
         }
 
+        // Unknown error shape
+        console.log('Authentication failed:', err);
         return res.status(401).json({
-            message: errorMessage,
-            error: errorCode
+            message: 'Invalid or expired token',
+            error: 'INVALID_TOKEN'
         });
     }
 };

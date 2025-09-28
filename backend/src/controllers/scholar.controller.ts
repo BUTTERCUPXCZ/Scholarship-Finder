@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';

@@ -1,10 +1,14 @@
-import { Request, Response } from 'express';
+import { Request, Response, RequestHandler } from 'express';
 import { createClient } from '@supabase/supabase-js';
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 
-// Initialize Supabase client with service role key for server-side operations
-const supabaseUrl = (process.env as any).SUPABASE_URL as string;
-const supabaseServiceKey = (process.env as any).SUPABASE_SERVICE_ROLE_KEY as string;
+interface AuthenticatedRequest extends Request {
+    userId?: string; // set by your auth middleware
+    files?: Express.Multer.File[]; // multer adds this when using upload.array(...)
+}
+
+const supabaseUrl = (process.env).SUPABASE_URL as string;
+const supabaseServiceKey = (process.env).SUPABASE_SERVICE_ROLE_KEY as string;
 
 if (!supabaseUrl || !supabaseServiceKey) {
     console.error('Missing Supabase configuration. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
@@ -27,7 +31,7 @@ const upload = multer({
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB limit
     },
-    fileFilter: (req: any, file: any, cb: any) => {
+    fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
         // Allow PDF, DOC, DOCX, and image files
         const allowedMimeTypes = [
             'application/pdf',
@@ -46,24 +50,23 @@ const upload = multer({
     }
 });
 
-export const uploadMiddleware = upload.array('documents', 5); // Max 5 files
+export const uploadMiddleware = upload.array('documents', 5);
 
-/**
- * Upload files to Supabase storage
- */
-export const uploadFiles = async (req: Request, res: Response) => {
+
+
+export const uploadFiles: RequestHandler = async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         console.log('Upload files endpoint called');
 
-        const userId = req.userId as string;
+        const userId = authReq.userId as string | undefined;
         if (!userId) {
             console.error('No user ID found in request');
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const files = req.files as any[];
+        const files = authReq.files;
         if (!files || files.length === 0) {
-            console.error('No files provided in request');
             return res.status(400).json({ message: 'No files provided' });
         }
 
@@ -83,7 +86,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
                 console.log(`Storage path: ${storagePath}`);
 
                 // Upload to Supabase storage
-                const { data, error } = await supabase.storage
+                const { error } = await supabase.storage
                     .from(BUCKET_NAME)
                     .upload(storagePath, file.buffer, {
                         contentType: file.mimetype,
@@ -118,7 +121,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
                         }
 
                         // Retry upload after creating bucket
-                        const { data: retryData, error: retryError } = await supabase.storage
+                        const { error: retryError } = await supabase.storage
                             .from(BUCKET_NAME)
                             .upload(storagePath, file.buffer, {
                                 contentType: file.mimetype,
@@ -181,11 +184,12 @@ export const uploadFiles = async (req: Request, res: Response) => {
 /**
  * Download a file from Supabase storage with proper authentication
  */
-export const downloadFile = async (req: Request, res: Response) => {
+export const downloadFile: RequestHandler = async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         // Extract the storage path from the request body
         const { storagePath } = req.body;
-        const userId = req.userId as string;
+        const userId = authReq.userId as string | undefined;
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });

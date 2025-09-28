@@ -12,22 +12,6 @@ interface ApplicationDocumentData {
     storagePath: string;
 }
 
-
-interface ApplicationSubmissionData {
-    scholarshipId: string;
-
-    Firstname: string;
-    Middlename?: string;
-    Lastname: string;
-    Email: string;
-    Phone: string;
-    Address: string;
-    City: string;
-
-    personalStatement?: string;
-    documents?: ApplicationDocumentData[];
-}
-
 /**
  * Submit an application for a scholarship
  */
