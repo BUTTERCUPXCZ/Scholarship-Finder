@@ -1,4 +1,4 @@
-import { Request, Response, RequestHandler } from 'express';
+import { Request, RequestHandler } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import multer, { FileFilterCallback } from 'multer';
 

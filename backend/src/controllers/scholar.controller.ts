@@ -1,5 +1,6 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Request, Response } from "express";
+import type { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
@@ -8,14 +9,12 @@ import { prisma } from "../lib/db";
 
 export const createScholar = async (req: Request, res: Response) => {
     try {
-
         const providerId = req.userId as string | undefined;
         if (!providerId) {
-            return res.status(401).json({ message: "Unauthorized: provider id missing" });
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
         }
 
         const parsedBody: CreateScholarInput = createScholarSchema.parse(req.body);
-
         const { title, type, description, location, requirements, benefits, deadline } = parsedBody;
 
         const deadlineDate = new Date(deadline);
@@ -36,8 +35,7 @@ export const createScholar = async (req: Request, res: Response) => {
 
         return res.status(201).json({ success: true, message: "Scholarship Created", data: scholar });
 
-    } catch (error: any) {
-
+    } catch (error: unknown) {
         if (error instanceof ZodError) {
             return res.status(400).json({ message: "Validation error", errors: error.issues });
         }
@@ -105,30 +103,26 @@ export const getAllScholars = async (req: Request, res: Response) => {
         const skip = (page - 1) * limit;
 
         // Build where condition efficiently
-        const whereCondition: any = {};
+        const whereCondition: Prisma.ScholarshipWhereInput = {};
 
-        // If a valid JWT is provided (cookie or Authorization header), decode it
-        // and filter scholarships to only those provided by that organization.
-        // This keeps the endpoint public (no required auth) but enables
-        // organization pages to automatically receive only their scholarships
-        // when they include the auth token.
+
         try {
             const token = req.cookies?.authToken || (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ') ? req.headers['authorization']!.split(' ')[1] : undefined);
             if (token) {
                 const secret = process.env.JWT_SECRET;
                 if (secret) {
-                    const decoded = jwt.verify(token, secret) as any;
-                    const providerIdFromToken = decoded?.userId as string | number | undefined;
-                    if (providerIdFromToken !== undefined && providerIdFromToken !== null) {
-                        // Ensure we store a string providerId (Prisma schema may use string IDs)
-                        whereCondition.providerId = String(providerIdFromToken);
+                    const decodedUnknown = jwt.verify(token, secret) as unknown;
+                    if (typeof decodedUnknown === 'object' && decodedUnknown !== null) {
+                        const providerIdFromToken = (decodedUnknown as Record<string, unknown>)['userId'];
+                        if (typeof providerIdFromToken === 'string' || typeof providerIdFromToken === 'number') {
+                            whereCondition.providerId = String(providerIdFromToken);
+                        }
                     }
                 }
             }
-        } catch (err) {
-            // If token is invalid or verification fails, ignore and continue
-            // returning public list of scholarships. Do not block the request.
-            console.log('Optional token decode failed in getAllScholars:', (err as any)?.message || err);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.log('Optional token decode failed in getAllScholars:', msg);
         }
 
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
@@ -190,7 +184,7 @@ export const getAllScholars = async (req: Request, res: Response) => {
                 hasPrev: page > 1
             }
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error fetching scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
@@ -452,7 +446,7 @@ export const getPublicScholars = async (req: Request, res: Response) => {
 
         const skip = (page - 1) * limit;
 
-        const whereCondition: any = {
+        const whereCondition: Prisma.ScholarshipWhereInput = {
             status: 'ACTIVE' // only active scholarships for students by default
         };
 

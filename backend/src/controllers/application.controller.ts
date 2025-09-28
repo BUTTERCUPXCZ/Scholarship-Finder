@@ -3,15 +3,6 @@ import { submitApplicationSchema } from '../Validators/Application';
 import { prisma } from '../lib/db';
 import { createNotification } from '../services/notification';
 
-
-interface ApplicationDocumentData {
-    filename: string;
-    contentType: string;
-    size: number;
-    fileUrl: string;
-    storagePath: string;
-}
-
 /**
  * Submit an application for a scholarship
  */
