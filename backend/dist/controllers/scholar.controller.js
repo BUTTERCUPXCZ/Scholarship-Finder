@@ -13,7 +13,7 @@ const createScholar = async (req, res) => {
     try {
         const providerId = req.userId;
         if (!providerId) {
-            return res.status(401).json({ message: "Unauthorized: provider id missing" });
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
         }
         const parsedBody = CreateScholar_1.createScholarSchema.parse(req.body);
         const { title, type, description, location, requirements, benefits, deadline } = parsedBody;
@@ -98,16 +98,19 @@ const getAllScholars = async (req, res) => {
             if (token) {
                 const secret = process.env.JWT_SECRET;
                 if (secret) {
-                    const decoded = jsonwebtoken_1.default.verify(token, secret);
-                    const providerIdFromToken = decoded?.userId;
-                    if (providerIdFromToken !== undefined && providerIdFromToken !== null) {
-                        whereCondition.providerId = String(providerIdFromToken);
+                    const decodedUnknown = jsonwebtoken_1.default.verify(token, secret);
+                    if (typeof decodedUnknown === 'object' && decodedUnknown !== null) {
+                        const providerIdFromToken = decodedUnknown['userId'];
+                        if (typeof providerIdFromToken === 'string' || typeof providerIdFromToken === 'number') {
+                            whereCondition.providerId = String(providerIdFromToken);
+                        }
                     }
                 }
             }
         }
         catch (err) {
-            console.log('Optional token decode failed in getAllScholars:', err?.message || err);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.log('Optional token decode failed in getAllScholars:', msg);
         }
         if (status && ['ACTIVE', 'EXPIRED'].includes(status)) {
             whereCondition.status = status;

@@ -11,6 +11,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const morgan_1 = __importDefault(require("morgan"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
+const mailer_1 = require("./lib/mailer");
 const scholarshipJobs_1 = require("./controllers/job/scholarshipJobs");
 const expiredScholarshipJob_1 = require("./jobs/expiredScholarshipJob");
 const scholar_routes_1 = __importDefault(require("./routes/scholar.routes"));
@@ -23,6 +24,7 @@ dotenv_1.default.config();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const app = (0, express_1.default)();
+app.set('trust proxy', 1);
 (0, scholarshipJobs_1.startScholarshipJobs)();
 (0, expiredScholarshipJob_1.startExpiredScholarshipJob)();
 app.use((0, helmet_1.default)({
@@ -41,7 +43,7 @@ if (NODE_ENV === 'production') {
 }
 const corsOrigins = NODE_ENV === "production"
     ? [process.env.FRONTEND_URL]
-    : ["http://localhost:5173", "http://    localhost:5174"];
+    : ["http://localhost:5173", "http://localhost:5174"];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         if (!origin)
@@ -76,7 +78,8 @@ app.use('/applications', application_routes_1.default);
 app.use('/upload', upload_routes_1.default);
 app.use('/notifications', notification_routes_1.default);
 const server = http_1.default.createServer(app);
-const io = (0, socketService_1.initializeSocket)(server);
+(0, socketService_1.initializeSocket)(server);
+(0, mailer_1.warmUpTransport)().catch(err => console.error('Warm up transport error:', err));
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log('Socket.IO server initialized for real-time notifications');

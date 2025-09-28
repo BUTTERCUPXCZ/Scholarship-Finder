@@ -13,7 +13,12 @@ const signToken = (user) => {
     if (!secret) {
         throw new Error("JWT_SECRET is not defined in environment variables.");
     }
-    return jsonwebtoken_1.default.sign(payload, secret, { expiresIn: (process.env.JWT_EXPIRES_IN || "1d") });
+    const expiresEnv = process.env.JWT_EXPIRES_IN;
+    const expiresInValue = expiresEnv && !Number.isNaN(Number(expiresEnv))
+        ? Number(expiresEnv)
+        : (expiresEnv || "1d");
+    const signOptions = { expiresIn: expiresInValue };
+    return jsonwebtoken_1.default.sign(payload, secret, signOptions);
 };
 exports.signToken = signToken;
 const authenticate = (req, res, next) => {
@@ -46,20 +51,28 @@ const authenticate = (req, res, next) => {
         next();
     }
     catch (err) {
-        console.log('Authentication failed:', err.message);
-        let errorMessage = "Invalid or expired token";
-        let errorCode = "INVALID_TOKEN";
-        if (err.name === 'TokenExpiredError') {
-            errorMessage = "Token has expired";
-            errorCode = "TOKEN_EXPIRED";
+        const isJwtError = (e) => typeof e === 'object' && e !== null && ('name' in e || 'message' in e);
+        if (isJwtError(err)) {
+            console.log('Authentication failed:', err.message);
+            let errorMessage = "Invalid or expired token";
+            let errorCode = "INVALID_TOKEN";
+            if (err.name === 'TokenExpiredError') {
+                errorMessage = "Token has expired";
+                errorCode = "TOKEN_EXPIRED";
+            }
+            else if (err.name === 'JsonWebTokenError') {
+                errorMessage = "Invalid token format";
+                errorCode = "MALFORMED_TOKEN";
+            }
+            return res.status(401).json({
+                message: errorMessage,
+                error: errorCode
+            });
         }
-        else if (err.name === 'JsonWebTokenError') {
-            errorMessage = "Invalid token format";
-            errorCode = "MALFORMED_TOKEN";
-        }
+        console.log('Authentication failed:', err);
         return res.status(401).json({
-            message: errorMessage,
-            error: errorCode
+            message: 'Invalid or expired token',
+            error: 'INVALID_TOKEN'
         });
     }
 };

@@ -6,17 +6,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const upload_controller_1 = require("../controllers/upload.controller");
 const auth_1 = require("../middleware/auth");
+const multer_1 = require("multer");
 const router = express_1.default.Router();
 const handleMulterError = (err, req, res, next) => {
     if (err) {
         console.error('Multer error:', err);
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' });
-        }
-        if (err.message === 'Only PDF, DOC, DOCX, and image files are allowed') {
+        if (err instanceof multer_1.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' });
+            }
             return res.status(400).json({ message: err.message });
         }
-        return res.status(400).json({ message: 'File upload error: ' + err.message });
+        if (err instanceof Error) {
+            if (err.message === 'Only PDF, DOC, DOCX, and image files are allowed') {
+                return res.status(400).json({ message: err.message });
+            }
+            return res.status(400).json({ message: 'File upload error: ' + err.message });
+        }
+        return res.status(400).json({ message: 'File upload error' });
     }
     next();
 };

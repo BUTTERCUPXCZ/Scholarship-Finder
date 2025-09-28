@@ -1,10 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prisma = void 0;
-const client_1 = require("@prisma/client");
+let PrismaClient;
+let prismaClientAvailable = true;
+try {
+    const pkg = require('@prisma/client');
+    PrismaClient = pkg.PrismaClient;
+}
+catch (err) {
+    prismaClientAvailable = false;
+    console.debug('Prisma client not available at require time:', err);
+    PrismaClient = class {
+        constructor() { }
+        $connect() {
+            return Promise.resolve();
+        }
+        $disconnect() {
+            return Promise.resolve();
+        }
+    };
+}
 const globalForPrisma = globalThis;
 exports.prisma = globalForPrisma.prisma ??
-    new client_1.PrismaClient({
+    new PrismaClient({
         log: process.env.NODE_ENV === 'development'
             ? ['query', 'error', 'warn']
             : ['error'],
@@ -37,9 +55,11 @@ async function connectWithRetry(retries = 5, delay = 2000) {
         }
     }
 }
-connectWithRetry().catch(error => {
-    console.error('💥 Critical: Could not establish database connection:', error);
-});
+if (process.env.NODE_ENV !== 'test' && prismaClientAvailable) {
+    connectWithRetry().catch(error => {
+        console.error('💥 Critical: Could not establish database connection:', error);
+    });
+}
 const gracefulShutdown = async () => {
     console.log('🔄 Gracefully disconnecting from database...');
     await exports.prisma.$disconnect();

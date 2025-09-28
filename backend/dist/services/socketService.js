@@ -28,10 +28,17 @@ const initializeSocket = (server) => {
         },
     });
     io.use((socket, next) => {
+        const getHeaderValue = (headers, key) => {
+            if (typeof headers === 'object' && headers !== null) {
+                const val = headers[key];
+                return typeof val === 'string' ? val : undefined;
+            }
+            return undefined;
+        };
         try {
-            const token = socket.handshake.auth.token ||
-                socket.handshake.headers.authorization?.replace('Bearer ', '') ||
-                socket.handshake.headers.cookie
+            const token = socket.handshake.auth?.token ||
+                getHeaderValue(socket.handshake.headers, 'authorization')?.replace('Bearer ', '') ||
+                getHeaderValue(socket.handshake.headers, 'cookie')
                     ?.split('authToken=')[1]
                     ?.split(';')[0];
             if (!token) {
@@ -44,23 +51,28 @@ const initializeSocket = (server) => {
                 return next(new Error('Server configuration error'));
             }
             const decoded = jsonwebtoken_1.default.verify(token, secret);
-            socket.userId = decoded.userId;
+            if (!decoded || typeof decoded !== 'object' || !decoded.userId) {
+                console.log('❌ Socket auth failed: Invalid token payload');
+                return next(new Error('Authentication error: Invalid token'));
+            }
+            socket.data.userId = decoded.userId;
             console.log(`✅ Socket authenticated: user ${decoded.userId}`);
             next();
         }
         catch (err) {
-            console.log('❌ Socket auth failed:', err.message);
+            const message = err instanceof Error ? err.message : String(err);
+            console.log('❌ Socket auth failed:', message);
             next(new Error('Authentication error: Invalid token'));
         }
     });
     io.on('connection', (socket) => {
-        console.log(`🔌 User ${socket.userId} connected`);
-        socket.join(`user_${socket.userId}`);
+        console.log(`🔌 User ${socket.data.userId} connected`);
+        socket.join(`user_${socket.data.userId}`);
         socket.on('ping', () => {
             socket.emit('pong');
         });
         socket.on('disconnect', () => {
-            console.log(`🔌 User ${socket.userId} disconnected`);
+            console.log(`🔌 User ${socket.data.userId} disconnected`);
         });
     });
     return io;

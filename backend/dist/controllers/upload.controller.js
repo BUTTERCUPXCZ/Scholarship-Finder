@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadFile = exports.uploadFiles = exports.uploadMiddleware = void 0;
 const supabase_js_1 = require("@supabase/supabase-js");
 const multer_1 = __importDefault(require("multer"));
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = (process.env).SUPABASE_URL;
+const supabaseServiceKey = (process.env).SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseServiceKey) {
     console.error('Missing Supabase configuration. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
     throw new Error('Supabase configuration missing');
@@ -43,16 +43,16 @@ const upload = (0, multer_1.default)({
 });
 exports.uploadMiddleware = upload.array('documents', 5);
 const uploadFiles = async (req, res) => {
+    const authReq = req;
     try {
         console.log('Upload files endpoint called');
-        const userId = req.userId;
+        const userId = authReq.userId;
         if (!userId) {
             console.error('No user ID found in request');
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        const files = req.files;
+        const files = authReq.files;
         if (!files || files.length === 0) {
-            console.error('No files provided in request');
             return res.status(400).json({ message: 'No files provided' });
         }
         console.log(`Processing ${files.length} files for user ${userId}`);
@@ -64,7 +64,7 @@ const uploadFiles = async (req, res) => {
                 const randomId = Math.random().toString(36).substring(2, 8);
                 const storagePath = `${userId}/documents/${timestamp}-${randomId}-${file.originalname}`;
                 console.log(`Storage path: ${storagePath}`);
-                const { data, error } = await supabase.storage
+                const { error } = await supabase.storage
                     .from(BUCKET_NAME)
                     .upload(storagePath, file.buffer, {
                     contentType: file.mimetype,
@@ -93,7 +93,7 @@ const uploadFiles = async (req, res) => {
                                 message: `Storage bucket error: ${bucketError.message}`
                             });
                         }
-                        const { data: retryData, error: retryError } = await supabase.storage
+                        const { error: retryError } = await supabase.storage
                             .from(BUCKET_NAME)
                             .upload(storagePath, file.buffer, {
                             contentType: file.mimetype,
@@ -149,9 +149,10 @@ const uploadFiles = async (req, res) => {
 };
 exports.uploadFiles = uploadFiles;
 const downloadFile = async (req, res) => {
+    const authReq = req;
     try {
         const { storagePath } = req.body;
-        const userId = req.userId;
+        const userId = authReq.userId;
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }

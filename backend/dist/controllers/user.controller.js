@@ -3,73 +3,96 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrganizationStats = exports.updateUserProfile = exports.getCurrentUser = exports.userLogout = exports.userLogin = exports.userRegister = exports.verifyEmail = exports.resendVerificationEmail = void 0;
+exports.getOrganizationStats = exports.updateUserProfile = exports.getCurrentUser = exports.userLogout = exports.userLogin = exports.userRegister = exports.verifyEmail = exports.resendVerificationEmail = exports.verifyPasswordOtp = exports.requestPasswordReset = exports.resetPassword = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const auth_1 = require("../middleware/auth");
 const db_1 = require("../lib/db");
 const databaseHealth_1 = require("../lib/databaseHealth");
-const resend_1 = require("resend");
 const crypto_1 = __importDefault(require("crypto"));
-const resend = new resend_1.Resend(process.env.RESEND_API_KEY);
+const design_controller_1 = require("../Email/design.controller");
+const mailer_1 = require("../lib/mailer");
 const generateToken = () => {
     return crypto_1.default.randomBytes(32).toString('hex');
 };
-const buildVerificationEmail = (fullname, verifyUrl) => {
-    const preheader = 'Verify your email to activate your account';
-    const safeName = fullname || 'there';
-    const html = `<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Verify your email</title>
-    </head>
-    <body style="margin:0;padding:0;background-color:#f6f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;">
-        <!-- Preheader: hidden in most email clients but visible in inbox preview -->
-        <div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>
-
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f6f7fb;padding:24px 0;">
-            <tr>
-                <td align="center">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;">
-                        <tr>
-                            <td style="padding:24px 32px;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;">
-                                <h1 style="margin:0;font-size:20px;letter-spacing:-0.5px;">ScholarSphere</h1>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding:32px;">
-                                <p style="margin:0 0 12px 0;color:#111827;font-size:16px;">Hi ${safeName},</p>
-                                <p style="margin:0 0 20px 0;color:#6b7280;font-size:14px;">Thanks for registering. Please verify your email address by clicking the button below. This helps us keep your account secure.</p>
-
-                                <!-- Button (use table for better email client support) -->
-                                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 28px 0;">
-                                    <tr>
-                                        <td align="center" bgcolor="#4f46e5" style="border-radius:6px;">
-                                            <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-weight:600;border-radius:6px;">Verify Email</a>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <p style="margin:0;color:#6b7280;font-size:13px;">If the button doesn't work, copy and paste the link below into your browser:</p>
-                                <p style="word-break:break-all;color:#2563eb;font-size:13px;margin-top:8px;">${verifyUrl}</p>
-
-                                <hr style="border:none;border-top:1px solid #eef2ff;margin:20px 0;" />
-                                <p style="margin:0;color:#9ca3af;font-size:12px;">If you didn't sign up for an account, you can safely ignore this email.</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding:16px 32px;background:#fbfafc;color:#9ca3af;font-size:12px;text-align:center;">© ${new Date().getFullYear()} ScholarSphere — <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}" style="color:inherit;text-decoration:underline;">Visit site</a></td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </body>
-</html>`;
-    const text = `Hello ${fullname},\n\nPlease verify your email by visiting the following link:\n${verifyUrl}\n\nIf you didn't create an account, you can ignore this message.`;
-    return { html, text };
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const user = await db_1.prisma.user.findUnique({ where: { email } });
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+        const tokenEntry = await db_1.prisma.passwordResetToken.findFirst({
+            where: { userId: user.id, token: otp },
+        });
+        if (!tokenEntry || tokenEntry.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+        const hashedPassword = await bcrypt_1.default.hash(newPassword, 10);
+        await db_1.prisma.user.update({
+            where: { id: user.id },
+            data: { password: hashedPassword },
+        });
+        await db_1.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+        return res.status(200).json({ message: "Password reset successfully" });
+    }
+    catch (error) {
+        console.error("Error resetPassword:", error);
+        return res.status(500).json({ message: "Failed to reset password" });
+    }
 };
+exports.resetPassword = resetPassword;
+const requestPasswordReset = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email)
+            return res.status(400).json({ message: "Email is required" });
+        const user = await db_1.prisma.user.findUnique({ where: { email } });
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+        await db_1.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+        const otp = generateOTP();
+        await db_1.prisma.passwordResetToken.create({
+            data: {
+                userId: user.id,
+                token: otp,
+                expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+            },
+        });
+        const msg = (0, design_controller_1.buildPasswordResetEmail)(user.fullname, otp);
+        await (0, mailer_1.sendEmail)(user.email, "Password Reset OTP", msg);
+        return res.status(200).json({ message: "OTP sent to your email" });
+    }
+    catch (error) {
+        console.error("Error requestPasswordReset:", error);
+        return res.status(500).json({ message: "Failed to send OTP" });
+    }
+};
+exports.requestPasswordReset = requestPasswordReset;
+const verifyPasswordOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp)
+            return res.status(400).json({ message: "Email and OTP are required" });
+        const user = await db_1.prisma.user.findUnique({ where: { email } });
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+        const tokenEntry = await db_1.prisma.passwordResetToken.findFirst({
+            where: { userId: user.id, token: otp },
+        });
+        if (!tokenEntry || tokenEntry.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+        return res.status(200).json({ message: "OTP verified successfully" });
+    }
+    catch (error) {
+        console.error("Error verifyPasswordOtp:", error);
+        return res.status(500).json({ message: "Failed to verify OTP" });
+    }
+};
+exports.verifyPasswordOtp = verifyPasswordOtp;
 const resendVerificationEmail = async (req, res) => {
     try {
         const { email } = req.body;
@@ -92,16 +115,12 @@ const resendVerificationEmail = async (req, res) => {
                 expiresAt: new Date(Date.now() + 1000 * 60 * 60)
             }
         });
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const verifyUrl = `${backendUrl}/users/verify?token=${token}`;
-        const msg = buildVerificationEmail(user.fullname, verifyUrl);
-        await resend.emails.send({
-            from: "onboarding@resend.dev",
-            to: email,
-            subject: "Verify your email",
-            html: msg.html,
-            text: msg.text
-        });
+        const msg = (0, design_controller_1.buildVerificationEmail)(user.fullname, verifyUrl);
+        (0, mailer_1.sendEmail)(user.email, "Verify your email", msg.text ? msg : { html: msg.html, text: msg.text })
+            .then(() => console.log(`Verification email (resend) queued for ${user.email}`))
+            .catch(err => console.error('Failed to send verification email (resend):', err));
         return res.status(200).json({ message: "Verification email resent" });
     }
     catch (error) {
@@ -120,7 +139,9 @@ const verifyEmail = async (req, res) => {
             where: { token: String(token) },
         });
         if (!dbToken || dbToken.expiresAt < new Date()) {
-            return res.status(400).json({ message: "Invalid or expired token" });
+            const clientUrl = (process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+            const safeClientUrl = typeof clientUrl === 'string' && clientUrl.length > 0 ? clientUrl : 'http://localhost:5173';
+            return res.redirect(`${safeClientUrl}/verify?status=error`);
         }
         const updatedUser = await db_1.prisma.user.update({
             where: { id: dbToken.userId },
@@ -132,7 +153,8 @@ const verifyEmail = async (req, res) => {
         });
         try {
             if (updatedUser) {
-                const authToken = (0, auth_1.signToken)({ id: String(updatedUser.id), email: updatedUser.email, role: updatedUser.role || 'STUDENT' });
+                const roleValue = typeof updatedUser.role === 'string' ? updatedUser.role : 'STUDENT';
+                const authToken = (0, auth_1.signToken)({ id: String(updatedUser.id), email: updatedUser.email, role: roleValue || 'STUDENT' });
                 res.cookie('authToken', authToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
@@ -145,13 +167,16 @@ const verifyEmail = async (req, res) => {
         catch (cookieErr) {
             console.log('Failed to set auth cookie after verification:', cookieErr);
         }
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-        const redirectUrl = `${clientUrl}/verify?status=success&email=${encodeURIComponent(updatedUser?.email || '')}`;
+        const clientUrl2 = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+        const safeClientUrl2 = typeof clientUrl2 === 'string' && clientUrl2.length > 0 ? clientUrl2 : 'http://localhost:5173';
+        const redirectUrl = `${safeClientUrl2}/verify?status=success&email=${encodeURIComponent(updatedUser?.email || '')}`;
         return res.redirect(redirectUrl);
     }
     catch (error) {
         console.log("Error Verify Email: ", error);
-        return res.redirect(`${process.env.CLIENT_URL}/verify?status=error`);
+        const fallbackClient = (process.env.CLIENT_URL || process.env.FRONTEND_URL) || `${req.protocol}://${req.get('host')}` || 'http://localhost:5173';
+        const safeFallback = typeof fallbackClient === 'string' && fallbackClient.length > 0 ? fallbackClient : 'http://localhost:5173';
+        return res.redirect(`${safeFallback}/verify?status=error`);
     }
 };
 exports.verifyEmail = verifyEmail;
@@ -179,16 +204,12 @@ const userRegister = async (req, res) => {
                 expiresAt: new Date(Date.now() + 1000 * 60 * 60)
             }
         });
-        const backendUrl2 = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl2 = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const verifyUrl2 = `${backendUrl2}/users/verify?token=${token}`;
-        const msg2 = buildVerificationEmail(fullname, verifyUrl2);
-        await resend.emails.send({
-            from: "onboarding@resend.dev",
-            to: email,
-            subject: "Verify your email",
-            html: msg2.html,
-            text: msg2.text
-        });
+        const msg2 = (0, design_controller_1.buildVerificationEmail)(fullname, verifyUrl2);
+        (0, mailer_1.sendEmail)(email, "Verify your email", msg2)
+            .then(() => console.log(`Verification email queued for ${email}`))
+            .catch(err => console.error('Failed to send verification email (registration):', err));
         return res.status(201).json({
             success: true,
             message: "User registered. Please check your email for verification.",
@@ -197,7 +218,8 @@ const userRegister = async (req, res) => {
     }
     catch (error) {
         console.log("Error User Registration: ", error);
-        if (error.message === "USER_EXISTS") {
+        const err = error;
+        if (err?.message === "USER_EXISTS") {
             return res.status(400).json({ message: "User already exists" });
         }
         const dbError = (0, databaseHealth_1.handleDatabaseError)(error, "User Registration");
@@ -226,7 +248,8 @@ const userLogin = async (req, res) => {
             if (!user.isVerified) {
                 throw new Error("EMAIL_NOT_VERIFIED");
             }
-            const { password: _, ...safeUser } = user;
+            const { password: _password, ...safeUser } = user;
+            void _password;
             const token = (0, auth_1.signToken)({ id: user.id, email: user.email, role: user.role });
             return { safeUser, token };
         });
@@ -245,7 +268,8 @@ const userLogin = async (req, res) => {
     }
     catch (error) {
         console.log("Error User Login: ", error);
-        const msg = error?.message || String(error);
+        const err = error;
+        const msg = err?.message || String(error);
         if (msg === "INVALID_CREDENTIALS") {
             return res.status(400).json({ message: "Invalid credentials" });
         }

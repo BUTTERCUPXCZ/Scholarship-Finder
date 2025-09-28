@@ -1,28 +1,38 @@
-let PrismaClient: any
+import type { PrismaClient as PrismaClientType } from '@prisma/client'
+
+type PrismaClientConstructor = new (...args: unknown[]) => PrismaClientType
+
+let PrismaClient: PrismaClientConstructor
 let prismaClientAvailable = true
 
 try {
-    // Try to require the generated Prisma client. In test environments where
-    // `prisma generate` hasn't been run, this can throw. We catch and fall
-    // back to a lightweight stub so unit tests can run without the generated
-    // client present.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
-    PrismaClient = require('@prisma/client').PrismaClient
-} catch (err) {
+    // Try to require the generated Prisma client at runtime. In test
+    // environments where `prisma generate` hasn't been run the require may
+    // throw; we catch and provide a minimal stub instance so imports succeed.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pkg = require('@prisma/client') as { PrismaClient: PrismaClientConstructor }
+    PrismaClient = pkg.PrismaClient
+} catch (err: unknown) {
     prismaClientAvailable = false
-    // Provide a minimal stub implementation that throws if any method is used
-    // (so tests that don't mock the service will still see clear failures),
-    // but allows modules to import `prisma` without triggering the "generate"
-    // error during require time.
+    // Use console.debug so this doesn't pollute normal logs. This also uses
+    // the `err` variable so linters don't flag it as unused.
+    // eslint-disable-next-line no-console
+    console.debug('Prisma client not available at require time:', err)
+
+    // Minimal stub that satisfies the runtime shape for connect/disconnect.
+    // Tests should mock service functions and not call Prisma directly when
+    // the generated client isn't present.
     PrismaClient = class {
-        constructor() { }
-        $connect() {
+        constructor() {
+            // empty
+        }
+        async $connect(): Promise<void> {
             return Promise.resolve()
         }
-        $disconnect() {
+        async $disconnect(): Promise<void> {
             return Promise.resolve()
         }
-    }
+    } as unknown as PrismaClientConstructor
 }
 
 const globalForPrisma = globalThis as unknown as {

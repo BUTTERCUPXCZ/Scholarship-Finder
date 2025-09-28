@@ -15,4 +15,7 @@ router.patch('/profile', auth_1.authenticate, user_controller_1.updateUserProfil
 router.get('/organization/stats', auth_1.authenticate, user_controller_1.getOrganizationStats);
 router.post('/resend-verification', user_controller_1.resendVerificationEmail);
 router.get('/verify', user_controller_1.verifyEmail);
+router.post("/request-password-reset", user_controller_1.requestPasswordReset);
+router.post("/verify-password-otp", user_controller_1.verifyPasswordOtp);
+router.post("/reset-password", user_controller_1.resetPassword);
 exports.default = router;

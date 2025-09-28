@@ -59,21 +59,26 @@ async function withDatabaseRetry(operation, maxRetries = 3) {
     return DatabaseHealthCheck.retryOperation(operation, maxRetries);
 }
 function handleDatabaseError(error, context) {
-    if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
-        console.error(`${context}: Database connection failed`, error);
-        return {
-            error: 'DATABASE_CONNECTION_FAILED',
-            message: 'Unable to connect to database. Please try again later.',
-            retryable: true
-        };
-    }
-    if (error.code === 'P2002') {
-        console.error(`${context}: Unique constraint violation`, error);
-        return {
-            error: 'UNIQUE_CONSTRAINT_VIOLATION',
-            message: 'A record with this information already exists.',
-            retryable: false
-        };
+    const isPrismaError = (err) => {
+        return typeof err === 'object' && err !== null && ('code' in err || 'message' in err);
+    };
+    if (isPrismaError(error)) {
+        if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
+            console.error(`${context}: Database connection failed`, error);
+            return {
+                error: 'DATABASE_CONNECTION_FAILED',
+                message: 'Unable to connect to database. Please try again later.',
+                retryable: true
+            };
+        }
+        if (error.code === 'P2002') {
+            console.error(`${context}: Unique constraint violation`, error);
+            return {
+                error: 'UNIQUE_CONSTRAINT_VIOLATION',
+                message: 'A record with this information already exists.',
+                retryable: false
+            };
+        }
     }
     console.error(`${context}: Unexpected database error`, error);
     return {
