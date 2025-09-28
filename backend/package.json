@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate deploy",
     "type-check": "tsc --noEmit",
     "render-build": "npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build",
-    "test": "jest --config jest.config.ts --runInBand"
+    "test": "jest --config jest.config.ts --runInBand",
+    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +54,8 @@
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.1",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.4.0",
