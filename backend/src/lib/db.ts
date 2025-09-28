@@ -40,23 +40,33 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 // Enhanced Prisma configuration for better connectivity
+// Build Prisma client options dynamically so we don't pass `undefined`
+// for the datasource URL (Prisma throws if url is undefined).
+const prismaOptions: ConstructorParameters<PrismaClientConstructor>[0] = {
+    log:
+        process.env.NODE_ENV === 'development'
+            ? ['query', 'error', 'warn']
+            : ['error'],
+    transactionOptions: {
+        timeout: 30000, // 30 seconds
+        isolationLevel: 'ReadCommitted'
+    }
+}
+
+if (process.env.DATABASE_URL) {
+    // Only attach datasources if DATABASE_URL is set.
+    // This prevents PrismaClientConstructorValidationError in test runs
+    // where DATABASE_URL may intentionally be unset.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - PrismaClient constructor accepts a `datasources` property
+    prismaOptions['datasources'] = {
+        db: { url: process.env.DATABASE_URL }
+    }
+}
+
 export const prisma =
     globalForPrisma.prisma ??
-    new PrismaClient({
-        log:
-            process.env.NODE_ENV === 'development'
-                ? ['query', 'error', 'warn']
-                : ['error'],
-        datasources: {
-            db: {
-                url: process.env.DATABASE_URL
-            }
-        },
-        transactionOptions: {
-            timeout: 30000, // 30 seconds
-            isolationLevel: 'ReadCommitted'
-        }
-    })
+    new PrismaClient(prismaOptions)
 
 // Enhanced connection handling with retry logic
 async function connectWithRetry(retries = 5, delay = 2000): Promise<void> {
