@@ -2,8 +2,13 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { registerUser, type RegisterData } from '../services/auth'
-
-
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Alert, AlertDescription } from '../components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Loader2, Mail, Lock, User, Eye, EyeOff, Building, GraduationCap } from 'lucide-react'
 
 const Register = () => {
     const [form, setForm] = useState<{
@@ -15,36 +20,19 @@ const Register = () => {
     }>({ fullname: '', email: '', password: '', confirmPassword: '', role: '' });
 
     const [error, setError] = useState<string | null>(null);
-    // ✅ Use Set for O(1) lookups/removals
-    const [errorFields, setErrorFields] = useState<Set<string>>(new Set());
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
-
-        // ✅ O(1) lookup + delete
-        if (errorFields.has(name)) {
-            setErrorFields(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(name);
-                return newSet;
-            });
-            if (errorFields.size <= 1) setError(null);
-        }
+        if (error) setError(null);
     };
 
-    const handleRoleSelect = (role: 'STUDENT' | 'ORGANIZATION') => {
-        setForm(prev => ({ ...prev, role }));
-
-        if (errorFields.has('role')) {
-            setErrorFields(prev => {
-                const newSet = new Set(prev);
-                newSet.delete('role');
-                return newSet;
-            });
-            if (errorFields.size <= 1) setError(null);
-        }
+    const handleRoleChange = (value: string) => {
+        setForm(prev => ({ ...prev, role: value }));
+        if (error) setError(null);
     };
 
     const mutation = useMutation({
@@ -68,173 +56,195 @@ const Register = () => {
         const trimmedFullname = fullname.trim();
         const trimmedEmail = email.trim();
 
-
-        const missing = Object.entries({
-            fullname: trimmedFullname,
-            email: trimmedEmail,
-            password,
-            confirmPassword,
-            role
-        })
-            .filter(([_, value]) => !value)
-            .map(([key]) => key);
-
-        if (missing.length > 0) {
+        if (!trimmedFullname || !trimmedEmail || !password || !confirmPassword || !role) {
             setError('All fields are required');
-            setErrorFields(new Set(missing));
             return;
         }
 
         if (password !== confirmPassword) {
             setError('Passwords do not match');
-            setErrorFields(new Set(['password', 'confirmPassword']));
             return;
         }
 
         setError(null);
-        setErrorFields(new Set());
         mutation.mutate({ fullname: trimmedFullname, email: trimmedEmail, password, role });
     };
 
     return (
-        <div className="flex min-h-screen w-full overflow-hidden">
-            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-12">
-                <img className="max-w-[500px] max-h-[80vh] mx-auto object-contain" src="/project-amico.png" alt="leftSideImage" />
-            </div>
-
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-white">
-                <div className="w-full max-w-md space-y-8">
-                    <div className="text-center">
-                        <h2 className="text-3xl font-bold text-gray-900">Sign up</h2>
-                        <p className="mt-2 text-sm text-gray-600">Create your account to get started</p>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
+            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                {/* Left Side - Illustration */}
+                <div className="hidden lg:flex items-center justify-center">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-3xl blur-xl"></div>
+                        <img
+                            src="/project-amico.png"
+                            alt="Register illustration"
+                            className="relative w-full max-w-lg h-auto rounded-3xl shadow-2xl"
+                        />
                     </div>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-
-                        {error && (
-                            <div className="w-full mt-4 rounded-md bg-red-50 p-3">
-                                <p className="text-sm font-medium text-red-800 text-center">{error}</p>
-                            </div>
-                        )}
-
-                        <button type="button" className="w-full mt-8 bg-gray-500/10 flex items-center justify-center h-12 rounded-full px-6 gap-3">
-                            <span className="text-sm text-gray-700">Google</span>
-                            <img className="h-6 w-6" src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleLogo.svg" alt="googleLogo" />
-                        </button>
-
-                        <div className="flex items-center gap-4 w-full my-5">
-                            <div className="w-full h-px bg-gray-300/90"></div>
-                            <p className="w-full text-nowrap text-sm text-gray-500/90">or sign up with email</p>
-                            <div className="w-full h-px bg-gray-300/90"></div>
-                        </div>
-
-                        {/* Full Name Input */}
-                        <div className={`flex items-center w-full bg-transparent border ${errorFields.has('fullname') ? 'border-red-500' : 'border-gray-300/60'} h-12 rounded-full overflow-hidden pl-6 gap-2`}>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8ZM8 10C5.33333 10 0 11.3333 0 14V16H16V14C16 11.3333 10.6667 10 8 10Z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                name="fullname"
-                                value={form.fullname}
-                                onChange={handleOnChange}
-                                type="text"
-                                placeholder="Full Name"
-                                className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
-                                required
-                            />
-                        </div>
-
-                        {/* Email Input */}
-                        <div className={`flex items-center mt-6 w-full bg-transparent border ${errorFields.has('email') ? 'border-red-500' : 'border-gray-300/60'} h-12 rounded-full overflow-hidden pl-6 gap-2`}>
-                            <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M0 .55.571 0H15.43l.57.55v9.9l-.571.55H.57L0 10.45zm1.143 1.138V9.9h13.714V1.69l-6.503 4.8h-.697zM13.749 1.1H2.25L8 5.356z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                name="email"
-                                value={form.email}
-                                onChange={handleOnChange}
-                                type="email"
-                                placeholder="Email address"
-                                className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
-                                required
-                            />
-                        </div>
-
-                        {/* Password Input */}
-                        <div className={`flex items-center mt-6 w-full bg-transparent border ${errorFields.has('password') ? 'border-red-500' : 'border-gray-300/60'} h-12 rounded-full overflow-hidden pl-6 gap-2`}>
-                            <svg width="13" height="17" viewBox="0 0 13 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13 8.5c0-.938-.729-1.7-1.625-1.7h-.812V4.25C10.563 1.907 8.74 0 6.5 0S2.438 1.907 2.438 4.25V6.8h-.813C.729 6.8 0 7.562 0 8.5v6.8c0 .938.729 1.7 1.625 1.7h9.75c.896 0 1.625-.762 1.625-1.7zM4.063 4.25c0-1.406 1.093-2.55 2.437-2.55s2.438 1.144 2.438 2.55V6.8H4.061z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                name="password"
-                                value={form.password}
-                                onChange={handleOnChange}
-                                type="password"
-                                placeholder="Password"
-                                className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
-                                required
-                            />
-                        </div>
-
-                        {/* Confirm Password Input */}
-                        <div className={`flex items-center mt-6 w-full bg-transparent border ${errorFields.has('confirmPassword') ? 'border-red-500' : 'border-gray-300/60'} h-12 rounded-full overflow-hidden pl-6 gap-2`}>
-                            <svg width="13" height="17" viewBox="0 0 13 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13 8.5c0-.938-.729-1.7-1.625-1.7h-.812V4.25C10.563 1.907 8.74 0 6.5 0S2.438 1.907 2.438 4.25V6.8h-.813C.729 6.8 0 7.562 0 8.5v6.8c0 .938.729 1.7 1.625 1.7h9.75c.896 0 1.625-.762 1.625-1.7zM4.063 4.25c0-1.406 1.093-2.55 2.437-2.55s2.438 1.144 2.438 2.55V6.8H4.061z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                name="confirmPassword"
-                                value={form.confirmPassword}
-                                onChange={handleOnChange}
-                                type="password"
-                                placeholder="Confirm Password"
-                                className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
-                                required
-                            />
-                        </div>
-
-                        {/* Role Selection */}
-                        <div className="w-full mt-6">
-                            <p className="text-sm text-gray-500/90 mb-3">Select your role:</p>
-                            <div className="flex gap-2 w-full">
-                                <button
-                                    type="button"
-                                    onClick={() => handleRoleSelect('STUDENT')}
-                                    className={`flex-1 h-12 rounded-full px-6 text-sm font-medium transition-all ${form.role === 'STUDENT'
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-gray-500/10 text-gray-700 hover:bg-gray-500/20'
-                                        } ${errorFields.has('role') ? 'ring-2 ring-red-500' : ''}`}
-                                >
-                                    Student
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRoleSelect('ORGANIZATION')}
-                                    className={`flex-1 h-12 rounded-full px-6 text-sm font-medium transition-all ${form.role === 'ORGANIZATION'
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-gray-500/10 text-gray-700 hover:bg-gray-500/20'
-                                        } ${errorFields.has('role') ? 'ring-2 ring-red-500' : ''}`}
-                                >
-                                    Organization
-                                </button>
-                            </div>
-                            {errorFields.has('role') && (
-                                <p className="mt-2 text-xs text-red-500 text-center">Please select a role</p>
+                {/* Right Side - Register Form */}
+                <div className="w-full max-w-md mx-auto lg:mx-0">
+                    <Card className="border-0 shadow-2xl">
+                        <CardHeader className="space-y-1 text-center pb-6">
+                            <CardTitle className="text-3xl font-bold text-gray-900">Create Account</CardTitle>
+                            <CardDescription className="text-gray-600">
+                                Join thousands of students finding their perfect scholarships
+                            </CardDescription>
+                        </CardHeader>
+                        
+                        <CardContent className="space-y-6">
+                            {error && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{error}</AlertDescription>
+                                </Alert>
                             )}
-                        </div>
 
-                        <button
-                            type="submit"
-                            className="w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity disabled:opacity-50"
-                            disabled={mutation.isPending}
-                        >
-                            {mutation.isPending ? 'Creating Account...' : 'Register'}
-                        </button>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Full Name Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullname">Full Name</Label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            id="fullname"
+                                            name="fullname"
+                                            type="text"
+                                            value={form.fullname}
+                                            onChange={handleOnChange}
+                                            placeholder="Enter your full name"
+                                            className="pl-10 h-12"
+                                            required
+                                        />
+                                    </div>
+                                </div>
 
-                        <p className="text-gray-500/90 text-sm mt-4">
-                            Already have an account?
-                            <Link className="text-indigo-400 hover:underline ml-1" to="/login">Sign in</Link>
-                        </p>
-                    </form>
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email Address</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            value={form.email}
+                                            onChange={handleOnChange}
+                                            placeholder="Enter your email"
+                                            className="pl-10 h-12"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Password Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Password</Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type={showPassword ? "text" : "password"}
+                                            value={form.password}
+                                            onChange={handleOnChange}
+                                            placeholder="Create a password"
+                                            className="pl-10 pr-10 h-12"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Confirm Password Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            id="confirmPassword"
+                                            name="confirmPassword"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            value={form.confirmPassword}
+                                            onChange={handleOnChange}
+                                            placeholder="Confirm your password"
+                                            className="pl-10 pr-10 h-12"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Role Selection */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="role">I am a...</Label>
+                                    <Select value={form.role} onValueChange={handleRoleChange}>
+                                        <SelectTrigger className="h-12">
+                                            <div className="flex items-center gap-2">
+                                                {form.role === 'STUDENT' && <GraduationCap className="h-4 w-4 text-gray-400" />}
+                                                {form.role === 'ORGANIZATION' && <Building className="h-4 w-4 text-gray-400" />}
+                                                <SelectValue placeholder="Select your role" />
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="STUDENT">
+                                                <div className="flex items-center gap-2">
+                                                    <GraduationCap className="h-4 w-4" />
+                                                    Student
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="ORGANIZATION">
+                                                <div className="flex items-center gap-2">
+                                                    <Building className="h-4 w-4" />
+                                                    Organization
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Submit Button */}
+                                <Button
+                                    type="submit"
+                                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    disabled={mutation.isPending}
+                                >
+                                    {mutation.isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Creating account...
+                                        </>
+                                    ) : (
+                                        'Create Account'
+                                    )}
+                                </Button>
+
+                                {/* Sign In Link */}
+                                <div className="text-center">
+                                    <p className="text-sm text-gray-600">
+                                        Already have an account?{' '}
+                                        <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline">
+                                            Sign in here
+                                        </Link>
+                                    </p>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
