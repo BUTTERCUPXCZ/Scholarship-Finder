@@ -1,7 +1,8 @@
 import React from 'react'
-import { Card, CardContent, CardFooter } from './ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from './ui/card'
 import { Button } from './ui/button'
-import { Calendar, MapPin } from 'lucide-react'
+import { Badge } from './ui/badge'
+import { Calendar, MapPin, Award, Clock, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 
@@ -17,6 +18,7 @@ interface Scholarship {
     createdAt: string
     updatedAt: string
     providerId: string
+    benefits: string
     applications?: any[]
 }
 
@@ -55,100 +57,110 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     }
 
     const daysLeft = getDaysUntilDeadline(scholarship.deadline)
+    const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
 
-    const buttonClass = isExpired
-        ? 'flex-1 border-none bg-gray-300 text-gray-700 cursor-not-allowed opacity-80 shadow-none'
-        : 'flex-1 border-none bg-[#4F39F6] hover:bg-[#3D2DB8] text-white hover:text-white transition-colors duration-200 shadow-md cursor-pointer'
+    const getStatusBadge = () => {
+        if (isExpired) {
+            return (
+                <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Expired
+                </Badge>
+            )
+        }
+        
+        if (isUrgent) {
+            return (
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    {daysLeft} days left
+                </Badge>
+            )
+        }
 
-    const getStatusText = () => {
-        if (isExpired) return 'Expired'
-        if (daysLeft !== null && daysLeft <= 7) return `${daysLeft} days left`
-        return null
+        return (
+            <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                <Award className="h-3 w-3 mr-1" />
+                Active
+            </Badge>
+        )
     }
 
-    const getStatusColor = () => {
-        if (isExpired) return 'bg-red-100 text-red-700'
-        if (daysLeft !== null && daysLeft <= 7) return 'bg-orange-100 text-orange-700'
-        return 'bg-green-100 text-green-700'
+    const handleClick = () => {
+        if (isExpired) return
+
+        if (onViewDetails) {
+            onViewDetails(scholarship.id)
+            return
+        }
+
+        if (!user) {
+            navigate('/login')
+            return
+        }
+
+        navigate(`/scholarship/${scholarship.id}`)
     }
 
     return (
-        <Card className="h-full w-full flex flex-col hover:shadow-lg transition-all duration-200 border border-gray-200  overflow-hidden">
-            {/* Header Section */}
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">{scholarship.type}</span>
-                    {/* Only render the status badge when there's text to show. This
-                        prevents an empty green pill from appearing when the status
-                        is neither expired nor near-deadline. */}
-                    {(() => {
-                        const statusText = getStatusText()
-                        const statusColor = getStatusColor()
-                        return (
-                            statusText && (
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColor}`}>
-                                    {statusText}
-                                </span>
-                            )
-                        )
-                    })()}
+        <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200">
+            {/* Header */}
+            <CardHeader className="pb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                    <Badge variant="outline" className="border-indigo-200 text-indigo-600 bg-indigo-50">
+                        {scholarship.type}
+                    </Badge>
+                    {getStatusBadge()}
                 </div>
-            </div>
-
-            <CardContent className="flex-1 p-4 flex flex-col">
-                {/* Title */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                
+                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                     {scholarship.title}
                 </h3>
+            </CardHeader>
 
+            <CardContent className="flex-1 pb-4">
                 {/* Description */}
-                <p className="text-gray-600 text-xs mb-4 line-clamp-3 flex-grow">
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
                     {scholarship.description}
                 </p>
 
+                {/* Benefits Preview */}
+                <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Award className="h-4 w-4 text-indigo-600" />
+                        <span className="text-sm font-medium text-indigo-700">Benefits</span>
+                    </div>
+                    <p className="text-sm text-indigo-600 line-clamp-2">
+                        {scholarship.benefits}
+                    </p>
+                </div>
+
                 {/* Details */}
-                <div className="space-y-2 text-sm text-gray-500 mb-4">
-                    <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 flex-shrink-0 text-gray-400" />
                         <span className="truncate">{scholarship.location}</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 flex-shrink-0 text-gray-400" />
                         <span>Deadline: {formatDate(scholarship.deadline)}</span>
                     </div>
                 </div>
-
-
             </CardContent>
 
-            <CardFooter className="p-4 pt-0 flex-shrink-0">
-                <div className="flex gap-2 w-full">
-                    <Button
-                        variant="outline"
-                        className={buttonClass}
-                        disabled={isExpired}
-                        onClick={() => {
-                            if (isExpired) return
-
-                            // If parent passed handler, use it. Otherwise, only allow navigation to details when authenticated.
-                            if (onViewDetails) {
-                                onViewDetails(scholarship.id)
-                                return
-                            }
-
-                            if (!user) {
-                                // Not authenticated -> redirect to login
-                                navigate('/login')
-                                return
-                            }
-
-                            navigate(`/scholarship/${scholarship.id}`)
-                        }}
-                    >
-                        {isExpired ? 'Scholarship expired' : 'View Details'}
-                    </Button>
-                </div>
+            <CardFooter className="pt-0">
+                <Button
+                    onClick={handleClick}
+                    disabled={isExpired}
+                    className={`w-full ${
+                        isExpired 
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200' 
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }`}
+                >
+                    {isExpired ? 'Application Closed' : 'View Details & Apply'}
+                </Button>
             </CardFooter>
         </Card>
     )

@@ -90,7 +90,6 @@ const Home = () => {
                                     <Sparkles className="h-4 w-4 mr-2" />
                                     Trusted by 50,000+ Students
                                 </Badge>
-
                                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                                     Unlock Your{' '}
                                     <span className="text-indigo-600 relative">
@@ -277,7 +276,6 @@ const Home = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
                             {/* Connection lines for desktop */}
                             <div className="hidden md:block absolute top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-indigo-200 to-indigo-300"></div>
-
                             {[
                                 {
                                     step: "01",
@@ -446,7 +444,6 @@ const Home = () => {
                                 </Badge>
                             </div>
                         </div>
-
                         <div>
                             <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
                             <ul className="space-y-3 text-gray-400">
@@ -456,7 +453,6 @@ const Home = () => {
                                 <li><a href="#" className="hover:text-white transition-colors hover:underline">How It Works</a></li>
                             </ul>
                         </div>
-
                         <div>
                             <h3 className="font-semibold mb-4 text-white">Support</h3>
                             <ul className="space-y-3 text-gray-400">
@@ -467,7 +463,6 @@ const Home = () => {
                             </ul>
                         </div>
                     </div>
-
                     <div className="border-t border-gray-800 pt-8 text-center">
                         <p className="text-gray-400">
                             © 2025 ScholarSphere. All rights reserved. Made with ❤️ for students worldwide.
