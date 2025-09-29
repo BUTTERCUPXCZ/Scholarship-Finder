@@ -13,10 +13,8 @@ import {
     AlertCircle,
     X,
     RotateCw,
-    SlidersHorizontal,
     Filter,
     GraduationCap,
-    MapPin,
     Calendar,
     TrendingUp
 } from 'lucide-react'
@@ -193,7 +191,7 @@ const Scholarship = () => {
                                         <Filter className="h-4 w-4" />
                                         Filters:
                                     </div>
-                                    
+
                                     <div className="flex flex-wrap gap-3 flex-1">
                                         {/* Type Filter */}
                                         <Select value={filterType} onValueChange={setFilterType}>
@@ -245,7 +243,7 @@ const Scholarship = () => {
                                                 Clear All
                                             </Button>
                                         )}
-                                        
+
                                         <Button
                                             variant="outline"
                                             onClick={() => refetch()}
@@ -356,8 +354,8 @@ const Scholarship = () => {
                                         </p>
                                     </div>
                                     {hasActiveFilters && (
-                                        <Button 
-                                            onClick={handleClearFilters} 
+                                        <Button
+                                            onClick={handleClearFilters}
                                             variant="outline"
                                             className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
                                         >
@@ -393,7 +391,7 @@ const Scholarship = () => {
                                             We're constantly adding new scholarships. Check back regularly or set up notifications.
                                         </p>
                                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                            <Button 
+                                            <Button
                                                 onClick={() => refetch()}
                                                 variant="outline"
                                                 className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
@@ -402,7 +400,7 @@ const Scholarship = () => {
                                                 <RotateCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
                                                 Check for New Scholarships
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                             >
