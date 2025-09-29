@@ -14,6 +14,8 @@ import {
 } from '../components/ui/dropdown-menu'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
 import {
     Search,
     Edit,
@@ -30,7 +32,8 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    AlertTriangle
+    AlertTriangle,
+    GraduationCap
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
@@ -317,12 +320,16 @@ const ManageScholar = () => {
 
     const ErrorContent = () => (
         <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-                <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading scholarships</h2>
-                <p className="text-gray-600 mb-4">Something went wrong. Please try again.</p>
-                <Button onClick={() => refetch()}>Try Again</Button>
-            </div>
+            <Card className="border-red-200 bg-red-50 shadow-lg max-w-md">
+                <CardContent className="p-8 text-center">
+                    <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading scholarships</h2>
+                    <p className="text-gray-600 mb-4">Something went wrong. Please try again.</p>
+                    <Button onClick={() => refetch()} className="bg-red-600 hover:bg-red-700 text-white rounded-xl">
+                        Try Again
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     )
 
@@ -334,7 +341,7 @@ const ManageScholar = () => {
                 <SidebarInset className="flex-1">
                     <Navbar showSidebarToggle={true} pageTitle="Manage Scholarships" />
 
-                    <div className="flex flex-1 flex-col gap-6 p-6">
+                    <div className="flex flex-1 flex-col gap-6 p-6 bg-gray-50">
                         <div className="max-w-7xl mx-auto w-full">
                             {isLoading ? (
                                 <LoadingContent />
@@ -352,16 +359,18 @@ const ManageScholar = () => {
                                 <>
                                     {/* Header Section */}
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                                        <div>
-                                            <h1 className="text-3xl font-bold text-gray-900">Manage Scholarships</h1>
-                                            <p className="text-gray-600 mt-1">Monitor, edit, and manage your posted scholarship opportunities</p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                                <GraduationCap className="h-7 w-7 text-white" />
+                                            </div>
+                                            <div>
+                                                <h1 className="text-3xl font-bold text-gray-900">Manage Scholarships</h1>
+                                                <p className="text-gray-600 mt-1">Monitor, edit, and manage your posted scholarship opportunities</p>
+                                            </div>
                                         </div>
                                         <Button
                                             onClick={() => setIsCreateModalOpen(true)}
-                                            className="text-white"
-                                            style={{ backgroundColor: '#4F39F6' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                                         >
                                             <Plus className="h-4 w-4 mr-2" />
                                             Create New Scholarship
@@ -370,167 +379,178 @@ const ManageScholar = () => {
 
                                     {/* Statistics Cards */}
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                                        <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                            <div className="flex items-center">
-                                                <div className="p-2 rounded-lg" style={{ backgroundColor: '#E8E4FF' }}>
-                                                    <CheckCircle className="h-6 w-6" style={{ color: '#4F39F6' }} />
+                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center">
+                                                    <div className="p-3 bg-green-100 rounded-xl">
+                                                        <CheckCircle className="h-6 w-6 text-green-600" />
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <p className="text-sm font-medium text-gray-600">Active</p>
+                                                        <p className="text-2xl font-bold text-gray-900">
+                                                            {(scholarships || []).filter(s => s.status === 'ACTIVE').length}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="ml-4">
-                                                    <p className="text-sm font-medium text-gray-600">Active</p>
-                                                    <p className="text-2xl font-bold text-gray-900">
-                                                        {(scholarships || []).filter(s => s.status === 'ACTIVE').length}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            </CardContent>
+                                        </Card>
 
-                                        <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                            <div className="flex items-center">
-                                                <div className="p-2 bg-yellow-100 rounded-lg">
-                                                    <Clock className="h-6 w-6 text-yellow-600" />
+                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center">
+                                                    <div className="p-3 bg-yellow-100 rounded-xl">
+                                                        <Clock className="h-6 w-6 text-yellow-600" />
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
+                                                        <p className="text-2xl font-bold text-gray-900">
+                                                            {(scholarships || []).filter(s => s.status === 'ACTIVE' && isDeadlineNear(s.deadline)).length}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="ml-4">
-                                                    <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
-                                                    <p className="text-2xl font-bold text-gray-900">
-                                                        {(scholarships || []).filter(s => s.status === 'ACTIVE' && isDeadlineNear(s.deadline)).length}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            </CardContent>
+                                        </Card>
 
-                                        <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                            <div className="flex items-center">
-                                                <div className="p-2 bg-green-100 rounded-lg">
-                                                    <Users className="h-6 w-6 text-green-600" />
+                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center">
+                                                    <div className="p-3 bg-indigo-100 rounded-xl">
+                                                        <Users className="h-6 w-6 text-indigo-600" />
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <p className="text-sm font-medium text-gray-600">Total Applicants</p>
+                                                        <p className="text-2xl font-bold text-gray-900">
+                                                            {(scholarships || []).reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="ml-4">
-                                                    <p className="text-sm font-medium text-gray-600">Total Applicants</p>
-                                                    <p className="text-2xl font-bold text-gray-900">
-                                                        {(scholarships || []).reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            </CardContent>
+                                        </Card>
 
-                                        <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                            <div className="flex items-center">
-                                                <div className="p-2 bg-gray-100 rounded-lg">
-                                                    <Archive className="h-6 w-6 text-gray-600" />
+                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center">
+                                                    <div className="p-3 bg-red-100 rounded-xl">
+                                                        <Archive className="h-6 w-6 text-red-600" />
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <p className="text-sm font-medium text-gray-600">Expired</p>
+                                                        <p className="text-2xl font-bold text-gray-900">
+                                                            {(scholarships || []).filter(s => s.status === 'EXPIRED').length}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="ml-4">
-                                                    <p className="text-sm font-medium text-gray-600">Expired</p>
-                                                    <p className="text-2xl font-bold text-gray-900">
-                                                        {(scholarships || []).filter(s => s.status === 'EXPIRED').length}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            </CardContent>
+                                        </Card>
                                     </div>
 
                                     {/* Filters and Search */}
-                                    <div className="bg-white p-4 rounded-lg border shadow-sm mb-6">
-                                        <div className="flex flex-col sm:flex-row gap-4">
-                                            {/* Search */}
-                                            <div className="flex-1">
-                                                <div className="relative">
-                                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                                    <Input
-                                                        placeholder="Search scholarships..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        className="pl-9"
-                                                    />
+                                    <Card className="border-gray-200 bg-white shadow-sm mb-6">
+                                        <CardContent className="p-4">
+                                            <div className="flex flex-col sm:flex-row gap-4">
+                                                {/* Search */}
+                                                <div className="flex-1">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                                        <Input
+                                                            placeholder="Search scholarships..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            className="pl-9 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Status Filter */}
+                                                <div className="flex gap-2">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="outline" className="gap-2 border-gray-200 rounded-xl">
+                                                                <Filter className="h-4 w-4" />
+                                                                Status: {filterStatus === 'all' ? 'All' : filterStatus}
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => setFilterStatus('all')}>
+                                                                All Scholarships
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setFilterStatus('ACTIVE')}>
+                                                                Active Only
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setFilterStatus('EXPIRED')}>
+                                                                Expired Only
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+
+                                                    {/* Sort */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="outline" className="gap-2 border-gray-200 rounded-xl">
+                                                                <SortDesc className="h-4 w-4" />
+                                                                Sort
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => setSortBy('newest')}>
+                                                                Newest First
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setSortBy('oldest')}>
+                                                                Oldest First
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setSortBy('deadline')}>
+                                                                By Deadline
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setSortBy('applicants')}>
+                                                                Most Applicants
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+
+                                                    {/* Check Expired Button */}
+                                                    <Button
+                                                        variant="outline"
+                                                        className="gap-2 border-gray-200 rounded-xl"
+                                                        onClick={handleCheckExpired}
+                                                        disabled={updateExpiredMutation.isPending}
+                                                    >
+                                                        <Clock className="h-4 w-4" />
+                                                        {updateExpiredMutation.isPending ? 'Checking...' : 'Check Expired'}
+                                                    </Button>
                                                 </div>
                                             </div>
-
-                                            {/* Status Filter */}
-                                            <div className="flex gap-2">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" className="gap-2">
-                                                            <Filter className="h-4 w-4" />
-                                                            Status: {filterStatus === 'all' ? 'All' : filterStatus}
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('all')}>
-                                                            All Scholarships
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('ACTIVE')}>
-                                                            Active Only
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setFilterStatus('EXPIRED')}>
-                                                            Expired Only
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-
-                                                {/* Sort */}
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" className="gap-2">
-                                                            <SortDesc className="h-4 w-4" />
-                                                            Sort
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => setSortBy('newest')}>
-                                                            Newest First
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setSortBy('oldest')}>
-                                                            Oldest First
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setSortBy('deadline')}>
-                                                            By Deadline
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setSortBy('applicants')}>
-                                                            Most Applicants
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-
-                                                {/* Check Expired Button */}
-                                                <Button
-                                                    variant="outline"
-                                                    className="gap-2"
-                                                    onClick={handleCheckExpired}
-                                                    disabled={updateExpiredMutation.isPending}
-                                                >
-                                                    <Clock className="h-4 w-4" />
-                                                    {updateExpiredMutation.isPending ? 'Checking...' : 'Check Expired'}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </CardContent>
+                                    </Card>
 
                                     {/* Scholarships Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                         {filteredAndSortedScholarships.length === 0 ? (
-                                            <div className="col-span-full bg-white p-12 rounded-lg border shadow-sm text-center">
-                                                <div className="max-w-md mx-auto">
-                                                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-                                                        <Search className="h-8 w-8 text-gray-400" />
-                                                    </div>
-                                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No scholarships found</h3>
-                                                    <p className="text-gray-600 mb-6">
-                                                        {searchTerm || filterStatus !== 'all'
-                                                            ? 'Try adjusting your search or filter criteria'
-                                                            : 'Get started by creating your first scholarship'
-                                                        }
-                                                    </p>
-                                                    {!searchTerm && filterStatus === 'all' && (
-                                                        <Button
-                                                            onClick={() => navigate('/organization/create-scholar')}
-                                                            className="text-white"
-                                                            style={{ backgroundColor: '#4F39F6' }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
-                                                        >
-                                                            <Plus className="h-4 w-4 mr-2" />
-                                                            Create Your First Scholarship
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                            <div className="col-span-full">
+                                                <Card className="border-gray-200 bg-white shadow-lg">
+                                                    <CardContent className="p-12 text-center">
+                                                        <div className="max-w-md mx-auto">
+                                                            <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                                                <Search className="h-10 w-10 text-indigo-600" />
+                                                            </div>
+                                                            <h3 className="text-lg font-medium text-gray-900 mb-2">No scholarships found</h3>
+                                                            <p className="text-gray-600 mb-6">
+                                                                {searchTerm || filterStatus !== 'all'
+                                                                    ? 'Try adjusting your search or filter criteria'
+                                                                    : 'Get started by creating your first scholarship'
+                                                                }
+                                                            </p>
+                                                            {!searchTerm && filterStatus === 'all' && (
+                                                                <Button
+                                                                    onClick={() => setIsCreateModalOpen(true)}
+                                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg"
+                                                                >
+                                                                    <Plus className="h-4 w-4 mr-2" />
+                                                                    Create Your First Scholarship
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
                                             </div>
                                         ) : (
                                             filteredAndSortedScholarships.map((scholarship) => {
@@ -538,130 +558,125 @@ const ManageScholar = () => {
                                                 const isNearDeadline = isDeadlineNear(scholarship.deadline)
 
                                                 return (
-                                                    <div key={scholarship.id} className={`bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
+                                                    <Card key={scholarship.id} className={`bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
                                                         {/* Header with Title and Status */}
-                                                        <div className="flex items-start justify-between gap-2 mb-4">
-                                                            <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
-                                                                {scholarship.title}
-                                                            </h3>
-                                                            <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                                                                {/* Status badge - show "Deadline Passed" if expired, otherwise show normal status */}
-                                                                {isExpired && scholarship.status === 'ACTIVE' ? (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                                                        <XCircle className="h-3 w-3" />
-                                                                        Deadline Passed
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(scholarship.status)}`}>
-                                                                        {getStatusIcon(scholarship.status)}
-                                                                        {scholarship.status}
-                                                                    </span>
-                                                                )}
+                                                        <CardHeader className="pb-4">
+                                                            <div className="flex items-start justify-between gap-2 mb-4">
+                                                                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
+                                                                    {scholarship.title}
+                                                                </h3>
+                                                                <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                                                                    {/* Status badge - show "Deadline Passed" if expired, otherwise show normal status */}
+                                                                    {isExpired && scholarship.status === 'ACTIVE' ? (
+                                                                        <Badge className="bg-red-100 text-red-800 border-red-200 border-0 px-3 py-1 rounded-full">
+                                                                            <XCircle className="h-3 w-3 mr-1" />
+                                                                            Deadline Passed
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge className={`border-0 px-3 py-1 rounded-full ${getStatusColor(scholarship.status)}`}>
+                                                                            {getStatusIcon(scholarship.status)}
+                                                                            <span className="ml-1">{scholarship.status}</span>
+                                                                        </Badge>
+                                                                    )}
 
-                                                                {/* Near deadline indicator - only show if not expired */}
-                                                                {isNearDeadline && scholarship.status === 'ACTIVE' && !isExpired && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                                                        <AlertTriangle className="h-3 w-3" />
-                                                                        Soon
-                                                                    </span>
-                                                                )}
+                                                                    {/* Near deadline indicator - only show if not expired */}
+                                                                    {isNearDeadline && scholarship.status === 'ACTIVE' && !isExpired && (
+                                                                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 border-0 px-2 py-1 rounded-full text-xs">
+                                                                            <AlertTriangle className="h-3 w-3 mr-1" />
+                                                                            Soon
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        </CardHeader>
 
-                                                        {/* Description */}
-                                                        <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-                                                            {scholarship.description}
-                                                        </p>
+                                                        <CardContent className="flex-1 pb-4 space-y-4">
+                                                            {/* Description */}
+                                                            <p className="text-gray-600 text-sm line-clamp-3 flex-grow">
+                                                                {scholarship.description}
+                                                            </p>
 
-                                                        {/* Metadata */}
-                                                        <div className="space-y-2 mb-4">
-                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                <MapPin className="h-4 w-4 flex-shrink-0" />
-                                                                <span className="truncate">{scholarship.location}</span>
+                                                            {/* Metadata */}
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                    <MapPin className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <span className="truncate">{scholarship.location}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                    <DollarSign className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <span className="truncate">{scholarship.benefits}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                    <Calendar className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                    <Users className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <span>{scholarship.applications?.length || 0} applicants</span>
+                                                                </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                <DollarSign className="h-4 w-4 flex-shrink-0" />
-                                                                <span className="truncate">{scholarship.benefits}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                <Calendar className="h-4 w-4 flex-shrink-0" />
-                                                                <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                <Users className="h-4 w-4 flex-shrink-0" />
-                                                                <span>{scholarship.applications?.length || 0} applicants</span>
-                                                            </div>
-                                                        </div>
 
-                                                        {/* Actions */}
-                                                        <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleViewApplications(scholarship.id)}
-                                                                className="gap-2 w-full justify-center"
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                                View Applications
-                                                            </Button>
-
-                                                            <div className="flex gap-2">
+                                                            {/* Actions */}
+                                                            <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-gray-100">
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    onClick={() => handleEditScholarship(scholarship)}
-                                                                    className="gap-2 flex-1 justify-center"
+                                                                    onClick={() => handleViewApplications(scholarship.id)}
+                                                                    className="gap-2 w-full justify-center border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg"
                                                                 >
-                                                                    <Edit className="h-4 w-4" />
-                                                                    Edit
+                                                                    <Eye className="h-4 w-4" />
+                                                                    View Applications
                                                                 </Button>
 
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button variant="outline" size="sm" className="px-3">
-                                                                            <MoreHorizontal className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end">
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => handleArchiveScholarship(scholarship.id)}
-                                                                            className="gap-2 text-amber-600 focus:text-amber-600"
-                                                                            disabled={archiveScholarshipMutation.isPending}
-                                                                        >
-                                                                            <Archive className="h-4 w-4" />
-                                                                            {archiveScholarshipMutation.isPending ? 'Archiving...' : 'Archive'}
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuSeparator />
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => handleDeleteScholarship(scholarship.id)}
-                                                                            className="gap-2 text-red-600 focus:text-red-600"
-                                                                            disabled={deleteScholarshipMutation.isPending}
-                                                                        >
-                                                                            <XCircle className="h-4 w-4" />
-                                                                            {deleteScholarshipMutation.isPending &&
-                                                                                deleteScholarshipMutation.variables === scholarship.id
-                                                                                ? 'Deleting...'
-                                                                                : 'Delete'
-                                                                            }
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
+                                                                <div className="flex gap-2">
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handleEditScholarship(scholarship)}
+                                                                        className="gap-2 flex-1 justify-center border-gray-200 rounded-lg"
+                                                                    >
+                                                                        <Edit className="h-4 w-4" />
+                                                                        Edit
+                                                                    </Button>
+
+                                                                    <DropdownMenu>
+                                                                        <DropdownMenuTrigger asChild>
+                                                                            <Button variant="outline" size="sm" className="px-3 border-gray-200 rounded-lg">
+                                                                                <MoreHorizontal className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </DropdownMenuTrigger>
+                                                                        <DropdownMenuContent align="end">
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => handleArchiveScholarship(scholarship.id)}
+                                                                                className="gap-2 text-amber-600 focus:text-amber-600"
+                                                                                disabled={archiveScholarshipMutation.isPending}
+                                                                            >
+                                                                                <Archive className="h-4 w-4" />
+                                                                                {archiveScholarshipMutation.isPending ? 'Archiving...' : 'Archive'}
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuSeparator />
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => handleDeleteScholarship(scholarship.id)}
+                                                                                className="gap-2 text-red-600 focus:text-red-600"
+                                                                                disabled={deleteScholarshipMutation.isPending}
+                                                                            >
+                                                                                <XCircle className="h-4 w-4" />
+                                                                                {deleteScholarshipMutation.isPending &&
+                                                                                    deleteScholarshipMutation.variables === scholarship.id
+                                                                                    ? 'Deleting...'
+                                                                                    : 'Delete'
+                                                                                }
+                                                                            </DropdownMenuItem>
+                                                                        </DropdownMenuContent>
+                                                                    </DropdownMenu>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </div>
+                                                        </CardContent>
+                                                    </Card>
                                                 )
                                             })
                                         )}
                                     </div>
-
-                                    {/* Load More Button (if needed for pagination) */}
-                                    {filteredAndSortedScholarships.length > 0 && (
-                                        <div className="text-center mt-8">
-                                            <Button variant="outline" disabled={isLoading}>
-                                                {isLoading ? 'Loading...' : 'Load More Scholarships'}
-                                            </Button>
-                                        </div>
-                                    )}
                                 </>
                             )}
                         </div>

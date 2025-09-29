@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
+import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import {
     Dialog,
     DialogContent,
@@ -17,7 +20,7 @@ import {
     organizationTypes,
     validateScholarshipForm
 } from '../schemas/scholarshipSchema'
-import { Loader2 } from 'lucide-react'
+import { Loader2, GraduationCap, MapPin, Calendar, Award, Target } from 'lucide-react'
 
 interface CreateScholarshipModalProps {
     isOpen: boolean
@@ -112,24 +115,34 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="max-w-5xl w-full max-h-[90vh] overflow-y-auto" style={{ width: '80vw', maxWidth: '1200px' }}>
-                <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">Create New Scholarship</DialogTitle>
-                    <DialogDescription>
+            <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
+                <DialogHeader className="pb-6 border-b border-gray-100">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                            <GraduationCap className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <DialogTitle className="text-2xl font-bold text-gray-900">Create New Scholarship</DialogTitle>
+                    </div>
+                    <DialogDescription className="text-gray-600">
                         Fill in the details to create a new scholarship opportunity for students.
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Basic Information Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <GraduationCap className="h-4 w-4 text-indigo-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="title" className="text-sm font-medium text-gray-700">
                                     Scholarship Title *
-                                </label>
+                                </Label>
                                 <Input
                                     id="title"
                                     name="title"
@@ -137,51 +150,47 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                     value={formData.title}
                                     onChange={handleInputChange}
                                     placeholder="Enter scholarship title"
-                                    className={errors.title ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+                                    className={`rounded-xl ${errors.title ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                                 />
                                 {errors.title && (
                                     <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                                 )}
                             </div>
 
-                            <div>
-                                <label htmlFor="organizationType" className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="organizationType" className="text-sm font-medium text-gray-700">
                                     Organization Type *
-                                </label>
-                                <select
-                                    id="organizationType"
-                                    name="organizationType"
-                                    value={formData.organizationType}
-                                    onChange={handleInputChange}
-                                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white ${errors.organizationType ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                                        }`}
-                                >
-                                    <option value="">Select organization type</option>
-                                    {organizationTypes.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                </Label>
+                                <Select value={formData.organizationType} onValueChange={(value) => setFormData(prev => ({ ...prev, organizationType: value }))}>
+                                    <SelectTrigger className={`rounded-xl ${errors.organizationType ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}>
+                                        <SelectValue placeholder="Select organization type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {organizationTypes.map((type) => (
+                                            <SelectItem key={type.value} value={type.value}>
+                                                {type.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.organizationType && (
                                     <p className="mt-1 text-sm text-red-600">{errors.organizationType}</p>
                                 )}
                             </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="description" className="text-sm font-medium text-gray-700">
                                 Description *
-                            </label>
-                            <textarea
+                            </Label>
+                            <Textarea
                                 id="description"
                                 name="description"
                                 value={formData.description}
                                 onChange={handleInputChange}
                                 placeholder="Provide a detailed description of the scholarship..."
                                 rows={4}
-                                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                                    }`}
+                                className={`rounded-xl ${errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                             />
                             {errors.description && (
                                 <p className="mt-1 text-sm text-red-600">{errors.description}</p>
@@ -190,109 +199,111 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                     </div>
 
                     {/* Requirements and Details Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Requirements & Details</h3>
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <Target className="h-4 w-4 text-indigo-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Requirements & Details</h3>
+                        </div>
 
-                        <div>
-                            <label htmlFor="eligibilityRequirements" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="eligibilityRequirements" className="text-sm font-medium text-gray-700">
                                 Eligibility Requirements *
-                            </label>
-                            <textarea
+                            </Label>
+                            <Textarea
                                 id="eligibilityRequirements"
                                 name="eligibilityRequirements"
                                 value={formData.eligibilityRequirements}
                                 onChange={handleInputChange}
                                 placeholder="Enter each requirement on a new line (one per line). You may start lines with -, • or * if you prefer."
                                 rows={4}
-                                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.eligibilityRequirements ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                                    }`}
+                                className={`rounded-xl ${errors.eligibilityRequirements ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                             />
                             {errors.eligibilityRequirements && (
                                 <p className="mt-1 text-sm text-red-600">{errors.eligibilityRequirements}</p>
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="location" className="text-sm font-medium text-gray-700">
                                     Location *
-                                </label>
-                                <Input
-                                    id="location"
-                                    name="location"
-                                    type="text"
-                                    value={formData.location}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., USA, Global, Philippines"
-                                    className={errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-                                />
+                                </Label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        id="location"
+                                        name="location"
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g., USA, Global, Philippines"
+                                        className={`pl-10 rounded-xl ${errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
+                                    />
+                                </div>
                                 {errors.location && (
                                     <p className="mt-1 text-sm text-red-600">{errors.location}</p>
                                 )}
                             </div>
 
-                            <div>
-                                <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="deadline" className="text-sm font-medium text-gray-700">
                                     Application Deadline *
-                                </label>
-                                <Input
-                                    id="deadline"
-                                    name="deadline"
-                                    type="date"
-                                    value={formData.deadline}
-                                    onChange={handleInputChange}
-                                    className={errors.deadline ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-                                />
+                                </Label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        id="deadline"
+                                        name="deadline"
+                                        type="date"
+                                        value={formData.deadline}
+                                        onChange={handleInputChange}
+                                        className={`pl-10 rounded-xl ${errors.deadline ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
+                                    />
+                                </div>
                                 {errors.deadline && (
                                     <p className="mt-1 text-sm text-red-600">{errors.deadline}</p>
                                 )}
                             </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="benefits" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="benefits" className="text-sm font-medium text-gray-700">
                                 Benefits & Value *
-                            </label>
-                            <textarea
-                                id="benefits"
-                                name="benefits"
-                                value={formData.benefits}
-                                onChange={handleInputChange}
-                                placeholder="List benefits one per line (e.g., Tuition waiver, Monthly stipend). You can also start lines with -, • or *."
-                                rows={3}
-                                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.benefits ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                                    }`}
-                            />
+                            </Label>
+                            <div className="relative">
+                                <Award className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                <Textarea
+                                    id="benefits"
+                                    name="benefits"
+                                    value={formData.benefits}
+                                    onChange={handleInputChange}
+                                    placeholder="List benefits one per line (e.g., Tuition waiver, Monthly stipend). You can also start lines with -, • or *."
+                                    rows={3}
+                                    className={`pl-10 rounded-xl ${errors.benefits ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
+                                />
+                            </div>
                             {errors.benefits && (
                                 <p className="mt-1 text-sm text-red-600">{errors.benefits}</p>
                             )}
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-3">
+                    <DialogFooter className="gap-3 pt-6 border-t border-gray-100">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleClose}
                             disabled={createScholarshipMutation.isPending}
+                            className="border-gray-200 rounded-xl"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             disabled={createScholarshipMutation.isPending}
-                            className="text-white"
-                            style={{ backgroundColor: '#4F39F6' }}
-                            onMouseEnter={(e) => {
-                                if (!createScholarshipMutation.isPending) {
-                                    e.currentTarget.style.backgroundColor = '#3D2DB8'
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!createScholarshipMutation.isPending) {
-                                    e.currentTarget.style.backgroundColor = '#4F39F6'
-                                }
-                            }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                             {createScholarshipMutation.isPending ? (
                                 <>

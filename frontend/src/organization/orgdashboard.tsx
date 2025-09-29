@@ -6,6 +6,8 @@ import {
     SidebarInset,
 } from '../components/ui/sidebar'
 import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
 import {
     Users,
     GraduationCap,
@@ -17,7 +19,9 @@ import {
     CheckCircle,
     AlertCircle,
     FileText,
-    Award
+    Award,
+    Plus,
+    ArrowRight
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
@@ -182,111 +186,177 @@ const orgdashboard = () => {
                 <SidebarInset className="flex-1">
                     <Navbar showSidebarToggle={true} pageTitle="Dashboard" />
 
-                    <div className="flex flex-1 flex-col gap-6 p-6">
+                    <div className="flex flex-1 flex-col gap-6 p-6 bg-gray-50">
                         {/* Welcome Header */}
                         <div className="flex flex-col gap-2">
-                            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.fullname || user?.email || 'User'}!</h1>
+                            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.fullname || user?.email || 'User'}!</h1>
                             <p className="text-gray-600">Here's what's happening with your scholarships today.</p>
                         </div>
 
                         {/* Key Metrics Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-1">Total Scholarships</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            {statsLoading ? '...' : stats?.totalScholarships || 0}
-                                        </p>
-                                        <p className="text-sm text-blue-600 mt-1">
-                                            {stats?.activeScholarships || 0} currently active
-                                        </p>
+                            <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1 font-medium">Total Scholarships</p>
+                                            <p className="text-3xl font-bold text-gray-900">
+                                                {statsLoading ? '...' : stats?.totalScholarships || 0}
+                                            </p>
+                                            <p className="text-sm text-indigo-600 mt-1 font-medium">
+                                                {stats?.activeScholarships || 0} currently active
+                                            </p>
+                                        </div>
+                                        <div className="bg-indigo-100 p-3 rounded-xl">
+                                            <GraduationCap className="w-6 h-6 text-indigo-600" />
+                                        </div>
                                     </div>
-                                    <div className="bg-blue-100 p-3 rounded-lg">
-                                        <GraduationCap className="w-6 h-6 text-blue-600" />
-                                    </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
 
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-1">Total Applications</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            {statsLoading ? '...' : stats?.totalApplications || 0}
-                                        </p>
-                                        <p className="text-sm text-green-600 mt-1">
-                                            {recentApplications?.filter(app => {
-                                                const today = new Date();
-                                                const appDate = new Date(app.submittedAt);
-                                                return appDate.toDateString() === today.toDateString();
-                                            }).length || 0} received today
-                                        </p>
+                            <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1 font-medium">Total Applications</p>
+                                            <p className="text-3xl font-bold text-gray-900">
+                                                {statsLoading ? '...' : stats?.totalApplications || 0}
+                                            </p>
+                                            <p className="text-sm text-green-600 mt-1 font-medium">
+                                                {recentApplications?.filter(app => {
+                                                    const today = new Date();
+                                                    const appDate = new Date(app.submittedAt);
+                                                    return appDate.toDateString() === today.toDateString();
+                                                }).length || 0} received today
+                                            </p>
+                                        </div>
+                                        <div className="bg-green-100 p-3 rounded-xl">
+                                            <Users className="w-6 h-6 text-green-600" />
+                                        </div>
                                     </div>
-                                    <div className="bg-green-100 p-3 rounded-lg">
-                                        <Users className="w-6 h-6 text-green-600" />
-                                    </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
 
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-1">Archived Scholarships</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            {statsLoading ? '...' : stats?.archivedScholarships || 0}
-                                        </p>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            Completed programs
-                                        </p>
+                            <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1 font-medium">Archived Scholarships</p>
+                                            <p className="text-3xl font-bold text-gray-900">
+                                                {statsLoading ? '...' : stats?.archivedScholarships || 0}
+                                            </p>
+                                            <p className="text-sm text-gray-600 mt-1 font-medium">
+                                                Completed programs
+                                            </p>
+                                        </div>
+                                        <div className="bg-yellow-100 p-3 rounded-xl">
+                                            <Award className="w-6 h-6 text-yellow-600" />
+                                        </div>
                                     </div>
-                                    <div className="bg-yellow-100 p-3 rounded-lg">
-                                        <Award className="w-6 h-6 text-yellow-600" />
-                                    </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
 
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-1">Acceptance Rate</p>
-                                        <p className="text-3xl font-bold text-gray-900">
-                                            {(() => {
-                                                const total = stats?.totalApplications || 0;
-                                                const accepted = recentApplications?.filter(app => app.status === 'ACCEPTED').length || 0;
-                                                const rate = total > 0 ? Math.round((accepted / total) * 100) : 0;
-                                                return statsLoading ? '...' : `${rate}%`;
-                                            })()}
-                                        </p>
-                                        <p className="text-sm text-purple-600 mt-1">
-                                            {recentApplications?.filter(app => app.status === 'ACCEPTED').length || 0} applications approved
-                                        </p>
+                            <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1 font-medium">Acceptance Rate</p>
+                                            <p className="text-3xl font-bold text-gray-900">
+                                                {(() => {
+                                                    const total = stats?.totalApplications || 0;
+                                                    const accepted = recentApplications?.filter(app => app.status === 'ACCEPTED').length || 0;
+                                                    const rate = total > 0 ? Math.round((accepted / total) * 100) : 0;
+                                                    return statsLoading ? '...' : `${rate}%`;
+                                                })()}
+                                            </p>
+                                            <p className="text-sm text-purple-600 mt-1 font-medium">
+                                                {recentApplications?.filter(app => app.status === 'ACCEPTED').length || 0} applications approved
+                                            </p>
+                                        </div>
+                                        <div className="bg-purple-100 p-3 rounded-xl">
+                                            <TrendingUp className="w-6 h-6 text-purple-600" />
+                                        </div>
                                     </div>
-                                    <div className="bg-purple-100 p-3 rounded-lg">
-                                        <TrendingUp className="w-6 h-6 text-purple-600" />
-                                    </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
                         </div>
 
+                        {/* Quick Actions */}
+                        <Card className="border-gray-200 bg-white shadow-lg">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-xl text-gray-900">Quick Actions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <Button
+                                        onClick={() => navigate('/manage-scholarships')}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white p-6 h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 justify-start"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Plus className="h-6 w-6" />
+                                            <div className="text-left">
+                                                <div className="font-semibold">Create Scholarship</div>
+                                                <div className="text-sm opacity-90">Post new opportunity</div>
+                                            </div>
+                                        </div>
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate('/manage-scholarships')}
+                                        className="border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 p-6 h-auto rounded-xl justify-start"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <GraduationCap className="h-6 w-6" />
+                                            <div className="text-left">
+                                                <div className="font-semibold">Manage Scholarships</div>
+                                                <div className="text-sm opacity-75">View and edit posts</div>
+                                            </div>
+                                        </div>
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate('/archive')}
+                                        className="border-2 border-gray-200 text-gray-600 hover:bg-gray-50 p-6 h-auto rounded-xl justify-start"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Award className="h-6 w-6" />
+                                            <div className="text-left">
+                                                <div className="font-semibold">View Archive</div>
+                                                <div className="text-sm opacity-75">Past scholarships</div>
+                                            </div>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         {/* Recent Activity & Analytics */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Recent Activity */}
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Applications</h2>
-                                <div className="space-y-4">
+                            <Card className="border-gray-200 bg-white shadow-lg">
+                                <CardHeader className="pb-4">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-xl text-gray-900">Recent Applications</CardTitle>
+                                        <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                                            View All
+                                            <ArrowRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
                                     {applicationsLoading ? (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-gray-500">Loading recent applications...</div>
                                         </div>
                                     ) : recentApplications && recentApplications.length > 0 ? (
                                         recentApplications.slice(0, 4).map((application) => (
-                                            <div key={application.id} className="flex items-start gap-3">
-                                                <div className={`p-2 rounded-lg mt-1 ${application.status === 'ACCEPTED' ? 'bg-green-100' :
-                                                    application.status === 'REJECTED' ? 'bg-red-100' :
-                                                        application.status === 'UNDER_REVIEW' ? 'bg-blue-100' :
-                                                            'bg-yellow-100'
+                                            <div key={application.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                                <div className={`p-2 rounded-xl mt-1 ${application.status === 'ACCEPTED' ? 'bg-green-100' :
+                                                        application.status === 'REJECTED' ? 'bg-red-100' :
+                                                            application.status === 'UNDER_REVIEW' ? 'bg-blue-100' :
+                                                                'bg-yellow-100'
                                                     }`}>
                                                     {application.status === 'ACCEPTED' ? (
                                                         <CheckCircle className="w-4 h-4 text-green-600" />
@@ -298,7 +368,7 @@ const orgdashboard = () => {
                                                         <FileText className="w-4 h-4 text-yellow-600" />
                                                     )}
                                                 </div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <p className="text-sm text-gray-900 font-medium">
                                                         {application.status === 'ACCEPTED' ? 'Application Accepted' :
                                                             application.status === 'REJECTED' ? 'Application Rejected' :
@@ -317,32 +387,23 @@ const orgdashboard = () => {
                                     ) : (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-center">
-                                                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                                <p className="text-gray-500 text-sm">No recent applications</p>
+                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <FileText className="w-8 h-8 text-indigo-600" />
+                                                </div>
+                                                <p className="text-gray-500 text-sm font-medium">No recent applications</p>
                                                 <p className="text-gray-400 text-xs">Applications will appear here when students apply</p>
                                             </div>
                                         </div>
                                     )}
-
-                                    {recentApplications && recentApplications.length > 4 && (
-                                        <div className="pt-3 border-t">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => navigate('/manage-scholarships')}
-                                                className="w-full"
-                                            >
-                                                View All Applications
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
 
                             {/* Application Statistics */}
-                            <div className="bg-white p-6 rounded-lg border shadow-sm">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Application Status Overview</h2>
-                                <div className="space-y-6">
+                            <Card className="border-gray-200 bg-white shadow-lg">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-xl text-gray-900">Application Status Overview</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
                                     {applicationsLoading ? (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-gray-500">Loading application statistics...</div>
@@ -351,12 +412,12 @@ const orgdashboard = () => {
                                         <>
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm text-gray-600">Pending Review</span>
-                                                    <span className="text-sm font-medium text-gray-900">{applicationStats.pending}</span>
+                                                    <span className="text-sm text-gray-600 font-medium">Pending Review</span>
+                                                    <span className="text-sm font-bold text-gray-900">{applicationStats.pending}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-yellow-500 h-2 rounded-full"
+                                                        className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
                                                         style={{
                                                             width: stats?.totalApplications
                                                                 ? `${(applicationStats.pending / stats.totalApplications) * 100}%`
@@ -368,12 +429,12 @@ const orgdashboard = () => {
 
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm text-gray-600">Under Review</span>
-                                                    <span className="text-sm font-medium text-gray-900">{applicationStats.underReview}</span>
+                                                    <span className="text-sm text-gray-600 font-medium">Under Review</span>
+                                                    <span className="text-sm font-bold text-gray-900">{applicationStats.underReview}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-blue-500 h-2 rounded-full"
+                                                        className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                                                         style={{
                                                             width: stats?.totalApplications
                                                                 ? `${(applicationStats.underReview / stats.totalApplications) * 100}%`
@@ -385,12 +446,12 @@ const orgdashboard = () => {
 
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm text-gray-600">Accepted</span>
-                                                    <span className="text-sm font-medium text-gray-900">{applicationStats.accepted}</span>
+                                                    <span className="text-sm text-gray-600 font-medium">Accepted</span>
+                                                    <span className="text-sm font-bold text-gray-900">{applicationStats.accepted}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-green-500 h-2 rounded-full"
+                                                        className="bg-green-500 h-2 rounded-full transition-all duration-500"
                                                         style={{
                                                             width: stats?.totalApplications
                                                                 ? `${(applicationStats.accepted / stats.totalApplications) * 100}%`
@@ -402,12 +463,12 @@ const orgdashboard = () => {
 
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm text-gray-600">Rejected</span>
-                                                    <span className="text-sm font-medium text-gray-900">{applicationStats.rejected}</span>
+                                                    <span className="text-sm text-gray-600 font-medium">Rejected</span>
+                                                    <span className="text-sm font-bold text-gray-900">{applicationStats.rejected}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-red-500 h-2 rounded-full"
+                                                        className="bg-red-500 h-2 rounded-full transition-all duration-500"
                                                         style={{
                                                             width: stats?.totalApplications
                                                                 ? `${(applicationStats.rejected / stats.totalApplications) * 100}%`
@@ -420,35 +481,36 @@ const orgdashboard = () => {
                                     ) : (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-center">
-                                                <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                                <p className="text-gray-500 text-sm">No application data available</p>
+                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <BarChart3 className="w-8 h-8 text-indigo-600" />
+                                                </div>
+                                                <p className="text-gray-500 text-sm font-medium">No application data available</p>
                                                 <p className="text-gray-400 text-xs">Statistics will appear when you receive applications</p>
                                             </div>
                                         </div>
                                     )}
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
                         </div>
 
                         {/* Upcoming Deadlines */}
-                        <div className="bg-white p-6 rounded-lg border shadow-sm">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Deadlines</h2>
-                            <div className="overflow-x-auto">
-                                {scholarshipsLoading ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <div className="text-gray-500">Loading scholarship deadlines...</div>
-                                    </div>
-                                ) : upcomingDeadlines.length > 0 ? (
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="border-b">
-                                                <th className="text-left text-sm font-medium text-gray-600 pb-3">Scholarship</th>
-                                                <th className="text-left text-sm font-medium text-gray-600 pb-3">Applications</th>
-                                                <th className="text-left text-sm font-medium text-gray-600 pb-3">Deadline</th>
-                                                <th className="text-left text-sm font-medium text-gray-600 pb-3">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
+                        <Card className="border-gray-200 bg-white shadow-lg">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-xl text-gray-900">Upcoming Deadlines</CardTitle>
+                                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-0">
+                                        Next 30 days
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="overflow-x-auto">
+                                    {scholarshipsLoading ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="text-gray-500">Loading scholarship deadlines...</div>
+                                        </div>
+                                    ) : upcomingDeadlines.length > 0 ? (
+                                        <div className="space-y-4">
                                             {upcomingDeadlines.map((scholarship) => {
                                                 const urgency = getDeadlineUrgency(scholarship.deadline);
                                                 const applicationCount = recentApplications?.filter(
@@ -456,52 +518,53 @@ const orgdashboard = () => {
                                                 ).length || 0;
 
                                                 return (
-                                                    <tr key={scholarship.id}>
-                                                        <td className="py-3">
-                                                            <div>
-                                                                <p className="text-sm font-medium text-gray-900">{scholarship.title}</p>
-                                                                <p className="text-xs text-gray-600">{scholarship.benefits}</p>
+                                                    <div key={scholarship.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                                        <div className="flex-1">
+                                                            <h4 className="font-medium text-gray-900 mb-1">{scholarship.title}</h4>
+                                                            <p className="text-sm text-gray-600 mb-2">{scholarship.benefits}</p>
+                                                            <div className="flex items-center gap-4 text-sm">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Users className="h-4 w-4 text-gray-400" />
+                                                                    <span className="text-gray-600">{applicationCount} applications</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Clock className={`w-4 h-4 ${urgency.color.replace('text-', 'text-')}`} />
+                                                                    <span className={urgency.color}>
+                                                                        {new Date(scholarship.deadline).toLocaleDateString('en-US', {
+                                                                            month: 'short',
+                                                                            day: 'numeric',
+                                                                            year: 'numeric'
+                                                                        })}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </td>
-                                                        <td className="py-3 text-sm text-gray-900">{applicationCount}</td>
-                                                        <td className="py-3">
-                                                            <div className="flex items-center gap-1">
-                                                                <Clock className={`w-4 h-4 ${urgency.color.replace('text-', 'text-')}`} />
-                                                                <span className={`text-sm ${urgency.color}`}>
-                                                                    {new Date(scholarship.deadline).toLocaleDateString('en-US', {
-                                                                        month: 'short',
-                                                                        day: 'numeric',
-                                                                        year: 'numeric'
-                                                                    })}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3">
-                                                            <span className={`px-2 py-1 text-xs ${urgency.bgColor} ${urgency.color} rounded-full`}>
-                                                                {urgency.status}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
+                                                        </div>
+                                                        <Badge className={`${urgency.bgColor} ${urgency.color} border-0 px-3 py-1 rounded-full`}>
+                                                            {urgency.status}
+                                                        </Badge>
+                                                    </div>
                                                 );
                                             })}
-                                        </tbody>
-                                    </table>
-                                ) : (
-                                    <div className="flex items-center justify-center py-8">
-                                        <div className="text-center">
-                                            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                            <p className="text-gray-500 text-sm">No upcoming deadlines</p>
-                                            <p className="text-gray-400 text-xs">
-                                                {scholarships?.length === 0
-                                                    ? 'Create your first scholarship to see deadlines here'
-                                                    : 'All your scholarships have deadlines beyond 30 days'
-                                                }
-                                            </p>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="text-center">
+                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <Calendar className="w-8 h-8 text-indigo-600" />
+                                                </div>
+                                                <p className="text-gray-500 text-sm font-medium">No upcoming deadlines</p>
+                                                <p className="text-gray-400 text-xs">
+                                                    {scholarships?.length === 0
+                                                        ? 'Create your first scholarship to see deadlines here'
+                                                        : 'All your scholarships have deadlines beyond 30 days'
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </SidebarInset>
             </div>
