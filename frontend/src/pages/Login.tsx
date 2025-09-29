@@ -104,7 +104,7 @@ const Login = () => {
                             Continue your scholarship journey and discover new opportunities waiting for you.
                         </p>
                     </div>
-                    
+
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 to-purple-200/50 rounded-3xl blur-xl"></div>
                         <img
@@ -134,7 +134,7 @@ const Login = () => {
                                 Enter your credentials to access your account
                             </CardDescription>
                         </CardHeader>
-                        
+
                         <CardContent className="space-y-6">
                             {error && (
                                 <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -189,18 +189,22 @@ const Login = () => {
                                 {/* Remember Me & Forgot Password */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
-                                        <Checkbox 
-                                            id="remember" 
+                                        <Checkbox
+                                            id="remember"
                                             checked={rememberMe}
-                                            onCheckedChange={setRememberMe}
+                                            onCheckedChange={(checked) => {
+                                                // Checkbox onCheckedChange can be boolean | "indeterminate";
+                                                // coerce to a simple boolean for our state
+                                                setRememberMe(checked === true);
+                                            }}
                                             className="border-gray-300"
                                         />
                                         <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                                             Remember me
                                         </Label>
                                     </div>
-                                    <Link 
-                                        to="/forgot-password" 
+                                    <Link
+                                        to="/forgot-password"
                                         className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
                                     >
                                         Forgot password?
@@ -248,8 +252,8 @@ const Login = () => {
 
                     {/* Back to Home */}
                     <div className="text-center mt-6">
-                        <Link 
-                            to="/home" 
+                        <Link
+                            to="/home"
                             className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600 transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" />
