@@ -16,7 +16,10 @@ import {
     Users,
     Award,
     Target,
-    FileCheck
+    FileCheck,
+    Clock,
+    Shield,
+    CheckCircle2
 } from 'lucide-react';
 import {
     Dialog,
@@ -73,18 +76,17 @@ const getScholarshipDetails = async (id: string): Promise<Scholarship> => {
 // Text formatting utilities
 const formatTextContent = (text: string): string => {
     return String(text || '')
-        .split(/\r?\n/) // handle CRLF and LF
+        .split(/\r?\n/)
         .map(line => line.trim())
         .filter(line => line.length > 0)
         .join('\n');
 };
 
 const formatBulletPoints = (text: string): string[] => {
-    // Accept either a string with newlines or an array-like string
     const raw = String(text || '');
     return raw
-        .split(/\r?\n/) // handle CRLF and LF
-        .map(line => line.replace(/^[-•*\s]+/, '').trim()) // remove leading bullets and extra whitespace
+        .split(/\r?\n/)
+        .map(line => line.replace(/^[-•*\s]+/, '').trim())
         .filter(line => line.length > 0);
 };
 
@@ -236,43 +238,43 @@ const ScholarshipDetails = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="min-h-screen bg-white">
                 <StudentNavbar />
                 <div className="container mx-auto px-4 py-8">
                     <div className="max-w-7xl mx-auto">
-                        <Skeleton className="h-6 w-64 mb-6" />
+                        <Skeleton className="h-6 w-64 mb-8 bg-gray-200" />
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2 space-y-6">
-                                <Card className="border-0 shadow-lg">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardContent className="p-8">
-                                        <Skeleton className="h-8 w-3/4 mb-4" />
+                                        <Skeleton className="h-8 w-3/4 mb-4 bg-gray-200" />
                                         <div className="flex gap-2 mb-6">
-                                            <Skeleton className="h-6 w-24 rounded-full" />
-                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                            <Skeleton className="h-6 w-24 rounded-full bg-gray-200" />
+                                            <Skeleton className="h-6 w-20 rounded-full bg-gray-200" />
                                         </div>
-                                        <Skeleton className="h-4 w-full mb-3" />
-                                        <Skeleton className="h-4 w-5/6 mb-3" />
-                                        <Skeleton className="h-4 w-4/6" />
+                                        <Skeleton className="h-4 w-full mb-3 bg-gray-200" />
+                                        <Skeleton className="h-4 w-5/6 mb-3 bg-gray-200" />
+                                        <Skeleton className="h-4 w-4/6 bg-gray-200" />
                                     </CardContent>
                                 </Card>
-                                <Card className="border-0 shadow-lg">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardHeader>
-                                        <Skeleton className="h-7 w-48" />
+                                        <Skeleton className="h-7 w-48 bg-gray-200" />
                                     </CardHeader>
                                     <CardContent className="space-y-3">
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-4/5" />
-                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-4 w-full bg-gray-200" />
+                                        <Skeleton className="h-4 w-4/5 bg-gray-200" />
+                                        <Skeleton className="h-4 w-3/4 bg-gray-200" />
                                     </CardContent>
                                 </Card>
                             </div>
                             <div className="lg:col-span-1">
-                                <Card className="border-0 shadow-xl sticky top-8">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl sticky top-8">
                                     <CardContent className="p-6">
-                                        <Skeleton className="h-8 w-40 mx-auto mb-4" />
-                                        <Skeleton className="h-20 w-full mb-6 rounded-lg" />
-                                        <Skeleton className="h-12 w-full mb-4 rounded-xl" />
-                                        <Skeleton className="h-3 w-48 mx-auto" />
+                                        <Skeleton className="h-8 w-40 mx-auto mb-4 bg-gray-200" />
+                                        <Skeleton className="h-20 w-full mb-6 rounded-lg bg-gray-200" />
+                                        <Skeleton className="h-12 w-full mb-4 rounded-lg bg-gray-200" />
+                                        <Skeleton className="h-3 w-48 mx-auto bg-gray-200" />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -286,26 +288,26 @@ const ScholarshipDetails = () => {
     // Error states
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="min-h-screen bg-white">
                 <StudentNavbar />
                 <div className="container mx-auto px-4 py-8">
                     <div className="max-w-4xl mx-auto">
-                        <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2">
+                        <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Scholarships
                         </Button>
-                        <Card className="border-red-200 bg-red-50/50 border-0 shadow-lg">
+                        <Card className="border border-red-200 bg-white shadow-sm rounded-xl">
                             <CardContent className="p-8 text-center">
-                                <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-                                <CardTitle className="text-2xl font-bold text-red-900 mb-2">
+                                <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
                                     Error Loading Scholarship
                                 </CardTitle>
-                                <p className="text-red-700 mb-6">{error.message}</p>
+                                <p className="text-gray-700 mb-6">{error.message}</p>
                                 <div className="flex gap-3 justify-center">
-                                    <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
+                                    <Button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
                                         Try Again
                                     </Button>
-                                    <Button variant="outline" onClick={handleBack} className="border-red-200 text-red-700">
+                                    <Button variant="outline" onClick={handleBack} className="border-gray-300 text-gray-700 rounded-lg">
                                         Back to Scholarships
                                     </Button>
                                 </div>
@@ -319,24 +321,24 @@ const ScholarshipDetails = () => {
 
     if (!scholarship) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="min-h-screen bg-white">
                 <StudentNavbar />
                 <div className="container mx-auto px-4 py-8">
                     <div className="max-w-4xl mx-auto">
-                        <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2">
+                        <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Scholarships
                         </Button>
-                        <Card className="text-center py-16 border-0 shadow-lg">
+                        <Card className="text-center py-16 border border-gray-200 bg-white shadow-sm rounded-xl">
                             <CardContent>
                                 <AlertCircle className="h-20 w-20 text-gray-300 mx-auto mb-6" />
-                                <CardTitle className="text-3xl font-bold text-gray-700 mb-4">
+                                <CardTitle className="text-3xl font-bold text-gray-900 mb-4">
                                     Scholarship Not Found
                                 </CardTitle>
                                 <p className="text-gray-600 mb-8 text-lg">
                                     The scholarship you're looking for doesn't exist or may have been removed.
                                 </p>
-                                <Button onClick={handleBack} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
+                                <Button onClick={handleBack} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 text-lg rounded-lg">
                                     Browse All Scholarships
                                 </Button>
                             </CardContent>
@@ -355,7 +357,7 @@ const ScholarshipDetails = () => {
     const requirementsList = formatBulletPoints(scholarship.requirements);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-white">
             <StudentNavbar />
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-7xl mx-auto">
@@ -371,25 +373,23 @@ const ScholarshipDetails = () => {
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-8">
                             {/* Scholarship Header */}
-                            <Card className="border-0 shadow-lg">
-                                <CardContent className="p-8">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                                            {scholarship.title}
-                                        </h1>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-3 mb-6">
-                                        <Badge variant="secondary" className="flex items-center gap-2 bg-blue-50 text-blue-700">
+                            <Card className="border border-gray-200 bg-white shadow-sm rounded-xl overflow-hidden">
+                                <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6">
+                                    <h1 className="text-3xl font-bold text-white leading-tight mb-3">
+                                        {scholarship.title}
+                                    </h1>
+                                    <div className="flex flex-wrap gap-3">
+                                        <Badge className="flex items-center gap-2 bg-white/20 text-white backdrop-blur-sm border-0">
                                             <MapPin className="h-4 w-4" />
                                             {scholarship.location}
                                         </Badge>
-                                        <Badge variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">
+                                        <Badge className="bg-white/10 text-white backdrop-blur-sm border-0">
                                             {scholarship.type}
                                         </Badge>
                                     </div>
-
-                                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                </div>
+                                <CardContent className="p-8">
+                                    <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">
                                         {formatTextContent(scholarship.description)}
                                     </p>
                                 </CardContent>
@@ -398,18 +398,19 @@ const ScholarshipDetails = () => {
                             {/* Scholarship Details */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Benefits */}
-                                <Card className="border-0 shadow-lg">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardHeader className="pb-4">
-                                        <CardTitle className="flex items-center gap-2 text-gray-900">
-                                            <Award className="h-5 w-5 text-green-600" />
-                                            Scholarship Benefits
+                                        <CardTitle className="flex items-center gap-3 text-gray-900">
+                                            <div className="p-2 bg-indigo-100 rounded-lg">
+                                                <Award className="h-5 w-5 text-indigo-600" />
+                                            </div>
+                                            <span className="text-xl">Scholarship Benefits</span>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <ul className="space-y-3">
+                                        <ul className="space-y-4">
                                             {benefitsList.map((benefit, index) => (
-                                                <li key={index} className="flex items-start gap-3">
-                                                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                                                <li key={index} className="flex items-start gap-4">
                                                     <span className="text-gray-700 leading-relaxed">{benefit}</span>
                                                 </li>
                                             ))}
@@ -418,18 +419,20 @@ const ScholarshipDetails = () => {
                                 </Card>
 
                                 {/* Requirements */}
-                                <Card className="border-0 shadow-lg">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardHeader className="pb-4">
-                                        <CardTitle className="flex items-center gap-2 text-gray-900">
-                                            <Target className="h-5 w-5 text-blue-600" />
-                                            Eligibility Requirements
+                                        <CardTitle className="flex items-center gap-3 text-gray-900">
+                                            <div className="p-2 bg-indigo-100 rounded-lg">
+                                                <Target className="h-5 w-5 text-indigo-600" />
+                                            </div>
+                                            <span className="text-xl">Eligibility Requirements</span>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <ul className="space-y-3">
+                                        <ul className="space-y-4">
                                             {requirementsList.map((requirement, index) => (
-                                                <li key={index} className="flex items-start gap-3">
-                                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                                <li key={index} className="flex items-start gap-4">
+
                                                     <span className="text-gray-700 leading-relaxed">{requirement}</span>
                                                 </li>
                                             ))}
@@ -443,36 +446,39 @@ const ScholarshipDetails = () => {
                         <div className="lg:col-span-1">
                             <div className="sticky top-8 space-y-6">
                                 {/* Application Card */}
-                                <Card className="border-0 shadow-xl">
+                                <Card className="border border-gray-200 bg-white shadow-sm rounded-xl overflow-hidden">
                                     <CardContent className="p-6">
                                         <div className="text-center mb-6">
                                             <div className="text-3xl font-bold text-gray-900 mb-2">
                                                 {scholarship.scholarshipValue || 'Full Scholarship'}
                                             </div>
-                                            <div className="text-gray-600 flex items-center justify-center gap-1">
+                                            <div className="text-gray-600 flex items-center justify-center gap-2">
                                                 <Users className="h-4 w-4" />
                                                 For {scholarship.eligibleStudents || 'eligible students'}
                                             </div>
                                         </div>
 
                                         {/* Deadline */}
-                                        <div className={`rounded-lg p-4 mb-6 border ${isExpired ? 'bg-red-50 border-red-200' :
-                                            isUrgent ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'
+                                        <div className={`rounded-xl p-4 mb-6 border ${isExpired
+                                            ? 'bg-red-50 border-red-200'
+                                            : isUrgent
+                                                ? 'bg-orange-50 border-orange-200'
+                                                : 'bg-indigo-50 border-indigo-200'
                                             }`}>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Calendar className={`h-4 w-4 ${isExpired ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-blue-600'
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <Clock className={`h-5 w-5 ${isExpired ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-indigo-600'
                                                     }`} />
-                                                <span className={`font-semibold text-sm ${isExpired ? 'text-red-800' : isUrgent ? 'text-orange-800' : 'text-blue-800'
+                                                <span className={`font-semibold text-sm ${isExpired ? 'text-red-800' : isUrgent ? 'text-orange-800' : 'text-indigo-800'
                                                     }`}>
                                                     Application Deadline
                                                 </span>
                                             </div>
-                                            <div className={`font-bold ${isExpired ? 'text-red-700' : isUrgent ? 'text-orange-700' : 'text-blue-700'
+                                            <div className={`font-bold text-lg ${isExpired ? 'text-red-700' : isUrgent ? 'text-orange-700' : 'text-indigo-700'
                                                 }`}>
                                                 {formatDate(scholarship.deadline)}
                                             </div>
                                             {!isExpired && (
-                                                <div className={`text-sm mt-1 ${isUrgent ? 'text-orange-600' : 'text-blue-600'
+                                                <div className={`text-sm mt-2 font-medium ${isUrgent ? 'text-orange-600' : 'text-indigo-600'
                                                     }`}>
                                                     {daysUntilDeadline > 0 ? (
                                                         `${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} remaining`
@@ -488,65 +494,49 @@ const ScholarshipDetails = () => {
                                             <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
                                                 <Button
                                                     size="lg"
-                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 mb-4"
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 mb-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                                                     onClick={() => setIsApplyOpen(true)}
                                                 >
                                                     Apply Now
                                                 </Button>
 
-                                                <DialogContent className="max-w-2xl max-h-[85vh] overflow-auto">
-                                                    <DialogHeader>
-                                                        <DialogTitle className="text-2xl font-bold">
+                                                {/* responsive modal width: full on small screens, constrained on larger screens */}
+                                                {/* wider modal so internal form fields don't compress on desktop */}
+                                                <DialogContent className="w-full max-w-[900px] sm:max-w-[900px] max-h-[85vh] overflow-auto border border-gray-200 rounded-xl bg-white">
+                                                    <DialogHeader className="border-b border-gray-200 pb-6">
+                                                        <DialogTitle className="text-2xl font-bold text-gray-900">
                                                             Apply for {scholarship.title}
                                                         </DialogTitle>
-                                                        <DialogDescription>
+                                                        <DialogDescription className="text-gray-600 text-lg">
                                                             Complete your application by filling out the form below and uploading required documents.
                                                         </DialogDescription>
                                                     </DialogHeader>
 
-                                                    <div className="space-y-6">
+                                                    <div className="space-y-6 py-6">
                                                         {/* Personal Information */}
                                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                            <div className="space-y-2">
-                                                                <label className="text-sm font-medium">First name *</label>
-                                                                <input
-                                                                    value={applicationData.firstName}
-                                                                    onChange={(e) => setApplicationData(prev => ({
-                                                                        ...prev,
-                                                                        firstName: e.target.value
-                                                                    }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                                    placeholder="Enter your first name"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-sm font-medium">Middle name *</label>
-                                                                <input
-                                                                    value={applicationData.middleName}
-                                                                    onChange={(e) => setApplicationData(prev => ({
-                                                                        ...prev,
-                                                                        middleName: e.target.value
-                                                                    }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                                    placeholder="Enter your middle name"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-sm font-medium">Last name *</label>
-                                                                <input
-                                                                    value={applicationData.lastName}
-                                                                    onChange={(e) => setApplicationData(prev => ({
-                                                                        ...prev,
-                                                                        lastName: e.target.value
-                                                                    }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                                    placeholder="Enter your last name"
-                                                                />
-                                                            </div>
+                                                            {[
+                                                                { key: 'firstName', label: 'First name *', placeholder: 'Enter your first name' },
+                                                                { key: 'middleName', label: 'Middle name *', placeholder: 'Enter your middle name' },
+                                                                { key: 'lastName', label: 'Last name *', placeholder: 'Enter your last name' }
+                                                            ].map((field) => (
+                                                                <div key={field.key} className="space-y-2">
+                                                                    <label className="text-sm font-medium text-gray-700">{field.label}</label>
+                                                                    <input
+                                                                        value={applicationData[field.key as keyof typeof applicationData]}
+                                                                        onChange={(e) => setApplicationData(prev => ({
+                                                                            ...prev,
+                                                                            [field.key]: e.target.value
+                                                                        }))}
+                                                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                        placeholder={field.placeholder}
+                                                                    />
+                                                                </div>
+                                                            ))}
                                                         </div>
 
                                                         <div className="space-y-2">
-                                                            <label className="text-sm font-medium">Email address *</label>
+                                                            <label className="text-sm font-medium text-gray-700">Email address *</label>
                                                             <input
                                                                 type="email"
                                                                 value={applicationData.email}
@@ -554,14 +544,14 @@ const ScholarshipDetails = () => {
                                                                     ...prev,
                                                                     email: e.target.value
                                                                 }))}
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
                                                                 placeholder="your.email@example.com"
                                                             />
                                                         </div>
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                             <div className="space-y-2">
-                                                                <label className="text-sm font-medium">Phone number *</label>
+                                                                <label className="text-sm font-medium text-gray-700">Phone number *</label>
                                                                 <input
                                                                     type="tel"
                                                                     value={applicationData.phone}
@@ -569,40 +559,40 @@ const ScholarshipDetails = () => {
                                                                         ...prev,
                                                                         phone: e.target.value
                                                                     }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
                                                                     placeholder="Your phone number"
                                                                 />
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <label className="text-sm font-medium">City *</label>
+                                                                <label className="text-sm font-medium text-gray-700">City *</label>
                                                                 <input
                                                                     value={applicationData.city}
                                                                     onChange={(e) => setApplicationData(prev => ({
                                                                         ...prev,
                                                                         city: e.target.value
                                                                     }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
                                                                     placeholder="Your city"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div className="space-y-2">
-                                                            <label className="text-sm font-medium">Address *</label>
+                                                            <label className="text-sm font-medium text-gray-700">Address *</label>
                                                             <input
                                                                 value={applicationData.address}
                                                                 onChange={(e) => setApplicationData(prev => ({
                                                                     ...prev,
                                                                     address: e.target.value
                                                                 }))}
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
                                                                 placeholder="Your full address"
                                                             />
                                                         </div>
 
                                                         {/* File Upload */}
                                                         <div className="space-y-2">
-                                                            <label className="text-sm font-medium">School document (PDF) *</label>
+                                                            <label className="text-sm font-medium text-gray-700">School document (PDF) *</label>
                                                             <div
                                                                 onDragOver={handleDragOver}
                                                                 onDragLeave={handleDragLeave}
@@ -611,7 +601,9 @@ const ScholarshipDetails = () => {
                                                                 role="button"
                                                                 tabIndex={0}
                                                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-                                                                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${isDragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+                                                                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${isDragOver
+                                                                    ? 'border-indigo-600 bg-indigo-50'
+                                                                    : 'border-gray-300 hover:border-gray-400 bg-gray-50'
                                                                     }`}
                                                             >
                                                                 <input
@@ -627,7 +619,7 @@ const ScholarshipDetails = () => {
                                                                     Drag & drop your PDF here
                                                                 </p>
                                                                 <p className="text-gray-500 text-sm">
-                                                                    or <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="text-blue-600 font-medium underline-offset-2">browse files</button>
+                                                                    or <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="text-indigo-600 font-medium underline-offset-2 hover:underline">browse files</button>
                                                                 </p>
                                                                 <p className="text-gray-400 text-xs mt-1">Max file size: 5MB</p>
                                                             </div>
@@ -640,7 +632,7 @@ const ScholarshipDetails = () => {
                                                                     </div>
                                                                     <button
                                                                         onClick={() => setApplyFile(null)}
-                                                                        className="text-red-600 hover:text-red-800"
+                                                                        className="text-red-600 hover:text-red-800 transition-colors"
                                                                     >
                                                                         <X className="h-4 w-4" />
                                                                     </button>
@@ -649,14 +641,14 @@ const ScholarshipDetails = () => {
                                                         </div>
                                                     </div>
 
-                                                    <DialogFooter>
+                                                    <DialogFooter className="border-t border-gray-200 pt-6">
                                                         <DialogClose asChild>
-                                                            <Button variant="outline">Cancel</Button>
+                                                            <Button variant="outline" className="border-gray-300 text-gray-700 rounded-lg">Cancel</Button>
                                                         </DialogClose>
                                                         <Button
                                                             onClick={handleApplicationSubmit}
                                                             disabled={applicationMutation.isPending}
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-6"
                                                         >
                                                             {applicationMutation.isPending ? (
                                                                 <div className="flex items-center gap-2">
@@ -676,12 +668,12 @@ const ScholarshipDetails = () => {
                                             </div>
                                         )}
 
-                                        <div className="text-center text-sm text-gray-500 mt-3">
+                                        <div className="text-center text-sm text-gray-500 mt-3 flex items-center justify-center gap-2">
+                                            <Shield className="h-4 w-4" />
                                             Secure application process
                                         </div>
                                     </CardContent>
                                 </Card>
-
                             </div>
                         </div>
                     </div>

@@ -25,9 +25,10 @@ interface Scholarship {
 interface ScholarshipCardProps {
     scholarship: Scholarship
     onViewDetails?: (scholarshipId: string) => void
+    layout?: 'grid' | 'list'
 }
 
-const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDetails }) => {
+const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDetails, layout = 'grid' }) => {
     const navigate = useNavigate()
     const { user } = useAuth()
     const isExpired = scholarship.status === 'EXPIRED' || new Date(scholarship.deadline) < new Date()
@@ -68,7 +69,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                 </Badge>
             )
         }
-        
+
         if (isUrgent) {
             return (
                 <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
@@ -78,12 +79,8 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
             )
         }
 
-        return (
-            <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                <Award className="h-3 w-3 mr-1" />
-                Active
-            </Badge>
-        )
+        // For regular active scholarships we no longer render an "Active" badge.
+        return null
     }
 
     const handleClick = () => {
@@ -102,8 +99,63 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
         navigate(`/scholarship/${scholarship.id}`)
     }
 
+    if (layout === 'list') {
+        return (
+            <Card className="w-full hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200">
+                <CardContent className="flex gap-4 items-start p-4">
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="border-indigo-200 text-indigo-600 bg-indigo-50">
+                                    {scholarship.type}
+                                </Badge>
+                                <h3 className="text-md font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                                    {scholarship.title}
+                                </h3>
+                            </div>
+
+                            {getStatusBadge()}
+                        </div>
+
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+                            {scholarship.description}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-gray-400" />
+                                <span className="truncate">{scholarship.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span>Deadline: {formatDate(scholarship.deadline)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-40 flex-shrink-0 flex flex-col gap-2">
+                        <div className="p-2 bg-indigo-50 rounded-md border border-indigo-100 text-indigo-700 text-sm">
+                            <div className="font-medium">Benefits</div>
+                            <div className="line-clamp-3 text-xs text-indigo-600">{scholarship.benefits}</div>
+                        </div>
+                        <Button
+                            onClick={handleClick}
+                            disabled={isExpired}
+                            className={`${isExpired
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                }`}
+                        >
+                            {isExpired ? 'Closed' : 'View'}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
-        <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200">
+        <Card className={`${layout === 'grid' ? 'h-full' : ''} flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200`}>
             {/* Header */}
             <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -112,7 +164,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                     </Badge>
                     {getStatusBadge()}
                 </div>
-                
+
                 <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                     {scholarship.title}
                 </h3>
@@ -153,11 +205,10 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                 <Button
                     onClick={handleClick}
                     disabled={isExpired}
-                    className={`w-full ${
-                        isExpired 
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200' 
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
+                    className={`w-full ${isExpired
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        }`}
                 >
                     {isExpired ? 'Application Closed' : 'View Details & Apply'}
                 </Button>

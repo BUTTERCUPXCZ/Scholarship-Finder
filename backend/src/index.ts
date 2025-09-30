@@ -16,6 +16,7 @@ import notificationRoutes from './routes/notification.routes';
 import rateLimit from 'express-rate-limit';
 import { initializeSocket } from './services/socketService';
 
+
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
@@ -23,7 +24,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
 
-// If behind a proxy (like Vercel, Heroku), trust the proxy so req.protocol and req.hostname are correct
+
 app.set('trust proxy', 1);
 
 

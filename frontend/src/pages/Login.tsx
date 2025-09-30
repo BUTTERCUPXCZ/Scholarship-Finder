@@ -5,12 +5,7 @@ import { loginUser, type LoginData } from '../services/auth';
 import { useAuth } from '../AuthProvider/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { Checkbox } from '../components/ui/checkbox';
-import { Loader2, Mail, Lock, Eye, EyeOff, GraduationCap, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
     const [form, setForm] = useState<LoginData>({ email: "", password: "" });
@@ -88,100 +83,92 @@ const Login = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                {/* Left Side - Branding & Illustration */}
-                <div className="hidden lg:flex flex-col items-center justify-center space-y-8">
-                    <div className="text-center space-y-4">
-                        <div className="flex items-center justify-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center">
-                                <GraduationCap className="h-7 w-7 text-white" />
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900">ScholarSphere</h1>
-                        </div>
-                        <h2 className="text-2xl font-semibold text-gray-800">Welcome Back!</h2>
-                        <p className="text-gray-600 max-w-md">
-                            Continue your scholarship journey and discover new opportunities waiting for you.
-                        </p>
-                    </div>
+        <div className="flex min-h-screen w-full overflow-hidden">
+            {/* Left Side - Image (hidden on mobile) */}
+            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-12">
+                <img
+                    className="max-w-[500px] max-h-[80vh] mx-auto object-contain"
+                    src="/project-amico.png"
+                    alt="Login Illustration"
+                />
+            </div>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 to-purple-200/50 rounded-3xl blur-xl"></div>
-                        <img
-                            src="/project-amico.png"
-                            alt="Login illustration"
-                            className="relative w-full max-w-lg h-auto rounded-3xl shadow-2xl"
-                        />
-                    </div>
-                </div>
-
-                {/* Right Side - Login Form */}
-                <div className="w-full max-w-md mx-auto lg:mx-0">
-                    {/* Mobile Header */}
-                    <div className="lg:hidden text-center mb-8">
-                        <div className="flex items-center justify-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                                <GraduationCap className="h-6 w-6 text-white" />
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-900">ScholarSphere</h1>
-                        </div>
-                    </div>
-
-                    <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
-                        <CardHeader className="space-y-1 text-center pb-6">
+            {/* Right Side - Form */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-white">
+                <div className="w-full flex flex-col items-center space-y-8">
+                    <Card className="w-full max-w-md">
+                        <CardHeader className="text-center">
                             <CardTitle className="text-2xl font-bold text-gray-900">Sign In</CardTitle>
                             <CardDescription className="text-gray-600">
                                 Enter your credentials to access your account
                             </CardDescription>
                         </CardHeader>
-
-                        <CardContent className="space-y-6">
-                            {error && (
-                                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                                    <AlertDescription className="text-red-700">{error}</AlertDescription>
-                                </Alert>
-                            )}
-
+                        <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
+                                {error && (
+                                    <div className="w-full rounded-md bg-red-50 p-3">
+                                        <p className="text-sm font-medium text-red-800 text-center">{error}</p>
+                                    </div>
+                                )}
+
                                 {/* Email Field */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                                        <Input
+                                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                                        Email Address
+                                    </label>
+                                    <div className="flex items-center w-full bg-transparent border border-gray-300/60 h-12 rounded-full overflow-hidden pl-6 gap-2">
+                                        <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M0 .55.571 0H15.43l.57.55v9.9l-.571.55H.57L0 10.45zm1.143 1.138V9.9h13.714V1.69l-6.503 4.8h-.697zM13.749 1.1H2.25L8 5.356z" fill="#6B7280" />
+                                        </svg>
+                                        <input
                                             id="email"
                                             name="email"
                                             type="email"
                                             value={form.email}
                                             onChange={handleChange}
-                                            placeholder="Enter your email"
-                                            className="pl-11 h-12 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="Enter your email address"
+                                            className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
                                             required
+                                            disabled={mutation.isPending}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Password Field */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                                        <Input
+                                    <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                                        Password
+                                    </label>
+                                    <div className="flex items-center w-full bg-transparent border border-gray-300/60 h-12 rounded-full overflow-hidden pl-6 gap-2">
+                                        <svg width="13" height="17" viewBox="0 0 13 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M13 8.5c0-.938-.729-1.7-1.625-1.7h-.812V4.25C10.563 1.907 8.74 0 6.5 0S2.438 1.907 2.438 4.25V6.8h-.813C.729 6.8 0 7.562 0 8.5v6.8c0 .938.729 1.7 1.625 1.7h9.75c.896 0 1.625-.762 1.625-1.7zM4.063 4.25c0-1.406 1.093-2.55 2.437-2.55s2.438 1.144 2.438 2.55V6.8H4.061z" fill="#6B7280" />
+                                        </svg>
+                                        <input
                                             id="password"
                                             name="password"
                                             type={showPassword ? "text" : "password"}
                                             value={form.password}
                                             onChange={handleChange}
                                             placeholder="Enter your password"
-                                            className="pl-11 pr-11 h-12 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                            className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
                                             required
+                                            disabled={mutation.isPending}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                                            className="pr-4 text-gray-400 hover:text-gray-600 transition-colors"
                                         >
-                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            {showPassword ? (
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 2c3.136 0 5.578 2.078 7.328 4.672a.665.665 0 0 1 0 .656C13.578 9.922 11.136 12 8 12c-3.136 0-5.578-2.078-7.328-4.672a.665.665 0 0 1 0-.656C2.422 4.078 4.864 2 8 2zm0 1.333c-2.53 0-4.578 1.613-6.172 3.828a.665.665 0 0 0 0 .672c1.594 2.215 3.642 3.828 6.172 3.828 2.53 0 4.578-1.613 6.172-3.828a.665.665 0 0 0 0-.672C12.578 4.946 10.53 3.333 8 3.333zm0 2.667a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill="currentColor" />
+                                                </svg>
+                                            ) : (
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M2.28 2.22a.75.75 0 0 0-1.06 1.06l1.945 1.946C1.542 6.422 0 8 0 8s3 5.333 8 5.333a7.6 7.6 0 0 0 2.72-.5l2.28 2.28a.75.75 0 1 0 1.06-1.062l-10-10zm4.438 4.438a2.5 2.5 0 0 0 3.522 3.522l-3.522-3.522z" fill="currentColor" />
+                                                    <path d="M5.525 3.22a2.5 2.5 0 0 1 3.255 3.255l.782.782A7.6 7.6 0 0 1 8 2.667C3 2.667 0 8 0 8s.939 1.333 2.667 2.667l.78-.78C2.16 8.78 1.333 7.556 1.333 7.556s.78-1.445 2.667-2.666l1.525-1.67z" fill="currentColor" />
+                                                </svg>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -189,23 +176,21 @@ const Login = () => {
                                 {/* Remember Me & Forgot Password */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
-                                        <Checkbox
+                                        <input
+                                            type="checkbox"
                                             id="remember"
                                             checked={rememberMe}
-                                            onCheckedChange={(checked) => {
-                                                // Checkbox onCheckedChange can be boolean | "indeterminate";
-                                                // coerce to a simple boolean for our state
-                                                setRememberMe(checked === true);
-                                            }}
-                                            className="border-gray-300"
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                            disabled={mutation.isPending}
                                         />
-                                        <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                                        <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                                             Remember me
-                                        </Label>
+                                        </label>
                                     </div>
                                     <Link
                                         to="/forgot-password"
-                                        className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
+                                        className="text-sm text-indigo-500 hover:text-indigo-600 hover:underline"
                                     >
                                         Forgot password?
                                     </Link>
@@ -214,56 +199,50 @@ const Login = () => {
                                 {/* Submit Button */}
                                 <Button
                                     type="submit"
-                                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-base"
+                                    className="w-full h-11 rounded-full text-white bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg transition-all duration-200"
                                     disabled={mutation.isPending}
                                 >
                                     {mutation.isPending ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                            Signing in...
-                                        </>
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="40 120" fill="none" />
+                                            </svg>
+                                            <span>Signing in...</span>
+                                        </div>
                                     ) : (
                                         'Sign In'
                                     )}
                                 </Button>
 
-                                {/* Divider */}
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-gray-200" />
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white px-2 text-gray-500">New to ScholarSphere?</span>
-                                    </div>
-                                </div>
-
                                 {/* Sign Up Link */}
                                 <div className="text-center">
                                     <p className="text-sm text-gray-600">
                                         Don't have an account?{' '}
-                                        <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline">
+                                        <Link
+                                            to="/register"
+                                            className="text-indigo-500 hover:text-indigo-600 hover:underline"
+                                        >
                                             Create free account
                                         </Link>
                                     </p>
                                 </div>
+
+                                {/* Back to Home */}
+                                <div className="text-center pt-4">
+                                    <Link
+                                        to="/home"
+                                        className="text-sm text-indigo-500 hover:text-indigo-600 hover:underline"
+                                    >
+                                        Back to Home
+                                    </Link>
+                                </div>
                             </form>
                         </CardContent>
                     </Card>
-
-                    {/* Back to Home */}
-                    <div className="text-center mt-6">
-                        <Link
-                            to="/home"
-                            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600 transition-colors"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Home
-                        </Link>
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-export default Login
+export default Login;

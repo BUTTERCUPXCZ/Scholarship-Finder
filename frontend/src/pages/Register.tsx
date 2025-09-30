@@ -101,7 +101,7 @@ const Register = () => {
                         <p className="text-gray-600 max-w-md">
                             Start your scholarship journey today and unlock thousands of educational opportunities.
                         </p>
-                        
+
                         {/* Benefits */}
                         <div className="space-y-3 pt-6">
                             {[
@@ -117,7 +117,7 @@ const Register = () => {
                             ))}
                         </div>
                     </div>
-                    
+
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 to-purple-200/50 rounded-3xl blur-xl"></div>
                         <img
@@ -147,7 +147,7 @@ const Register = () => {
                                 Join thousands of students finding their perfect scholarships
                             </CardDescription>
                         </CardHeader>
-                        
+
                         <CardContent className="space-y-6">
                             {error && (
                                 <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -249,7 +249,7 @@ const Register = () => {
                                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                         </button>
                                     </div>
-                                    
+
                                     {/* Password Requirements */}
                                     {form.password && (
                                         <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
@@ -357,8 +357,8 @@ const Register = () => {
 
                     {/* Back to Home */}
                     <div className="text-center mt-6">
-                        <Link 
-                            to="/home" 
+                        <Link
+                            to="/home"
                             className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600 transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" />

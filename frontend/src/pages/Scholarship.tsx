@@ -1,29 +1,27 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import StudentNavbar from '../components/studentNavbar'
 import ScholarshipCard from '../components/ScholarshipCard'
 import { useScholarships, type Scholarship as ScholarshipType } from '../hooks/useScholarshipQueries'
 import { Skeleton } from '../components/ui/skeleton'
 import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
 import { Card, CardContent } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import {
     Search,
     AlertCircle,
     X,
     RotateCw,
-    Filter,
-    GraduationCap,
-    Calendar,
     TrendingUp
 } from 'lucide-react'
+
+type ViewMode = 'grid' | 'list'
 
 const Scholarship = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [filterType, setFilterType] = useState('all')
     const [sortBy, setSortBy] = useState<'deadline' | 'title' | 'newest' | 'oldest'>('deadline')
     const [locationFilter, setLocationFilter] = useState('all')
+    const [viewMode, setViewMode] = useState<ViewMode>('grid')
 
     const {
         data: scholarships,
@@ -33,9 +31,7 @@ const Scholarship = () => {
         isRefetching
     } = useScholarships()
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault()
-    }
+    // search form handling removed; search input is controlled directly via state
 
     const handleClearSearch = () => {
         setSearchTerm('')
@@ -97,6 +93,15 @@ const Scholarship = () => {
 
     const hasActiveFilters = searchTerm || filterType !== 'all' || locationFilter !== 'all' || sortBy !== 'deadline'
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const itemsPerPage = 9
+
+    // Reset page when filters/search change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchTerm, filterType, locationFilter, sortBy])
+
     if (error) {
         return (
             <div className="min-h-screen bg-gray-50">
@@ -139,183 +144,93 @@ const Scholarship = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <StudentNavbar />
+            {/* Only Navbar is sticky */}
+            <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+                <StudentNavbar />
+            </div>
 
-            {/* Header Section */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="max-w-7xl mx-auto">
-                        {/* Page Header */}
-                        <div className="text-center mb-8">
-                            <div className="flex items-center justify-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center">
-                                    <GraduationCap className="h-7 w-7 text-white" />
-                                </div>
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                                    Scholarship Opportunities
+            {/* Hero */}
+            <div className="bg-indigo-600">
+                <div className="container mx-auto px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-10 sm:py-14 lg:py-16">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+                            <div className="flex-1 text-white py-6 lg:py-0">
+                                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-extrabold leading-tight mb-3">
+                                    Find the right scholarship or grant for you.
                                 </h1>
+                                <p className="text-indigo-100 max-w-2xl text-base">
+                                    Easily search available scholarships, student financial assistance programs and learn how you can apply.
+                                </p>
+
                             </div>
-                            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                                Discover and apply for scholarships that match your academic profile and career goals
-                            </p>
+
+                            <div className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 flex justify-center lg:justify-end">
+                                <img src="/find.png" alt="Scholarship illustration" className="w-4/5 sm:w-3/4 md:w-2/3 lg:w-full h-auto object-contain" />
+                            </div>
                         </div>
-
-                        {/* Search Bar */}
-                        <div className="max-w-2xl mx-auto mb-8">
-                            <form onSubmit={handleSearch} className="relative">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search scholarships by title, description, location, or benefits..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-12 pr-12 py-4 h-14 text-base border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm"
-                                />
-                                {searchTerm && (
-                                    <button
-                                        type="button"
-                                        onClick={handleClearSearch}
-                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
-                                )}
-                            </form>
-                        </div>
-
-                        {/* Filters */}
-                        <Card className="border-gray-200 shadow-sm">
-                            <CardContent className="p-6">
-                                <div className="flex flex-col lg:flex-row gap-4 items-center">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                                        <Filter className="h-4 w-4" />
-                                        Filters:
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-3 flex-1">
-                                        {/* Type Filter */}
-                                        <Select value={filterType} onValueChange={setFilterType}>
-                                            <SelectTrigger className="w-48 border-gray-200">
-                                                <SelectValue placeholder="All Types" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Types</SelectItem>
-                                                {scholarshipTypes.map((type: string) => (
-                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-
-                                        {/* Location Filter */}
-                                        <Select value={locationFilter} onValueChange={setLocationFilter}>
-                                            <SelectTrigger className="w-48 border-gray-200">
-                                                <SelectValue placeholder="All Locations" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Locations</SelectItem>
-                                                {scholarshipLocations.map((location: string) => (
-                                                    <SelectItem key={location} value={location}>{location}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-
-                                        {/* Sort Filter */}
-                                        <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                                            <SelectTrigger className="w-48 border-gray-200">
-                                                <SelectValue placeholder="Sort by" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="deadline">Deadline (Earliest)</SelectItem>
-                                                <SelectItem value="title">Title (A-Z)</SelectItem>
-                                                <SelectItem value="newest">Newest First</SelectItem>
-                                                <SelectItem value="oldest">Oldest First</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        {hasActiveFilters && (
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleClearFilters}
-                                                className="border-gray-200 text-gray-600 hover:bg-gray-50"
-                                            >
-                                                Clear All
-                                            </Button>
-                                        )}
-
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => refetch()}
-                                            disabled={isRefetching}
-                                            className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                                        >
-                                            <RotateCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
-                                            Refresh
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Active Filters Display */}
-                                {hasActiveFilters && (
-                                    <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
-                                        {searchTerm && (
-                                            <Badge variant="secondary" className="flex items-center gap-1 bg-indigo-100 text-indigo-700">
-                                                Search: "{searchTerm}"
-                                                <button onClick={handleClearSearch} className="hover:bg-indigo-200 rounded-full p-0.5">
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </Badge>
-                                        )}
-                                        {filterType !== 'all' && (
-                                            <Badge variant="secondary" className="flex items-center gap-1 bg-indigo-100 text-indigo-700">
-                                                Type: {filterType}
-                                                <button onClick={() => setFilterType('all')} className="hover:bg-indigo-200 rounded-full p-0.5">
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </Badge>
-                                        )}
-                                        {locationFilter !== 'all' && (
-                                            <Badge variant="secondary" className="flex items-center gap-1 bg-indigo-100 text-indigo-700">
-                                                Location: {locationFilter}
-                                                <button onClick={() => setLocationFilter('all')} className="hover:bg-indigo-200 rounded-full p-0.5">
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </Badge>
-                                        )}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32 py-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Results Summary */}
-                    {!isLoading && (
-                        <div className="mb-8">
-                            <div className="flex items-center justify-between">
-                                <p className="text-gray-600 flex items-center gap-2">
-                                    <TrendingUp className="h-4 w-4" />
-                                    Showing {filteredScholarships.length} of {scholarships?.length || 0} scholarships
-                                </p>
-                                {filteredScholarships.length > 0 && (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Updated {new Date().toLocaleDateString()}</span>
-                                    </div>
-                                )}
+                    {/* Controls & Results Summary */}
+                    <div className="mb-6">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="flex items-center gap-3 w-full md:w-2/3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Search scholarships, locations, benefits..."
+                                        className="w-full pl-10 pr-10 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            onClick={handleClearSearch}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+                                            aria-label="Clear search"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <Select onValueChange={(v) => setFilterType(v)} defaultValue={filterType}>
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Types</SelectItem>
+                                        {scholarshipTypes.map((t) => (
+                                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select onValueChange={(v) => setLocationFilter(v)} defaultValue={locationFilter}>
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="Location" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Locations</SelectItem>
+                                        {scholarshipLocations.map((l) => (
+                                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+
                         </div>
-                    )}
+                    </div>
 
                     {/* Loading State */}
                     {isLoading && (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 9 }).map((_, index) => (
                                     <Card key={index} className="h-[400px] border-gray-200">
                                         <CardContent className="p-6 space-y-4">
@@ -369,50 +284,73 @@ const Scholarship = () => {
 
                     {/* Scholarships Grid */}
                     {!isLoading && filteredScholarships.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredScholarships.map((scholarship: ScholarshipType) => (
-                                <div key={scholarship.id} className="h-full">
-                                    <ScholarshipCard scholarship={scholarship} />
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                        <>
+                            {/* Paginate filtered scholarships */}
+                            {(() => {
+                                const totalItems = filteredScholarships.length
+                                const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
+                                const startIndex = (currentPage - 1) * itemsPerPage
+                                const endIndex = startIndex + itemsPerPage
+                                const pageItems = filteredScholarships.slice(startIndex, endIndex)
 
-                    {/* Load More Section */}
-                    {!isLoading && filteredScholarships.length > 0 && (
-                        <div className="text-center mt-12">
-                            <Card className="border-gray-200 bg-white">
-                                <CardContent className="p-8">
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            Looking for more opportunities?
-                                        </h3>
-                                        <p className="text-gray-600">
-                                            We're constantly adding new scholarships. Check back regularly or set up notifications.
-                                        </p>
-                                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                return (
+                                    <>
+                                        {/* Use auto-rows-fr so each grid row has equal height and cards can stretch to fill */}
+                                        <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr' : 'space-y-4'}>
+                                            {pageItems.map((scholarship: ScholarshipType) => (
+                                                <div key={scholarship.id} className={viewMode === 'grid' ? 'h-full flex' : ''}>
+                                                    {/* make ScholarshipCard grow to fill the grid cell */}
+                                                    <div className="flex-1">
+                                                        <ScholarshipCard scholarship={scholarship} layout={viewMode === 'grid' ? 'grid' : 'list'} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Pagination controls */}
+                                        <div className="flex items-center justify-center gap-3 mt-8">
                                             <Button
-                                                onClick={() => refetch()}
+                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                disabled={currentPage <= 1}
                                                 variant="outline"
-                                                className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                                                disabled={isRefetching}
+                                                className="px-3 py-1"
                                             >
-                                                <RotateCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
-                                                Check for New Scholarships
+                                                Prev
                                             </Button>
+
+                                            <div className="flex items-center gap-2">
+                                                {Array.from({ length: totalPages }).map((_, idx) => {
+                                                    const page = idx + 1
+                                                    return (
+                                                        <button
+                                                            key={page}
+                                                            onClick={() => setCurrentPage(page)}
+                                                            className={`px-3 py-1 rounded ${page === currentPage ? 'bg-indigo-600 text-white' : 'bg-white border'}`}
+                                                            aria-current={page === currentPage}
+                                                        >
+                                                            {page}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+
                                             <Button
-                                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredScholarships.length / itemsPerPage), p + 1))}
+                                                disabled={currentPage >= Math.ceil(filteredScholarships.length / itemsPerPage)}
+                                                variant="outline"
+                                                className="px-3 py-1"
                                             >
-                                                Back to Top
+                                                Next
                                             </Button>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                    </>
+                                )
+                            })()}
+                        </>
                     )}
                 </div>
+
+
             </div>
         </div>
     )
