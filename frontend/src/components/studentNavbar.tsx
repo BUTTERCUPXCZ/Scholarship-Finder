@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { ChevronDown, LogOut, User, FileText, GraduationCap } from 'lucide-react'
+import { ChevronDown, LogOut, User, FileText } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { Button } from './ui/button'
 

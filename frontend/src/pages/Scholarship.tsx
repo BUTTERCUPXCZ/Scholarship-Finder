@@ -10,8 +10,7 @@ import {
     Search,
     AlertCircle,
     X,
-    RotateCw,
-    TrendingUp
+    RotateCw
 } from 'lucide-react'
 
 type ViewMode = 'grid' | 'list'
@@ -21,7 +20,7 @@ const Scholarship = () => {
     const [filterType, setFilterType] = useState('all')
     const [sortBy, setSortBy] = useState<'deadline' | 'title' | 'newest' | 'oldest'>('deadline')
     const [locationFilter, setLocationFilter] = useState('all')
-    const [viewMode, setViewMode] = useState<ViewMode>('grid')
+    const [viewMode] = useState<ViewMode>('grid')
 
     const {
         data: scholarships,

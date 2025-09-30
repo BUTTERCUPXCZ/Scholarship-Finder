@@ -12,14 +12,12 @@ import {
     AlertCircle,
     FileText,
     X,
-    Calendar,
     Users,
     Award,
     Target,
     FileCheck,
     Clock,
     Shield,
-    CheckCircle2
 } from 'lucide-react';
 import {
     Dialog,
