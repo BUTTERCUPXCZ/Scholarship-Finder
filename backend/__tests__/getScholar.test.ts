@@ -19,6 +19,8 @@ jest.mock("../src/controllers/scholar.controller", () => ({
     getOrganizationScholarships: (req: any, res: any) => res.status(200).json([{ id: 3, name: "Org Scholar" }]),
     getPublicScholars: (req: any, res: any) => res.status(200).json([{ id: 4, name: "Public Scholar" }]),
     deleteScholarship: (req: any, res: any) => res.status(200).json({ message: "Scholar deleted" }),
+    DeleteArchivedScholarship: (req: any, res: any) => res.status(200).json({ message: "Archived deleted" }),
+    RestoreArchivedScholarship: (req: any, res: any) => res.status(200).json({ message: "Archived restored" }),
 }));
 
 // Create app for testing

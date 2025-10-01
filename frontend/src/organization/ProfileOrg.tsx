@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '../components/ui/sidebar';
 import OrgSidebar from '../components/orgSidebar';
 import Navbar from '../components/Navbar';
