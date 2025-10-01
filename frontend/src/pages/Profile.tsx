@@ -202,7 +202,7 @@ const Profile = () => {
                                                 <p className="text-sm text-gray-900 truncate">{user.email}</p>
                                             </div>
                                         </div>
-                                        
+
                                         {profileData.phone && (
                                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -214,7 +214,7 @@ const Profile = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {profileData.location && (
                                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -226,7 +226,7 @@ const Profile = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {user.createdAt && (
                                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -235,9 +235,9 @@ const Profile = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-gray-700">Member Since</p>
                                                     <p className="text-sm text-gray-900">
-                                                        {new Date(user.createdAt).toLocaleDateString('en-US', { 
-                                                            year: 'numeric', 
-                                                            month: 'long' 
+                                                        {new Date(user.createdAt).toLocaleDateString('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'long'
                                                         })}
                                                     </p>
                                                 </div>
@@ -282,7 +282,7 @@ const Profile = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">Email Address</Label>
                                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -290,7 +290,7 @@ const Profile = () => {
                                                 <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">Phone Number</Label>
                                             {isEditing ? (
@@ -306,7 +306,7 @@ const Profile = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">Location</Label>
                                             {isEditing ? (
@@ -323,7 +323,7 @@ const Profile = () => {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     <div className="space-y-2">
                                         <Label className="text-sm font-medium text-gray-700">Bio</Label>
                                         {isEditing ? (
@@ -376,7 +376,7 @@ const Profile = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">Major/Field of Study</Label>
                                             {isEditing ? (
@@ -392,7 +392,7 @@ const Profile = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">Expected Graduation</Label>
                                             {isEditing ? (
@@ -408,7 +408,7 @@ const Profile = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-gray-700">GPA</Label>
                                             {isEditing ? (
@@ -428,120 +428,9 @@ const Profile = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Quick Stats */}
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardHeader className="pb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                            <Award className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <CardTitle className="text-lg text-gray-900">Quick Stats</CardTitle>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="text-center p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                                            <div className="text-2xl font-bold text-indigo-600">0</div>
-                                            <div className="text-sm text-gray-600">Applications</div>
-                                        </div>
-                                        <div className="text-center p-4 bg-green-50 rounded-xl border border-green-100">
-                                            <div className="text-2xl font-bold text-green-600">0</div>
-                                            <div className="text-sm text-gray-600">Accepted</div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+
                         </div>
 
-                        {/* Main Content Area */}
-                        <div className="lg:col-span-8 space-y-8">
-                            {/* Account Settings */}
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardHeader className="pb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                            <Settings className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-xl text-gray-900">Account Settings</CardTitle>
-                                            <CardDescription className="text-gray-600">
-                                                Manage your account preferences and security settings
-                                            </CardDescription>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6">
-                                        <div className="p-4 border border-gray-200 rounded-xl">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="font-medium text-gray-900">Email Notifications</h4>
-                                                    <p className="text-sm text-gray-600">Receive updates about your applications</p>
-                                                </div>
-                                                <Button variant="outline" size="sm" className="border-gray-200">
-                                                    Configure
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="p-4 border border-gray-200 rounded-xl">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="font-medium text-gray-900">Privacy Settings</h4>
-                                                    <p className="text-sm text-gray-600">Control who can see your profile</p>
-                                                </div>
-                                                <Button variant="outline" size="sm" className="border-gray-200">
-                                                    Manage
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="p-4 border border-gray-200 rounded-xl">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="font-medium text-gray-900">Password & Security</h4>
-                                                    <p className="text-sm text-gray-600">Update your password and security preferences</p>
-                                                </div>
-                                                <Button variant="outline" size="sm" className="border-gray-200">
-                                                    Update
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Recent Activity */}
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardHeader className="pb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                            <Calendar className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-xl text-gray-900">Recent Activity</CardTitle>
-                                            <CardDescription className="text-gray-600">
-                                                Your latest scholarship applications and updates
-                                            </CardDescription>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-center py-12">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                            <Award className="w-8 h-8 text-gray-400" />
-                                        </div>
-                                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Activity Yet</h3>
-                                        <p className="text-gray-600 mb-6">
-                                            Start applying for scholarships to see your activity here
-                                        </p>
-                                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                            Browse Scholarships
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
                     </div>
                 </div>
             </div>

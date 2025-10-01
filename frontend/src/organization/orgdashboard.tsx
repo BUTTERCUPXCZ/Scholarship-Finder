@@ -281,56 +281,7 @@ const orgdashboard = () => {
                             </Card>
                         </div>
 
-                        {/* Quick Actions */}
-                        <Card className="border-gray-200 bg-white shadow-lg">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="text-xl text-gray-900">Quick Actions</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button
-                                        onClick={() => navigate('/manage-scholarships')}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white p-6 h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 justify-start"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Plus className="h-6 w-6" />
-                                            <div className="text-left">
-                                                <div className="font-semibold">Create Scholarship</div>
-                                                <div className="text-sm opacity-90">Post new opportunity</div>
-                                            </div>
-                                        </div>
-                                    </Button>
 
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => navigate('/manage-scholarships')}
-                                        className="border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 p-6 h-auto rounded-xl justify-start"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <GraduationCap className="h-6 w-6" />
-                                            <div className="text-left">
-                                                <div className="font-semibold">Manage Scholarships</div>
-                                                <div className="text-sm opacity-75">View and edit posts</div>
-                                            </div>
-                                        </div>
-                                    </Button>
-
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => navigate('/archive')}
-                                        className="border-2 border-gray-200 text-gray-600 hover:bg-gray-50 p-6 h-auto rounded-xl justify-start"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Award className="h-6 w-6" />
-                                            <div className="text-left">
-                                                <div className="font-semibold">View Archive</div>
-                                                <div className="text-sm opacity-75">Past scholarships</div>
-                                            </div>
-                                        </div>
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
 
                         {/* Recent Activity & Analytics */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -339,10 +290,7 @@ const orgdashboard = () => {
                                 <CardHeader className="pb-4">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-xl text-gray-900">Recent Applications</CardTitle>
-                                        <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg">
-                                            View All
-                                            <ArrowRight className="h-4 w-4 ml-1" />
-                                        </Button>
+
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -354,9 +302,9 @@ const orgdashboard = () => {
                                         recentApplications.slice(0, 4).map((application) => (
                                             <div key={application.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
                                                 <div className={`p-2 rounded-xl mt-1 ${application.status === 'ACCEPTED' ? 'bg-green-100' :
-                                                        application.status === 'REJECTED' ? 'bg-red-100' :
-                                                            application.status === 'UNDER_REVIEW' ? 'bg-blue-100' :
-                                                                'bg-yellow-100'
+                                                    application.status === 'REJECTED' ? 'bg-red-100' :
+                                                        application.status === 'UNDER_REVIEW' ? 'bg-blue-100' :
+                                                            'bg-yellow-100'
                                                     }`}>
                                                     {application.status === 'ACCEPTED' ? (
                                                         <CheckCircle className="w-4 h-4 text-green-600" />

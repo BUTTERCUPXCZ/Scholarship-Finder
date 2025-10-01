@@ -75,19 +75,17 @@ export const useScholarships = (filters: ScholarshipFilters = {}) => {
             const response = await getPublicScholars(filters)
             return response.data
         },
-        // ✅ Optimized caching strategy
-        staleTime: 1000 * 60 * 2, // 2 minutes - scholarships don't change frequently
-        gcTime: 1000 * 60 * 10, // 10 minutes
+
+        staleTime: 1000 * 60 * 2,
+        gcTime: 1000 * 60 * 10,
         refetchOnWindowFocus: false,
         retry: 2,
-        // ✅ Enable background refetching for better UX
-        refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
-        // ✅ Always enabled since this is public data
+        refetchInterval: 1000 * 60 * 5,
         enabled: true,
     })
 }
 
-// ✅ Optimized infinite query for pagination (for future use)
+
 export const useInfiniteScholarships = (filters: ScholarshipFilters = {}) => {
     const { logout } = useAuth()
     const navigate = useNavigate()
@@ -127,7 +125,7 @@ export const useInfiniteScholarships = (filters: ScholarshipFilters = {}) => {
     })
 }
 
-// ✅ Archive scholarships query hook
+
 export const useArchivedScholarships = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
@@ -148,16 +146,16 @@ export const useArchivedScholarships = () => {
                 throw error
             }
         },
-        // ✅ Archive data changes less frequently than active scholarships
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 15, // 15 minutes
+
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 15,
         refetchOnWindowFocus: false,
         retry: 2,
         enabled: true,
     })
 }
 
-// ✅ Hook for creating scholarships with optimistic updates
+
 export const useCreateScholarship = () => {
     const queryClient = useQueryClient()
     const { logout } = useAuth()
@@ -166,13 +164,12 @@ export const useCreateScholarship = () => {
     return useMutation({
         mutationFn: createScholar,
         onMutate: async (newScholarship) => {
-            // ✅ Cancel any outgoing refetches
+
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
 
-            // ✅ Snapshot the previous value for rollback
             const previousScholarships = queryClient.getQueryData(scholarshipKeys.lists())
 
-            // ✅ Optimistically update to the new value
+
             queryClient.setQueryData(scholarshipKeys.lists(), (old: Scholarship[] = []) => [
                 {
                     id: `temp-${Date.now()}`,
@@ -188,7 +185,7 @@ export const useCreateScholarship = () => {
             return { previousScholarships }
         },
         onError: (error: any, _newScholarship, context) => {
-            // ✅ Rollback on error
+
             if (context?.previousScholarships) {
                 queryClient.setQueryData(scholarshipKeys.lists(), context.previousScholarships)
             }
@@ -203,17 +200,17 @@ export const useCreateScholarship = () => {
         },
         onSuccess: (_data) => {
             toast.success('Scholarship created successfully!')
-            // ✅ Invalidate and refetch
+
             queryClient.invalidateQueries({ queryKey: scholarshipKeys.lists() })
         },
         onSettled: () => {
-            // ✅ Always refetch after error or success
+
             queryClient.invalidateQueries({ queryKey: scholarshipKeys.lists() })
         },
     })
 }
 
-// ✅ Hook for updating scholarships
+
 export const useUpdateScholarship = () => {
     const queryClient = useQueryClient()
     const { logout } = useAuth()
@@ -366,7 +363,7 @@ export const useUpdateExpiredScholarships = () => {
     })
 }
 
-// ✅ Hook for prefetching scholarship data (performance optimization)
+
 export const usePrefetchScholarships = () => {
     const queryClient = useQueryClient()
 

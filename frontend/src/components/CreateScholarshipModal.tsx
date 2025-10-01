@@ -115,12 +115,9 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
+            <DialogContent className="-full max-w-[900px] sm:max-w-[800px] max-h-[85vh] overflow-auto border border-gray-200 rounded-xl bg-white">
                 <DialogHeader className="pb-6 border-b border-gray-100">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                            <GraduationCap className="h-6 w-6 text-indigo-600" />
-                        </div>
                         <DialogTitle className="text-2xl font-bold text-gray-900">Create New Scholarship</DialogTitle>
                     </div>
                     <DialogDescription className="text-gray-600">
@@ -132,9 +129,6 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                     {/* Basic Information Section */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                <GraduationCap className="h-4 w-4 text-indigo-600" />
-                            </div>
                             <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
                         </div>
 
@@ -162,7 +156,7 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                     Organization Type *
                                 </Label>
                                 <Select value={formData.organizationType} onValueChange={(value) => setFormData(prev => ({ ...prev, organizationType: value }))}>
-                                    <SelectTrigger className={`rounded-xl ${errors.organizationType ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}>
+                                    <SelectTrigger className={`rounded-xl ${errors.organizationType ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 w-full'}`}>
                                         <SelectValue placeholder="Select organization type" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -201,9 +195,6 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                     {/* Requirements and Details Section */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                <Target className="h-4 w-4 text-indigo-600" />
-                            </div>
                             <h3 className="text-lg font-semibold text-gray-900">Requirements & Details</h3>
                         </div>
 
@@ -216,7 +207,7 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                 name="eligibilityRequirements"
                                 value={formData.eligibilityRequirements}
                                 onChange={handleInputChange}
-                                placeholder="Enter each requirement on a new line (one per line). You may start lines with -, • or * if you prefer."
+                                placeholder="Enter each requirement"
                                 rows={4}
                                 className={`rounded-xl ${errors.eligibilityRequirements ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                             />
@@ -231,15 +222,15 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                     Location *
                                 </Label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+
                                     <Input
                                         id="location"
                                         name="location"
                                         type="text"
                                         value={formData.location}
                                         onChange={handleInputChange}
-                                        placeholder="e.g., USA, Global, Philippines"
-                                        className={`pl-10 rounded-xl ${errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
+                                        placeholder="Davao, Philippines"
+                                        className={`ounded-xl ${errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                                     />
                                 </div>
                                 {errors.location && (
@@ -273,15 +264,14 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
                                 Benefits & Value *
                             </Label>
                             <div className="relative">
-                                <Award className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                 <Textarea
                                     id="benefits"
                                     name="benefits"
                                     value={formData.benefits}
                                     onChange={handleInputChange}
-                                    placeholder="List benefits one per line (e.g., Tuition waiver, Monthly stipend). You can also start lines with -, • or *."
+                                    placeholder="List benefits one per line (e.g., Tuition waiver, Monthly stipend)."
                                     rows={3}
-                                    className={`pl-10 rounded-xl ${errors.benefits ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
+                                    className={`rounded-xl ${errors.benefits ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'}`}
                                 />
                             </div>
                             {errors.benefits && (

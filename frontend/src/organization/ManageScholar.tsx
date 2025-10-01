@@ -33,7 +33,6 @@ import {
     CheckCircle,
     XCircle,
     AlertTriangle,
-    GraduationCap
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
@@ -338,10 +337,10 @@ const ManageScholar = () => {
             <div className="flex h-screen w-full">
                 <OrgSidebar />
 
-                <SidebarInset className="flex-1">
+                <SidebarInset className="flex-1 overflow-hidden">
                     <Navbar showSidebarToggle={true} pageTitle="Manage Scholarships" />
 
-                    <div className="flex flex-1 flex-col gap-6 p-6 bg-gray-50">
+                    <div className="flex flex-1 flex-col gap-6 p-6 bg-gray-50 overflow-y-auto">
                         <div className="max-w-7xl mx-auto w-full">
                             {isLoading ? (
                                 <LoadingContent />
@@ -360,9 +359,6 @@ const ManageScholar = () => {
                                     {/* Header Section */}
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                                <GraduationCap className="h-7 w-7 text-white" />
-                                            </div>
                                             <div>
                                                 <h1 className="text-3xl font-bold text-gray-900">Manage Scholarships</h1>
                                                 <p className="text-gray-600 mt-1">Monitor, edit, and manage your posted scholarship opportunities</p>
@@ -379,12 +375,10 @@ const ManageScholar = () => {
 
                                     {/* Statistics Cards */}
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-                                                    <div className="p-3 bg-green-100 rounded-xl">
-                                                        <CheckCircle className="h-6 w-6 text-green-600" />
-                                                    </div>
+
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Active</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -395,12 +389,9 @@ const ManageScholar = () => {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-                                                    <div className="p-3 bg-yellow-100 rounded-xl">
-                                                        <Clock className="h-6 w-6 text-yellow-600" />
-                                                    </div>
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -411,12 +402,10 @@ const ManageScholar = () => {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-                                                    <div className="p-3 bg-indigo-100 rounded-xl">
-                                                        <Users className="h-6 w-6 text-indigo-600" />
-                                                    </div>
+
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Total Applicants</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -427,12 +416,10 @@ const ManageScholar = () => {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="border-gray-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-                                                    <div className="p-3 bg-red-100 rounded-xl">
-                                                        <Archive className="h-6 w-6 text-red-600" />
-                                                    </div>
+
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Expired</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -526,7 +513,7 @@ const ManageScholar = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                         {filteredAndSortedScholarships.length === 0 ? (
                                             <div className="col-span-full">
-                                                <Card className="border-gray-200 bg-white shadow-lg">
+                                                <Card className="border-gray-200 bg-white shadow-sm">
                                                     <CardContent className="p-12 text-center">
                                                         <div className="max-w-md mx-auto">
                                                             <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -558,7 +545,7 @@ const ManageScholar = () => {
                                                 const isNearDeadline = isDeadlineNear(scholarship.deadline)
 
                                                 return (
-                                                    <Card key={scholarship.id} className={`bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
+                                                    <Card key={scholarship.id} className={`bg-white border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
                                                         {/* Header with Title and Status */}
                                                         <CardHeader className="pb-4">
                                                             <div className="flex items-start justify-between gap-2 mb-4">
@@ -599,19 +586,19 @@ const ManageScholar = () => {
                                                             {/* Metadata */}
                                                             <div className="space-y-2">
                                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                    <MapPin className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <MapPin className="h-4 w-4 flex-shrink-0 text-gray-400" />
                                                                     <span className="truncate">{scholarship.location}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                    <DollarSign className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <DollarSign className="h-4 w-4 flex-shrink-0 text-gray-400" />
                                                                     <span className="truncate">{scholarship.benefits}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                    <Calendar className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <Calendar className="h-4 w-4 flex-shrink-0 text-gray-400" />
                                                                     <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                                    <Users className="h-4 w-4 flex-shrink-0 text-indigo-600" />
+                                                                    <Users className="h-4 w-4 flex-shrink-0 text-gray-400" />
                                                                     <span>{scholarship.applications?.length || 0} applicants</span>
                                                                 </div>
                                                             </div>

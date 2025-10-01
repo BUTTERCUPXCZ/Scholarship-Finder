@@ -371,3 +371,12 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
+export const getApplicants = async (req: Request, res: Response) => {
+    try {
+
+    } catch (error) {
+
+    }
+}

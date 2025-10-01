@@ -13,6 +13,10 @@ interface Scholarship {
     updatedAt: string
     providerId: string
     applications?: any[]
+    _count?: {
+        applications: number
+    }
+
 }
 
 interface PaginationInfo {
@@ -105,4 +109,52 @@ export const getPublicScholars = async (filters: ScholarshipFilters = {}): Promi
     }
 
     return await response.json();
+}
+
+// Organization/Provider endpoint - gets scholarships with application counts
+export const getOrganizationScholarships = async (): Promise<ScholarshipResponse> => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/organization`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        let errorMessage = 'Failed to fetch organization scholarships';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch {
+            // ignore parse errors
+        }
+        throw new Error(`${response.status} ${errorMessage}`);
+    }
+
+    return await response.json();
+}
+
+export const RestoreArchivedScholarship = async (archiveId: string): Promise<void> => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/restore-archived/${encodeURIComponent(archiveId)}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('UNAUTHORIZED');
+        }
+
+        let errorMessage = 'Failed to restore archived scholarship';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch (error) {
+            // If parsing error response fails, use default message
+        }
+        throw new Error(`${response.status} ${errorMessage}`);
+    }
 }

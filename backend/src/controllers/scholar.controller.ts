@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
+import { idnEmail } from "zod/v4/core/regexes.cjs";
 
 
 export const createScholar = async (req: Request, res: Response) => {
@@ -105,8 +106,6 @@ export const getAllScholars = async (req: Request, res: Response) => {
         // Build where condition efficiently
         const whereCondition: Prisma.ScholarshipWhereInput = {};
 
-        // OPTIMIZATION 1: Only decode JWT if specifically needed (e.g., for filtering by provider)
-        // Move this logic to a separate middleware or only when filtering by provider is requested
         let providerIdFromToken: string | undefined;
 
         // Only decode token if we need provider-specific filtering
@@ -420,9 +419,15 @@ export const getOrganizationScholarships = async (req: Request, res: Response) =
                         id: true,
                         status: true
                     }
+                },
+                _count: {
+                    select: {
+                        applications: true
+                    }
                 }
             }
         });
+
 
         return res.status(200).json({
             success: true,
@@ -527,5 +532,85 @@ export const getPublicScholars = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching public scholarships:', error);
         return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+}
+
+
+export const DeleteArchivedScholarship = async (req: Request, res: Response) => {
+    try {
+        const providerId = req.userId as string || undefined;
+        if (!providerId) {
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
+        }
+
+        const { id } = req.params;
+        const archiveId = id;
+        if (!archiveId) {
+            return res.status(400).json({ success: false, message: "Invalid archive id" });
+        }
+
+        const response = await prisma.archive.deleteMany({
+            where: {
+                id: archiveId,
+                providerId: providerId
+            }
+        });
+        if (response.count === 0) {
+            return res.status(404).json({ success: false, message: "Archive record not found or you don't have permission to delete it" });
+        }
+        return res.status(200).json({ success: true, message: "Archived scholarship record deleted successfully" });
+
+
+    } catch (error) {
+        console.error("Error deleting archived scholarship:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+
+}
+export const RestoreArchivedScholarship = async (req: Request, res: Response) => {
+    try {
+        const providerId = req.userId as string | undefined;
+        if (!providerId) {
+            return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
+        }
+        const { id } = req.params;
+        const archiveId = id;
+        if (!archiveId) {
+            return res.status(400).json({ success: false, message: "Invalid archive id" });
+        }
+        const archiveRecord = await prisma.archive.findUnique({
+            where: { id: archiveId }
+        });
+        if (!archiveRecord) {
+            return res.status(404).json({ success: false, message: "Archive record not found" });
+        }
+        if (archiveRecord.providerId !== providerId) {
+            return res.status(403).json({ success: false, message: "Forbidden: You can only restore your own archived scholarships" });
+        }
+        const restoredScholarship = await prisma.scholarship.create({
+            data: {
+                title: archiveRecord.title,
+                description: archiveRecord.description,
+                location: archiveRecord.location,
+                benefits: archiveRecord.benefits,
+                requirements: archiveRecord.requirements,
+                deadline: archiveRecord.deadline,
+                type: archiveRecord.type,
+                status: archiveRecord.originalStatus,
+                providerId: archiveRecord.providerId
+            }
+        });
+        await prisma.archive.delete({
+            where: { id: archiveId }
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Archived scholarship restored successfully",
+            data: restoredScholarship
+        });
+    }
+    catch (error) {
+        console.error("Error restoring archived scholarship:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }

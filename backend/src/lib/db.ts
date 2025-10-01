@@ -6,22 +6,14 @@ let PrismaClient: PrismaClientConstructor
 let prismaClientAvailable = true
 
 try {
-    // Try to require the generated Prisma client at runtime. In test
-    // environments where `prisma generate` hasn't been run the require may
-    // throw; we catch and provide a minimal stub instance so imports succeed.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pkg = require('@prisma/client') as { PrismaClient: PrismaClientConstructor }
     PrismaClient = pkg.PrismaClient
 } catch (err: unknown) {
     prismaClientAvailable = false
-    // Use console.debug so this doesn't pollute normal logs. This also uses
-    // the `err` variable so linters don't flag it as unused.
-    // eslint-disable-next-line no-console
+
     console.debug('Prisma client not available at require time:', err)
 
-    // Minimal stub that satisfies the runtime shape for connect/disconnect.
-    // Tests should mock service functions and not call Prisma directly when
-    // the generated client isn't present.
+
     PrismaClient = class {
         constructor() {
             // empty
@@ -42,7 +34,7 @@ const globalForPrisma = globalThis as unknown as {
 // Enhanced Prisma configuration for better connectivity
 // Build Prisma client options dynamically so we don't pass `undefined`
 // for the datasource URL (Prisma throws if url is undefined).
-const prismaOptions: ConstructorParameters<PrismaClientConstructor>[0] = {
+const prismaOptions: any = {
     log:
         process.env.NODE_ENV === 'development'
             ? ['query', 'error', 'warn']
@@ -53,13 +45,33 @@ const prismaOptions: ConstructorParameters<PrismaClientConstructor>[0] = {
     }
 }
 
+// Enhanced connection pool settings via URL parameters
 if (process.env.DATABASE_URL) {
-    // Only attach datasources if DATABASE_URL is set.
+    const url = new URL(process.env.DATABASE_URL);
+
+    // Add connection pool parameters if not already present
+    if (!url.searchParams.has('connection_limit')) {
+        url.searchParams.set('connection_limit', '50');
+    }
+    if (!url.searchParams.has('pool_timeout')) {
+        url.searchParams.set('pool_timeout', '30');
+    }
+    if (!url.searchParams.has('connect_timeout')) {
+        url.searchParams.set('connect_timeout', '30');
+    }
+    if (!url.searchParams.has('socket_timeout')) {
+        url.searchParams.set('socket_timeout', '30');
+    }
+
+    prismaOptions.datasourceUrl = url.toString();
+}
+
+// Use datasourceUrl if configured, otherwise fall back to datasources
+if (!prismaOptions.datasourceUrl && process.env.DATABASE_URL) {
+    // Only attach datasources if DATABASE_URL is set and datasourceUrl wasn't already configured.
     // This prevents PrismaClientConstructorValidationError in test runs
     // where DATABASE_URL may intentionally be unset.
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - PrismaClient constructor accepts a `datasources` property
-    prismaOptions['datasources'] = {
+    prismaOptions.datasources = {
         db: { url: process.env.DATABASE_URL }
     }
 }

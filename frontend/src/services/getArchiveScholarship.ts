@@ -48,3 +48,29 @@ export const getArchiveScholarships = async (): Promise<Archive[]> => {
 
 // Keep the old function for backward compatibility
 export const getArchiveScholarship = getArchiveScholarships;
+
+export const deleteArchiveScholarship = async (archiveId: string): Promise<void> => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/delete-archived/${encodeURIComponent(archiveId)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('UNAUTHORIZED');
+        }
+
+        let errorMessage = 'Failed to delete archived scholarship';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch {
+            // If parsing error response fails, use default message
+        }
+
+        throw new Error(`${response.status} ${errorMessage}`);
+    }
+};

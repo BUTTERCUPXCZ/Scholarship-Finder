@@ -289,16 +289,7 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                     variant="outline"
                     size="sm"
                     onClick={onBack}
-                    className="gap-2 border-2"
-                    style={{ borderColor: '#4F39F6', color: '#4F39F6' }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#4F39F6'
-                        e.currentTarget.style.color = 'white'
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.color = '#4F39F6'
-                    }}
+                    className="flex items-center gap-2 text-white bg-indigo-600 hover:bg-indigo-800 hover:text-white"
                 >
                     <ChevronLeft className="h-4 w-4" />
                     Back to Scholarships
@@ -389,15 +380,7 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="gap-2 border-2"
-                                    style={{ borderColor: '#4F39F6', color: '#4F39F6' }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#4F39F6'
-                                        e.currentTarget.style.color = 'white'
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent'
-                                        e.currentTarget.style.color = '#4F39F6'
-                                    }}
+
                                 >
                                     <Filter className="h-4 w-4" />
                                     Status: {statusFilter === 'all' ? 'All' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
@@ -574,33 +557,11 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <Button variant="outline" size="sm" className="gap-1 border-2"
-                                                    style={{ borderColor: '#4F39F6', color: '#4F39F6' }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#4F39F6'
-                                                        e.currentTarget.style.color = 'white'
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = 'transparent'
-                                                        e.currentTarget.style.color = '#4F39F6'
-                                                    }}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                    View
-                                                </Button>
+
 
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="outline" size="sm" className="border-2"
-                                                            style={{ borderColor: '#4F39F6', color: '#4F39F6' }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#4F39F6'
-                                                                e.currentTarget.style.color = 'white'
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'transparent'
-                                                                e.currentTarget.style.color = '#4F39F6'
-                                                            }}
                                                         >
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
@@ -617,10 +578,6 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
                                                             </DropdownMenuItem>
                                                         ))}
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleSendResponse([applicant.id], 'under_review')} className="gap-2">
-                                                            <Send className="h-4 w-4" />
-                                                            Send Response
-                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>

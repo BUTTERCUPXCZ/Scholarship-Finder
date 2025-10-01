@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { Calendar, MapPin, Award, Clock, AlertTriangle } from 'lucide-react'
+import { Calendar, MapPin, Award, Clock, AlertTriangle, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 
@@ -20,6 +20,9 @@ interface Scholarship {
     providerId: string
     benefits: string
     applications?: any[]
+    _count?: {
+        applications: number
+    }
 }
 
 interface ScholarshipCardProps {
@@ -57,8 +60,15 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
         }
     }
 
+
+
     const daysLeft = getDaysUntilDeadline(scholarship.deadline)
     const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
+
+    // Standardized button classes to keep list and grid layouts consistent
+    const primaryBtnClass = isExpired
+        ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
+        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
 
     const getStatusBadge = () => {
         if (isExpired) {
@@ -101,7 +111,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
 
     if (layout === 'list') {
         return (
-            <Card className="w-full hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200">
+            <Card className="w-full hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200 rounded-lg">
                 <CardContent className="flex gap-4 items-start p-4">
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
@@ -128,7 +138,13 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                             </div>
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-gray-400" />
-                                <span>Deadline: {formatDate(scholarship.deadline)}</span>
+                                <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-gray-400" />
+                                <span className="truncate">
+                                    {(scholarship.applications?.length ?? scholarship._count?.applications) ?? 0} applicants
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -141,10 +157,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                         <Button
                             onClick={handleClick}
                             disabled={isExpired}
-                            className={`${isExpired
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                }`}
+                            className={`${primaryBtnClass} w-full`}
                         >
                             {isExpired ? 'Closed' : 'View'}
                         </Button>
@@ -155,7 +168,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     }
 
     return (
-        <Card className={`${layout === 'grid' ? 'h-full' : ''} flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200`}>
+        <Card className={`${layout === 'grid' ? 'h-full' : ''} flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200 rounded-lg`}>
             {/* Header */}
             <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -176,16 +189,6 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                     {scholarship.description}
                 </p>
 
-                {/* Benefits Preview */}
-                <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Award className="h-4 w-4 text-indigo-600" />
-                        <span className="text-sm font-medium text-indigo-700">Benefits</span>
-                    </div>
-                    <p className="text-sm text-indigo-600 line-clamp-2">
-                        {scholarship.benefits}
-                    </p>
-                </div>
 
                 {/* Details */}
                 <div className="space-y-3">
@@ -196,7 +199,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
 
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                        <span>Deadline: {formatDate(scholarship.deadline)}</span>
+                        <span className="truncate">Deadline: {formatDate(scholarship.deadline)}</span>
                     </div>
                 </div>
             </CardContent>
@@ -205,10 +208,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                 <Button
                     onClick={handleClick}
                     disabled={isExpired}
-                    className={`w-full ${isExpired
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        }`}
+                    className={`w-full ${primaryBtnClass}`}
                 >
                     {isExpired ? 'Application Closed' : 'View Details & Apply'}
                 </Button>

@@ -7,6 +7,15 @@ import { useArchivedScholarships } from '../hooks/useScholarshipQueries'
 import { useOptimizedFilter, useDebounce } from '../hooks/useOptimizations'
 import toast from 'react-hot-toast'
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '../components/ui/dialog'
+import { RestoreArchivedScholarship } from '@/services/getScholarships'
+import {
     Archive as ArchiveIcon,
     RotateCcw,
     Trash2,
@@ -14,6 +23,7 @@ import {
     Calendar,
     Users
 } from 'lucide-react'
+import { deleteArchiveScholarship } from '@/services/getArchiveScholarship'
 
 // Archive interface matching the API response
 interface ArchiveScholarship {
@@ -38,7 +48,7 @@ const Archive: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [selectedScholarships, setSelectedScholarships] = useState<string[]>([])
-    // ✅ Use TanStack Query for optimized data fetching
+
     const {
         data: archivedScholarships = [],
         isLoading: loading,
@@ -46,10 +56,13 @@ const Archive: React.FC = () => {
         refetch
     } = useArchivedScholarships()
 
-    // ✅ Use debounced search for better performance  
+
+
+
+
     const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-    // ✅ Optimized filtering with memoization
+
     const filteredScholarships = useOptimizedFilter(
         archivedScholarships,
         (scholarship: ArchiveScholarship) => {
@@ -79,7 +92,6 @@ const Archive: React.FC = () => {
         )
     }
 
-    // ✅ Optimized refresh handler with user feedback
     const handleRefresh = async () => {
         try {
             await refetch()
@@ -97,14 +109,68 @@ const Archive: React.FC = () => {
         }
     }
 
-    const handleRestore = (scholarshipId: string) => {
-        console.log('Restoring scholarship:', scholarshipId)
-        // Implementation for restoring scholarship
+    // Confirmation dialog state
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [confirmMode, setConfirmMode] = useState<'restore' | 'delete' | null>(null)
+    const [confirmTarget, setConfirmTarget] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null)
+    const [isProcessing, setIsProcessing] = useState(false)
+
+    const openConfirm = (mode: 'restore' | 'delete', type: 'single' | 'bulk', id?: string) => {
+        setConfirmMode(mode)
+        setConfirmTarget({ type, id })
+        setConfirmOpen(true)
     }
 
-    const handlePermanentDelete = (scholarshipId: string) => {
-        console.log('Permanently deleting scholarship:', scholarshipId)
-        // Implementation for permanent deletion
+    const performConfirmAction = async () => {
+        if (!confirmMode || !confirmTarget) return
+
+        setIsProcessing(true)
+        try {
+            if (confirmMode === 'delete') {
+                if (confirmTarget.type === 'single' && confirmTarget.id) {
+                    toast.loading('Deleting archived scholarship...', { id: `delete-${confirmTarget.id}` })
+                    await deleteArchiveScholarship(confirmTarget.id)
+                    toast.success('Archived scholarship deleted', { id: `delete-${confirmTarget.id}` })
+                    setSelectedScholarships(prev => prev.filter(id => id !== confirmTarget.id))
+                } else {
+                    toast.loading('Deleting selected archived scholarships...')
+                    for (const id of selectedScholarships) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await deleteArchiveScholarship(id)
+                    }
+                    toast.success('Selected archived scholarships deleted')
+                    setSelectedScholarships([])
+                }
+            } else if (confirmMode === 'restore') {
+                if (confirmTarget.type === 'single' && confirmTarget.id) {
+                    toast.loading('Restoring archived scholarship...', { id: `restore-${confirmTarget.id}` })
+                    await RestoreArchivedScholarship(confirmTarget.id)
+                    toast.success('Archived scholarship restored', { id: `restore-${confirmTarget.id}` })
+                } else {
+                    toast.loading('Restoring selected archived scholarships...')
+                    for (const id of selectedScholarships) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await RestoreArchivedScholarship(id)
+                    }
+                    toast.success('Selected archived scholarships restored')
+                    setSelectedScholarships([])
+                }
+            }
+
+            await refetch()
+        } catch (err: any) {
+            const message = err?.message || 'Action failed'
+            if (String(message).includes('UNAUTHORIZED') || String(message).includes('401')) {
+                toast.error('Session expired. Please login again.')
+            } else {
+                toast.error(message)
+            }
+        } finally {
+            setIsProcessing(false)
+            setConfirmOpen(false)
+            setConfirmMode(null)
+            setConfirmTarget(null)
+        }
     }
 
     const getStatusBadge = (status: string) => {
@@ -140,7 +206,7 @@ const Archive: React.FC = () => {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
-                                            <ArchiveIcon className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600" />
+
                                             Archive
                                         </h1>
                                         <p className="text-gray-600 mt-1 text-sm sm:text-base">View and manage archived scholarship posts</p>
@@ -161,8 +227,8 @@ const Archive: React.FC = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => selectedScholarships.forEach(handleRestore)}
-                                            className="gap-2 justify-center"
+                                            onClick={() => openConfirm('restore', 'bulk')}
+                                            className="gap-2 justify-center text-indigo-600 hover:text-indigo-700"
                                         >
                                             <RotateCcw className="h-4 w-4" />
                                             Restore ({selectedScholarships.length})
@@ -170,7 +236,7 @@ const Archive: React.FC = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => selectedScholarships.forEach(handlePermanentDelete)}
+                                            onClick={() => openConfirm('delete', 'bulk')}
                                             className="gap-2 text-red-600 hover:text-red-700 justify-center"
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -385,8 +451,8 @@ const Archive: React.FC = () => {
                                                                     <Button
                                                                         variant="outline"
                                                                         size="sm"
-                                                                        onClick={() => handleRestore(scholarship.id)}
-                                                                        className="gap-1 text-green-600 hover:text-green-700"
+                                                                        onClick={() => openConfirm('restore', 'single', scholarship.id)}
+                                                                        className="gap-1 text-indigo-600 hover:text-indigo-700"
                                                                     >
                                                                         <RotateCcw className="h-3 w-3" />
                                                                         Restore
@@ -394,7 +460,7 @@ const Archive: React.FC = () => {
                                                                     <Button
                                                                         variant="outline"
                                                                         size="sm"
-                                                                        onClick={() => handlePermanentDelete(scholarship.id)}
+                                                                        onClick={() => openConfirm('delete', 'single', scholarship.id)}
                                                                         className="gap-1 text-red-600 hover:text-red-700"
                                                                     >
                                                                         <Trash2 className="h-3 w-3" />
@@ -458,8 +524,8 @@ const Archive: React.FC = () => {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => handleRestore(scholarship.id)}
-                                                                className="gap-1 text-green-600 hover:text-green-700 flex-1"
+                                                                onClick={() => openConfirm('restore', 'single', scholarship.id)}
+                                                                className="gap-1 text-indigo-600 hover:text-indigo-700 flex-1"
                                                             >
                                                                 <RotateCcw className="h-3 w-3" />
                                                                 Restore
@@ -467,7 +533,7 @@ const Archive: React.FC = () => {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => handlePermanentDelete(scholarship.id)}
+                                                                onClick={() => openConfirm('delete', 'single', scholarship.id)}
                                                                 className="gap-1 text-red-600 hover:text-red-700 flex-1"
                                                             >
                                                                 <Trash2 className="h-3 w-3" />
@@ -494,6 +560,34 @@ const Archive: React.FC = () => {
                         </div>
                     </div>
                 </SidebarInset>
+
+                {/* Confirmation Dialog */}
+                <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{confirmMode === 'delete' ? 'Confirm Permanent Delete' : 'Confirm Restore'}</DialogTitle>
+                            <DialogDescription>
+                                {confirmMode === 'delete'
+                                    ? 'This action will permanently delete the selected archived scholarship(s). This cannot be undone.'
+                                    : 'This will restore the selected archived scholarship(s) back to active list.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={isProcessing}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={performConfirmAction}
+                                    className={confirmMode === 'delete' ? 'text-white bg-indigo-600 hover:bg-indigo-900 hover:text-white' : 'text-white bg-indigo-600 hover:bg-indigo-700'}
+                                    disabled={isProcessing}
+                                >
+                                    {isProcessing ? 'Processing...' : (confirmMode === 'delete' ? 'Delete' : 'Restore')}
+                                </Button>
+                            </div>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </SidebarProvider>
     )

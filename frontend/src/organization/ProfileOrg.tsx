@@ -255,34 +255,7 @@ const ProfileOrg = () => {
                                     </CardContent>
                                 </Card>
 
-                                {/* Quick Actions */}
-                                <Card className="border-0 shadow-lg">
-                                    <CardHeader className="bg-white border-b border-gray-200">
-                                        <CardTitle className="text-lg text-gray-900">Quick Actions</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-4 space-y-3">
-                                        <Button
-                                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                                            onClick={() => navigate('/organization/manage-scholar')}
-                                        >
-                                            Manage Scholarships
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                                            onClick={() => navigate('/organization/applications')}
-                                        >
-                                            View Applications
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                                            onClick={() => navigate('/organization/archive')}
-                                        >
-                                            View Archive
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+
                             </div>
                         </div>
                     </div>

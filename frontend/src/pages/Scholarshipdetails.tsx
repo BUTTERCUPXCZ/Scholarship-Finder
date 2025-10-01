@@ -399,9 +399,6 @@ const ScholarshipDetails = () => {
                                 <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardHeader className="pb-4">
                                         <CardTitle className="flex items-center gap-3 text-gray-900">
-                                            <div className="p-2 bg-indigo-100 rounded-lg">
-                                                <Award className="h-5 w-5 text-indigo-600" />
-                                            </div>
                                             <span className="text-xl">Scholarship Benefits</span>
                                         </CardTitle>
                                     </CardHeader>
@@ -420,9 +417,6 @@ const ScholarshipDetails = () => {
                                 <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
                                     <CardHeader className="pb-4">
                                         <CardTitle className="flex items-center gap-3 text-gray-900">
-                                            <div className="p-2 bg-indigo-100 rounded-lg">
-                                                <Target className="h-5 w-5 text-indigo-600" />
-                                            </div>
                                             <span className="text-xl">Eligibility Requirements</span>
                                         </CardTitle>
                                     </CardHeader>

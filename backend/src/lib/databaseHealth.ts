@@ -1,9 +1,12 @@
 import { prisma } from './db';
+import { ConnectionMonitor } from './connectionMonitor';
 
 export class DatabaseHealthCheck {
     private static isConnected = false;
     private static lastHealthCheck = 0;
     private static readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+    private static connectionAttempts = 0;
+    private static maxConnectionAttempts = 5;
 
     static async checkConnection(): Promise<boolean> {
         const now = Date.now();
@@ -14,14 +17,30 @@ export class DatabaseHealthCheck {
         }
 
         try {
-            // Simple query to test connection
-            await prisma.$queryRaw`SELECT 1`;
+            // Simple query to test connection with timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Health check timeout')), 10000);
+            });
+
+            await Promise.race([
+                prisma.$queryRaw`SELECT 1`,
+                timeoutPromise
+            ]);
+
             this.isConnected = true;
             this.lastHealthCheck = now;
+            this.connectionAttempts = 0; // Reset on success
             return true;
         } catch (error) {
             console.error('Database health check failed:', error);
             this.isConnected = false;
+            this.connectionAttempts++;
+
+            // Log connection pool issues specifically
+            if (error instanceof Error && error.message.includes('connection pool')) {
+                console.error('🔴 Connection pool exhausted. Consider increasing pool size or investigating connection leaks.');
+            }
+
             return false;
         }
     }
@@ -42,18 +61,31 @@ export class DatabaseHealthCheck {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 await this.ensureConnection();
-                return await operation();
+                const result = await operation();
+
+                // Log successful operation after retries
+                if (attempt > 1) {
+                    console.log(`✅ Database operation succeeded on attempt ${attempt}`);
+                }
+
+                return result;
             } catch (error) {
                 lastError = error as Error;
                 console.error(`Database operation failed (attempt ${attempt}/${maxRetries}):`, error);
+
+                // Handle specific Prisma connection pool errors
+                if (error instanceof Error && error.message.includes('connection pool')) {
+                    console.error(`🔴 Connection pool timeout on attempt ${attempt}. Active connections may not be properly released.`);
+                }
 
                 if (attempt === maxRetries) {
                     break;
                 }
 
-                // Exponential backoff
-                const delay = delayMs * Math.pow(2, attempt - 1);
-                console.log(`Retrying in ${delay}ms...`);
+                // Exponential backoff with jitter
+                const jitter = Math.random() * 1000;
+                const delay = (delayMs * Math.pow(2, attempt - 1)) + jitter;
+                console.log(`Retrying in ${Math.round(delay)}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
@@ -64,24 +96,49 @@ export class DatabaseHealthCheck {
     static getConnectionStatus(): boolean {
         return this.isConnected;
     }
+
+    static getConnectionAttempts(): number {
+        return this.connectionAttempts;
+    }
+
+    static resetConnectionAttempts(): void {
+        this.connectionAttempts = 0;
+    }
 }
 
 
 export async function withDatabaseRetry<T>(
     operation: () => Promise<T>,
-    maxRetries = 3
+    maxRetries = 3,
+    operationName?: string
 ): Promise<T> {
-    return DatabaseHealthCheck.retryOperation(operation, maxRetries);
+    return ConnectionMonitor.withTracking(
+        () => DatabaseHealthCheck.retryOperation(operation, maxRetries),
+        operationName
+    );
 }
 
 
 export function handleDatabaseError(error: unknown, context: string) {
     // Narrow unknown to an object that may include Prisma error properties
-    const isPrismaError = (err: unknown): err is { code?: string; message?: string } => {
-        return typeof err === 'object' && err !== null && ('code' in err || 'message' in err);
+    const isPrismaError = (err: unknown): err is { code?: string; message?: string; errorCode?: string } => {
+        return typeof err === 'object' && err !== null && ('code' in err || 'message' in err || 'errorCode' in err);
     };
 
     if (isPrismaError(error)) {
+        // Handle connection pool timeout errors (P2024)
+        if (error.code === 'P2024' || error.errorCode === 'P2024' ||
+            error.message?.includes('connection pool') ||
+            error.message?.includes('Timed out fetching a new connection')) {
+            console.error(`${context}: Connection pool timeout`, error);
+            return {
+                error: 'CONNECTION_POOL_TIMEOUT',
+                message: 'Database is temporarily overloaded. Please try again in a moment.',
+                retryable: true
+            };
+        }
+
+        // Handle general connection failures
         if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
             console.error(`${context}: Database connection failed`, error);
             return {

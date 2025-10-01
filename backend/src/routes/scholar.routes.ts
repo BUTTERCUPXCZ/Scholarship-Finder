@@ -1,5 +1,5 @@
 import express from 'express'
-import { createScholar, getAllScholars, getScholarshipById, updateExpiredScholarshipsEndpoint, ArchiveScholarship, updateScholar, getArchivedScholarships, getOrganizationScholarships, getPublicScholars } from '../controllers/scholar.controller';
+import { createScholar, getAllScholars, getScholarshipById, updateExpiredScholarshipsEndpoint, ArchiveScholarship, updateScholar, getArchivedScholarships, getOrganizationScholarships, getPublicScholars, DeleteArchivedScholarship, RestoreArchivedScholarship } from '../controllers/scholar.controller';
 import { authenticate } from '../middleware/auth';
 import { deleteScholarship } from '../controllers/scholar.controller';
 
@@ -26,6 +26,11 @@ router.post('/archive-scholar/:id', authenticate, ArchiveScholarship);
 router.post('/update-expired', authenticate, updateExpiredScholarshipsEndpoint);
 
 router.post('/get-archived', authenticate, getArchivedScholarships);
+
+// Use the dedicated DeleteArchivedScholarship controller and accept an ID param
+router.delete('/delete-archived/:id', authenticate, DeleteArchivedScholarship);
+
+router.post('/restore-archived/:id', authenticate, RestoreArchivedScholarship);
 
 
 export default router;  
