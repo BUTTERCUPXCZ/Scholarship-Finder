@@ -236,7 +236,7 @@ const ScholarshipDetails = () => {
         return (
             <div className="min-h-screen bg-white">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-7xl mx-auto">
                         <Skeleton className="h-6 w-64 mb-8 bg-gray-200" />
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -286,7 +286,7 @@ const ScholarshipDetails = () => {
         return (
             <div className="min-h-screen bg-white">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-4xl mx-auto">
                         <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />
@@ -319,7 +319,7 @@ const ScholarshipDetails = () => {
         return (
             <div className="min-h-screen bg-white">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-4xl mx-auto">
                         <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />

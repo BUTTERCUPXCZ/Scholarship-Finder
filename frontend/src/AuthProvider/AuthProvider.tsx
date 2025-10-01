@@ -79,15 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: userData, isLoading: queryLoading, refetch, error } = useQuery({
         queryKey: ["auth", "currentUser"],
         queryFn: checkAuthStatus,
-        // ✅ Always check auth status to maintain login state across all pages
+        // ✅ Only enable if we don't have cached user or need to validate
         enabled: true,
         // Use cached user so the UI stays authenticated instantly on reload while
         // the real request validates the session in the background.
         initialData: cachedUser ?? undefined,
-        staleTime: 1000 * 60 * 5,
-        gcTime: 1000 * 60 * 10,
-        retry: false,
+        staleTime: 1000 * 60 * 10, // Increased to 10 minutes to reduce refetches
+        gcTime: 1000 * 60 * 30, // Increased cache time
+        retry: 1, // Reduced retries
         refetchOnWindowFocus: false,
+        refetchOnReconnect: false, // Prevent excessive refetches on reconnect
+        refetchInterval: false, // Disable polling
     });
 
     // Sync user state with query and mark initial check as complete
@@ -155,13 +157,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.warn('Supabase signOut failed:', err);
         }
 
-        // 3) Clear react-query cache and cancel running queries
+        // 3) Clear only auth-related queries instead of ALL queries
         try {
-            await queryClient.cancelQueries();
-            queryClient.removeQueries();
-            queryClient.clear();
+            await queryClient.cancelQueries({ queryKey: ["auth"] });
+            queryClient.removeQueries({ queryKey: ["auth"] });
+            queryClient.setQueryData(["auth", "currentUser"], null);
         } catch (err) {
-            console.warn('Failed to fully clear query client:', err);
+            console.warn('Failed to clear auth queries:', err);
         }
 
         // 4) Clear local storage keys related to auth and any tokens
@@ -190,7 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // 6) Finally update local UI state
         setUser(null);
-        setInitialCheckComplete(false);
+        setInitialCheckComplete(true); // Keep this true to avoid loading state
     }, [queryClient]);
 
     const refetchUser = useCallback(() => {

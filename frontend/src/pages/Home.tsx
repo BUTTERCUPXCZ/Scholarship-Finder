@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 
-// Animation variants
+// Animation variants - memoized to prevent recreation on every render
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -48,13 +48,13 @@ const scaleIn = {
     }
 }
 
-// Animated component wrapper
+// Animated component wrapper - memoized to prevent unnecessary re-renders
 type AnimatedSectionProps = {
     children: ReactNode
     className?: string
 }
 
-const AnimatedSection: React.FC<AnimatedSectionProps> = ({ children, className = '' }) => {
+const AnimatedSection: React.FC<AnimatedSectionProps> = React.memo(({ children, className = '' }) => {
     const [ref, inView] = useInView({
         triggerOnce: true,
         threshold: 0.1,
@@ -71,7 +71,9 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({ children, className =
             {children}
         </motion.div>
     )
-}
+})
+
+AnimatedSection.displayName = 'AnimatedSection'
 
 const Home = () => {
     return (
@@ -79,9 +81,10 @@ const Home = () => {
             <StudentNavbar />
 
             {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50 py-20 lg:py-32 overflow-hidden">
+            {/* Reduced top padding so the hero sits closer to the top under the sticky navbar */}
+            <section className="relative bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50 pt-4 lg:pt-6 pb-16 lg:pb-28 overflow-hidden">
                 <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-                <div className="container mx-auto px-4 max-w-7xl relative">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         {/* Left Content */}
                         <AnimatedSection className="space-y-8">
@@ -143,11 +146,11 @@ const Home = () => {
                             className="relative"
                         >
                             <div className="relative">
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-200 to-indigo-300 rounded-3xl blur-xl opacity-30"></div>
+
                                 <img
-                                    src="/illustration.png"
+                                    src="/freepik.png"
                                     alt="Student success illustration"
-                                    className="relative w-full h-auto rounded-3xl shadow-2xl"
+                                    className="relative w-full h-auto rounded-3xl"
                                 />
                             </div>
                         </motion.div>
@@ -157,7 +160,7 @@ const Home = () => {
 
             {/* Features Section */}
             <section className="py-20 bg-white">
-                <div className="container mx-auto px-4 max-w-7xl">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <AnimatedSection className="text-center mb-16">
                         <motion.div variants={fadeInUp}>
                             <Badge variant="outline" className="mb-4 border-indigo-200 text-indigo-600">
@@ -221,7 +224,7 @@ const Home = () => {
 
             {/* How It Works Section */}
             <section className="py-20 bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50">
-                <div className="container mx-auto px-4 max-w-7xl">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <AnimatedSection>
                         <div className="text-center mb-16">
                             <Badge variant="outline" className="mb-4 border-indigo-200 text-indigo-600">
@@ -288,7 +291,7 @@ const Home = () => {
             {/* CTA Section */}
             <section className="py-20 bg-indigo-600 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-700"></div>
-                <div className="container mx-auto px-4 max-w-7xl relative">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
                     <AnimatedSection>
                         <div className="text-center">
                             <motion.div variants={fadeInUp}>
@@ -320,7 +323,7 @@ const Home = () => {
 
             {/* Footer */}
             <footer className="bg-gray-900 text-white py-16">
-                <div className="container mx-auto px-4 max-w-7xl">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                         <div className="col-span-1 md:col-span-2">
                             <div className="flex items-center gap-2 mb-6">

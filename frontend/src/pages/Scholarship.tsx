@@ -150,7 +150,7 @@ const Scholarship = () => {
 
             {/* Hero */}
             <div className="bg-indigo-600">
-                <div className="container mx-auto px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-10 sm:py-14 lg:py-16">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
                     <div className="max-w-6xl mx-auto">
                         <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
                             <div className="flex-1 text-white py-6 lg:py-0">
@@ -172,33 +172,37 @@ const Scholarship = () => {
             </div>
 
             {/* Main Content */}
-            <div className="container mx-auto px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32 py-6">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Controls & Results Summary */}
                     <div className="mb-6">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="flex items-center gap-3 w-full md:w-2/3">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <div className="flex flex-col gap-4">
+                            {/* Search Bar - Full width on mobile */}
+                            <div className="w-full">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Search scholarships, locations, benefits..."
-                                        className="w-full pl-10 pr-10 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                        className="w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 text-sm"
                                     />
                                     {searchTerm && (
                                         <button
                                             onClick={handleClearSearch}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
                                             aria-label="Clear search"
                                         >
                                             <X className="h-4 w-4" />
                                         </button>
                                     )}
                                 </div>
+                            </div>
 
+                            {/* Filters - Stack on mobile, inline on larger screens */}
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <Select onValueChange={(v) => setFilterType(v)} defaultValue={filterType}>
-                                    <SelectTrigger className="w-[140px]">
+                                    <SelectTrigger className="w-full sm:w-[140px]">
                                         <SelectValue placeholder="Type" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -210,7 +214,7 @@ const Scholarship = () => {
                                 </Select>
 
                                 <Select onValueChange={(v) => setLocationFilter(v)} defaultValue={locationFilter}>
-                                    <SelectTrigger className="w-[140px]">
+                                    <SelectTrigger className="w-full sm:w-[140px]">
                                         <SelectValue placeholder="Location" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -220,16 +224,36 @@ const Scholarship = () => {
                                         ))}
                                     </SelectContent>
                                 </Select>
+
+                                <Select onValueChange={(v) => setSortBy(v as any)} defaultValue={sortBy}>
+                                    <SelectTrigger className="w-full sm:w-[140px]">
+                                        <SelectValue placeholder="Sort by" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="deadline">Deadline</SelectItem>
+                                        <SelectItem value="title">Title</SelectItem>
+                                        <SelectItem value="newest">Newest</SelectItem>
+                                        <SelectItem value="oldest">Oldest</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                {hasActiveFilters && (
+                                    <Button
+                                        onClick={handleClearFilters}
+                                        variant="outline"
+                                        className="w-full sm:w-auto border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                    >
+                                        Clear Filters
+                                    </Button>
+                                )}
                             </div>
-
-
                         </div>
                     </div>
 
                     {/* Loading State */}
                     {isLoading && (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                                 {Array.from({ length: 9 }).map((_, index) => (
                                     <Card key={index} className="h-[400px] border-gray-200">
                                         <CardContent className="p-6 space-y-4">
@@ -294,8 +318,16 @@ const Scholarship = () => {
 
                                 return (
                                     <>
-                                        {/* Use auto-rows-fr so each grid row has equal height and cards can stretch to fill */}
-                                        <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr' : 'space-y-4'}>
+                                        {/* Results count */}
+                                        <div className="mb-4">
+                                            <p className="text-sm text-gray-600">
+                                                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} scholarships
+                                                {searchTerm && ` for "${searchTerm}"`}
+                                            </p>
+                                        </div>
+
+                                        {/* Responsive Grid: 1 column on mobile, 2 on tablet, 3 on desktop */}
+                                        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 auto-rows-fr' : 'space-y-4'}>
                                             {pageItems.map((scholarship: ScholarshipType) => (
                                                 <div key={scholarship.id} className={viewMode === 'grid' ? 'h-full flex' : ''}>
                                                     {/* make ScholarshipCard grow to fill the grid cell */}

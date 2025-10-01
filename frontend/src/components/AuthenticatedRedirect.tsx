@@ -1,8 +1,22 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../AuthProvider/AuthProvider';
+import { useMemo } from 'react';
 
 const AuthenticatedRedirect = () => {
     const { user, isAuthenticated, isLoading } = useAuth();
+
+    // Memoize the redirect logic to prevent unnecessary re-renders
+    const redirectTarget = useMemo(() => {
+        if (isLoading) return null;
+
+        if (!isAuthenticated) {
+            return '/home';
+        }
+
+        // If authenticated, redirect based on role
+        const userRole = user?.role?.toString?.() ?? '';
+        return userRole === 'ORGANIZATION' ? '/orgdashboard' : '/home';
+    }, [isAuthenticated, isLoading, user?.role]);
 
     // Show loading while checking auth state
     if (isLoading) {
@@ -24,18 +38,7 @@ const AuthenticatedRedirect = () => {
         );
     }
 
-    // If not authenticated, go to login
-    if (!isAuthenticated) {
-        return <Navigate to="/home" replace />;
-    }
-
-    // If authenticated, redirect based on role
-    const userRole = user?.role?.toString?.() ?? '';
-    if (userRole === 'ORGANIZATION') {
-        return <Navigate to="/orgdashboard" replace />;
-    } else {
-        return <Navigate to="/home" replace />;
-    }
+    return <Navigate to={redirectTarget!} replace />;
 };
 
 export default AuthenticatedRedirect;
