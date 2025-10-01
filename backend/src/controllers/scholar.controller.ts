@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
-import { idnEmail } from "zod/v4/core/regexes.cjs";
 
 
 export const createScholar = async (req: Request, res: Response) => {

@@ -18,7 +18,6 @@ interface OrganizationStats {
 
 const ProfileOrg = () => {
     const { user, refetchUser } = useAuth();
-    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         fullname: user?.fullname || '',

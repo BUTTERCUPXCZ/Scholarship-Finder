@@ -1,11 +1,9 @@
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 import { useQuery } from '@tanstack/react-query'
 import {
     SidebarProvider,
     SidebarInset,
 } from '../components/ui/sidebar'
-import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import {
@@ -20,8 +18,6 @@ import {
     AlertCircle,
     FileText,
     Award,
-    Plus,
-    ArrowRight
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
@@ -66,7 +62,6 @@ interface Scholarship {
 }
 
 const orgdashboard = () => {
-    const navigate = useNavigate()
     const { user } = useAuth()
 
     // Fetch organization statistics

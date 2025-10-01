@@ -5,7 +5,8 @@ import {
     getApplicationById,
     withdrawApplication,
     getScholarshipApplications,
-    updateApplicationStatus
+    updateApplicationStatus,
+    getApplicants
 } from '../controllers/application.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -20,5 +21,6 @@ router.delete('/:id/withdraw', authenticate, withdrawApplication);
 // Organization routes
 router.get('/scholarship/:scholarshipId', authenticate, getScholarshipApplications);
 router.patch('/:id/status', authenticate, updateApplicationStatus);
+router.get('/get-applications', authenticate, getApplicants);
 
 export default router;

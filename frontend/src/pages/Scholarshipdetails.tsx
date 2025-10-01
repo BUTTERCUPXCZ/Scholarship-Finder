@@ -13,8 +13,6 @@ import {
     FileText,
     X,
     Users,
-    Award,
-    Target,
     FileCheck,
     Clock,
     Shield,

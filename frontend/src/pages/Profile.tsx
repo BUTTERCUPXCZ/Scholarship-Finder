@@ -22,8 +22,6 @@ import {
     Camera,
     GraduationCap,
     BookOpen,
-    Award,
-    Settings
 } from 'lucide-react'
 
 const Profile = () => {

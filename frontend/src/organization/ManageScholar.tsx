@@ -27,12 +27,12 @@ import {
     DollarSign,
     Users,
     Filter,
-    SortDesc,
     Plus,
     Clock,
     CheckCircle,
     XCircle,
     AlertTriangle,
+    ArrowUpDown,
 } from 'lucide-react'
 import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
@@ -40,7 +40,7 @@ import ApplicationManagement from './ApplicationManagement'
 import EditModalForm from '../components/Editmodalform'
 import CreateScholarshipModal from '../components/CreateScholarshipModal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAllScholars } from '../services/getScholarships'
+import { getOrganizationScholarships } from '../services/getScholarships'
 import { deleteScholarship } from '../services/deleteScholarship'
 import { archiveScholarship } from '../services/Archive'
 import { updateExpiredScholarships } from '../services/updateExpiredScholarships'
@@ -61,11 +61,14 @@ interface Scholarship {
     updatedAt: string
     providerId: string
     applications?: any[]
+    _count?: {
+        applications: number
+    }
 }
 
 const ManageScholar = () => {
     const navigate = useNavigate()
-    const { logout, isAuthenticated, isLoading: authLoading } = useAuth()
+    const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth()
     const queryClient = useQueryClient()
 
     // State management
@@ -90,10 +93,10 @@ const ManageScholar = () => {
         error,
         refetch
     } = useQuery<Scholarship[], Error>({
-        queryKey: ['scholarships'],
+        queryKey: ['organization-scholarships'],
         queryFn: async () => {
             try {
-                const response = await getAllScholars()
+                const response = await getOrganizationScholarships()
                 return response.data
             } catch (error: any) {
                 // Handle authentication errors
@@ -108,7 +111,7 @@ const ManageScholar = () => {
                 throw error
             }
         },
-        enabled: isAuthenticated, // Only run query if authenticated
+        enabled: isAuthenticated, // Only run query if authenticated - backend handles organization filtering
         refetchOnWindowFocus: false,
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: (failureCount, error: any) => {
@@ -121,13 +124,18 @@ const ManageScholar = () => {
         }
     })
 
-    // Redirect to login if not authenticated - only run once when auth state changes
+    // Redirect to login if not authenticated or not an organization - only run once when auth state changes
     useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            toast.error('Please log in to access this page')
-            navigate('/login', { replace: true })
+        if (!authLoading) {
+            if (!isAuthenticated) {
+                toast.error('Please log in to access this page')
+                navigate('/login', { replace: true })
+            } else if (user && user.role !== 'ORGANIZATION') {
+                toast.error('Access denied. This page is only available for organizations.')
+                navigate('/', { replace: true }) // Redirect to home or appropriate page
+            }
         }
-    }, [isAuthenticated, authLoading, navigate])
+    }, [isAuthenticated, authLoading, user, navigate])
 
     // Delete scholarship mutation
     const deleteScholarshipMutation = useMutation({
@@ -135,7 +143,7 @@ const ManageScholar = () => {
             deleteScholarship(id),
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list
-            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
             // Show success message
             toast.success(data.message || 'Scholarship deleted successfully')
         },
@@ -157,7 +165,7 @@ const ManageScholar = () => {
             archiveScholarship(id),
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list
-            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
             // Show success message
             toast.success(data.message || 'Scholarship archived successfully')
         },
@@ -179,7 +187,7 @@ const ManageScholar = () => {
             updateExpiredScholarships(),
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list to show updated statuses
-            queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+            queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
             // Show success message if any scholarships were updated
             if (data.count > 0) {
                 toast.success(`${data.count} scholarship(s) marked as expired`)
@@ -254,7 +262,7 @@ const ManageScholar = () => {
 
     const handleEditSuccess = () => {
         // Invalidate and refetch scholarships data after successful edit
-        queryClient.invalidateQueries({ queryKey: ['scholarships'] })
+        queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
     }
 
     const handleArchiveScholarship = async (id: string) => {
@@ -277,13 +285,19 @@ const ManageScholar = () => {
         setViewingApplications(null)
     }
 
-    // Filter and sort scholarships - updated for backend data
+    // Filter and sort scholarships - with multi-layer organization ownership verification
+    // 1. Backend already filters by providerId === req.userId (organization)
+    // 2. Frontend additionally verifies scholarship.providerId === user.id for extra security
     const filteredAndSortedScholarships = (scholarships || [])
         .filter(scholarship => {
+            // Ensure the scholarship belongs to the current organization
+            const belongsToCurrentOrg = user?.id ? scholarship.providerId === user.id : true; // If no user, let backend handle it
+
             const matchesSearch = scholarship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 scholarship.description.toLowerCase().includes(searchTerm.toLowerCase())
             const matchesFilter = filterStatus === 'all' || scholarship.status === filterStatus
-            return matchesSearch && matchesFilter
+
+            return belongsToCurrentOrg && matchesSearch && matchesFilter
         })
         .sort((a, b) => {
             switch (sortBy) {
@@ -294,7 +308,9 @@ const ManageScholar = () => {
                 case 'deadline':
                     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
                 case 'applicants':
-                    return (b.applications?.length || 0) - (a.applications?.length || 0)
+                    const aCount = a._count?.applications || a.applications?.length || 0
+                    const bCount = b._count?.applications || b.applications?.length || 0
+                    return bCount - aCount
                 default:
                     return 0
             }
@@ -342,7 +358,7 @@ const ManageScholar = () => {
 
                     <div className="flex flex-1 flex-col gap-6 p-6 bg-gray-50 overflow-y-auto">
                         <div className="max-w-7xl mx-auto w-full">
-                            {isLoading ? (
+                            {isLoading || authLoading ? (
                                 <LoadingContent />
                             ) : error ? (
                                 <ErrorContent />
@@ -378,7 +394,9 @@ const ManageScholar = () => {
                                         <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-
+                                                    <div className="p-2 bg-green-100 rounded-lg">
+                                                        <CheckCircle className="h-6 w-6 text-green-600" />
+                                                    </div>
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Active</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -392,6 +410,9 @@ const ManageScholar = () => {
                                         <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
+                                                    <div className="p-2 bg-orange-100 rounded-lg">
+                                                        <Clock className="h-6 w-6 text-orange-600" />
+                                                    </div>
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -405,11 +426,13 @@ const ManageScholar = () => {
                                         <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-
+                                                    <div className="p-2 bg-blue-100 rounded-lg">
+                                                        <Users className="h-6 w-6 text-blue-600" />
+                                                    </div>
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Total Applicants</p>
                                                         <p className="text-2xl font-bold text-gray-900">
-                                                            {(scholarships || []).reduce((sum, s) => sum + (s.applications?.length || 0), 0)}
+                                                            {(scholarships || []).reduce((sum, s) => sum + (s._count?.applications || s.applications?.length || 0), 0)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -419,7 +442,9 @@ const ManageScholar = () => {
                                         <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center">
-
+                                                    <div className="p-2 bg-red-100 rounded-lg">
+                                                        <XCircle className="h-6 w-6 text-red-600" />
+                                                    </div>
                                                     <div className="ml-4">
                                                         <p className="text-sm font-medium text-gray-600">Expired</p>
                                                         <p className="text-2xl font-bold text-gray-900">
@@ -474,8 +499,11 @@ const ManageScholar = () => {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="outline" className="gap-2 border-gray-200 rounded-xl">
-                                                                <SortDesc className="h-4 w-4" />
-                                                                Sort
+                                                                <ArrowUpDown className="h-4 w-4" />
+                                                                Sort: {sortBy === 'newest' ? 'Newest' :
+                                                                    sortBy === 'oldest' ? 'Oldest' :
+                                                                        sortBy === 'deadline' ? 'Deadline' :
+                                                                            sortBy === 'applicants' ? 'Most Applications' : 'Newest'}
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
@@ -489,7 +517,7 @@ const ManageScholar = () => {
                                                                 By Deadline
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => setSortBy('applicants')}>
-                                                                Most Applicants
+                                                                Most Applications
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -543,6 +571,7 @@ const ManageScholar = () => {
                                             filteredAndSortedScholarships.map((scholarship) => {
                                                 const isExpired = isScholarshipExpired(scholarship.deadline)
                                                 const isNearDeadline = isDeadlineNear(scholarship.deadline)
+                                                const applicationCount = scholarship._count?.applications || scholarship.applications?.length || 0
 
                                                 return (
                                                     <Card key={scholarship.id} className={`bg-white border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full ${isExpired && scholarship.status === 'ACTIVE' ? 'border-red-200 bg-red-50' : ''}`}>
@@ -599,7 +628,7 @@ const ManageScholar = () => {
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                                                     <Users className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                                                                    <span>{scholarship.applications?.length || 0} applicants</span>
+                                                                    <span>{applicationCount} applicants</span>
                                                                 </div>
                                                             </div>
 
@@ -612,7 +641,7 @@ const ManageScholar = () => {
                                                                     className="gap-2 w-full justify-center border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg"
                                                                 >
                                                                     <Eye className="h-4 w-4" />
-                                                                    View Applications
+                                                                    View Applications ({applicationCount})
                                                                 </Button>
 
                                                                 <div className="flex gap-2">

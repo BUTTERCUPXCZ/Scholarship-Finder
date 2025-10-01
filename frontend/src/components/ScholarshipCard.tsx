@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { Calendar, MapPin, Award, Clock, AlertTriangle, Users } from 'lucide-react'
+import { Calendar, MapPin, Clock, AlertTriangle, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 

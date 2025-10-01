@@ -20,7 +20,7 @@ import {
     organizationTypes,
     validateScholarshipForm
 } from '../schemas/scholarshipSchema'
-import { Loader2, GraduationCap, MapPin, Calendar, Award, Target } from 'lucide-react'
+import { Loader2, Calendar } from 'lucide-react'
 
 interface CreateScholarshipModalProps {
     isOpen: boolean

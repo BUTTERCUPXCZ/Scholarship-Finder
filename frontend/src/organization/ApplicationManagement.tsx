@@ -23,7 +23,6 @@ import {
     Download,
     Send,
     MoreHorizontal,
-    Eye,
     Check,
     X,
     Clock,

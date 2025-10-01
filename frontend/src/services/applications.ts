@@ -324,3 +324,32 @@ export const updateApplicationStatus = async (
     const data = await response.json();
     return data.data;
 };
+
+export const getApplicants = async (): Promise<BackendApplication[]> => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/get-applicants`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('UNAUTHORIZED');
+        }
+
+        let errorMessage = 'Failed to fetch applicants';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch {
+            // If parsing error response fails, use default message
+        }
+
+        throw new Error(`${response.status} ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    return data.data;
+};

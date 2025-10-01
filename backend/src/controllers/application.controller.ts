@@ -375,8 +375,29 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
 
 export const getApplicants = async (req: Request, res: Response) => {
     try {
+        const userID = req.userId as string; // org/provider ID
+        if (!userID) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
 
+        // Get scholarships created by the provider (organization)
+        const scholarshipsWithApplicants = await prisma.scholarship.findMany({
+            where: {
+                providerId: userID, // only scholarships of the logged-in org
+            },
+            include: {
+                applications: {
+                    include: {
+                        user: true, // include applicant details
+                        documents: true, // include submitted documents if needed
+                    },
+                },
+            },
+        });
+
+        return res.status(200).json(scholarshipsWithApplicants);
     } catch (error) {
-
+        console.error("Error fetching applicants:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};

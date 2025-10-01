@@ -1,4 +1,3 @@
-import { prisma } from './db';
 
 export class ConnectionMonitor {
     private static metrics = {

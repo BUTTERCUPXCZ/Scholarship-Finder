@@ -1,31 +1,11 @@
 import type { PrismaClient as PrismaClientType } from '@prisma/client'
+import { PrismaClient as PrismaClientClass } from '@prisma/client'
 
 type PrismaClientConstructor = new (...args: unknown[]) => PrismaClientType
 
-let PrismaClient: PrismaClientConstructor
-let prismaClientAvailable = true
-
-try {
-    const pkg = require('@prisma/client') as { PrismaClient: PrismaClientConstructor }
-    PrismaClient = pkg.PrismaClient
-} catch (err: unknown) {
-    prismaClientAvailable = false
-
-    console.debug('Prisma client not available at require time:', err)
-
-
-    PrismaClient = class {
-        constructor() {
-            // empty
-        }
-        async $connect(): Promise<void> {
-            return Promise.resolve()
-        }
-        async $disconnect(): Promise<void> {
-            return Promise.resolve()
-        }
-    } as unknown as PrismaClientConstructor
-}
+// Assign synchronously using a static import (package is a project dependency)
+const PrismaClient: PrismaClientConstructor = PrismaClientClass as unknown as PrismaClientConstructor
+const prismaClientAvailable = true
 
 const globalForPrisma = globalThis as unknown as {
     prisma: InstanceType<typeof PrismaClient> | undefined
@@ -34,7 +14,24 @@ const globalForPrisma = globalThis as unknown as {
 // Enhanced Prisma configuration for better connectivity
 // Build Prisma client options dynamically so we don't pass `undefined`
 // for the datasource URL (Prisma throws if url is undefined).
-const prismaOptions: any = {
+
+type IsolationLevel = 'ReadCommitted' | 'RepeatableRead' | 'Serializable' | 'ReadUncommitted'
+
+interface LocalTransactionOptions {
+    timeout?: number
+    isolationLevel?: IsolationLevel
+}
+
+interface LocalPrismaOptions {
+    log?: Array<'query' | 'info' | 'warn' | 'error'>
+    transactionOptions?: LocalTransactionOptions
+    datasources?: Record<string, { url?: string }>
+    // custom helper used in this module
+    datasourceUrl?: string
+    [key: string]: unknown
+}
+
+const prismaOptions: LocalPrismaOptions = {
     log:
         process.env.NODE_ENV === 'development'
             ? ['query', 'error', 'warn']
@@ -69,7 +66,7 @@ if (process.env.DATABASE_URL) {
 // Use datasourceUrl if configured, otherwise fall back to datasources
 if (!prismaOptions.datasourceUrl && process.env.DATABASE_URL) {
     // Only attach datasources if DATABASE_URL is set and datasourceUrl wasn't already configured.
-    // This prevents PrismaClientConstructorValidationError in test runs
+    // This prevents PrismaClientConstructorValidationError  test runs
     // where DATABASE_URL may intentionally be unset.
     prismaOptions.datasources = {
         db: { url: process.env.DATABASE_URL }

@@ -1,5 +1,5 @@
 import StudentNavbar from '../components/studentNavbar'
-import { BookOpen, Users, Award, ArrowRight, Sparkles, GraduationCap, Search, TrendingUp, Star, CheckCircle } from 'lucide-react'
+import { Users, ArrowRight, GraduationCap, Search, TrendingUp, CheckCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
