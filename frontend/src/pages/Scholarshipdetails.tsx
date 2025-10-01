@@ -286,7 +286,7 @@ const ScholarshipDetails = () => {
         return (
             <div className="min-h-screen bg-white">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-4xl mx-auto">
                         <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />
@@ -319,7 +319,7 @@ const ScholarshipDetails = () => {
         return (
             <div className="min-h-screen bg-white">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-4xl mx-auto">
                         <Button variant="ghost" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800">
                             <ArrowLeft className="h-4 w-4" />
@@ -349,14 +349,14 @@ const ScholarshipDetails = () => {
     const isExpired = scholarship.status === 'EXPIRED' || new Date(scholarship.deadline) < new Date();
     const daysUntilDeadline = getDaysUntilDeadline(scholarship.deadline);
     const isUrgent = daysUntilDeadline <= 7 && daysUntilDeadline > 0;
-    const benefitsList = formatBulletPoints(scholarship.benefits);
-    const requirementsList = formatBulletPoints(scholarship.requirements);
+    const benefitsList: string[] = formatBulletPoints(scholarship.benefits);
+    const requirementsList: string[] = formatBulletPoints(scholarship.requirements);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="h-screen bg-gray-50 flex flex-col">
             <StudentNavbar />
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-7xl mx-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <Breadcrumbs
                         className="mb-8"
                         items={[
@@ -402,7 +402,7 @@ const ScholarshipDetails = () => {
                                     </CardHeader>
                                     <CardContent>
                                         <ul className="space-y-4">
-                                            {benefitsList.map((benefit, index) => (
+                                            {benefitsList.map((benefit: string, index: number) => (
                                                 <li key={index} className="flex items-start gap-4">
                                                     <span className="text-gray-700 leading-relaxed">{benefit}</span>
                                                 </li>
@@ -420,7 +420,7 @@ const ScholarshipDetails = () => {
                                     </CardHeader>
                                     <CardContent>
                                         <ul className="space-y-4">
-                                            {requirementsList.map((requirement, index) => (
+                                            {requirementsList.map((requirement: string, index: number) => (
                                                 <li key={index} className="flex items-start gap-4">
 
                                                     <span className="text-gray-700 leading-relaxed">{requirement}</span>

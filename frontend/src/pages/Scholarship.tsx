@@ -105,7 +105,7 @@ const Scholarship = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <StudentNavbar />
-                <div className="container mx-auto px-4 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="max-w-2xl mx-auto">
                         <Card className="border-red-200 bg-red-50">
                             <CardContent className="flex items-center gap-4 p-8">
@@ -142,16 +142,16 @@ const Scholarship = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="h-screen bg-gray-50 flex flex-col">
             {/* Only Navbar is sticky */}
-            <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+            <div className="bg-white border-b border-gray-200 shadow-sm">
                 <StudentNavbar />
             </div>
 
-            {/* Hero */}
-            <div className="bg-indigo-600">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
-                    <div className="max-w-6xl mx-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {/* Hero */}
+                <div className="bg-indigo-600">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
                         <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
                             <div className="flex-1 text-white py-6 lg:py-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-extrabold leading-tight mb-3">
@@ -169,22 +169,20 @@ const Scholarship = () => {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div className="max-w-7xl mx-auto">
+                {/* Main Content */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {/* Controls & Results Summary */}
                     <div className="mb-6">
-                        <div className="flex flex-col gap-4">
-                            {/* Search Bar - Full width on mobile */}
-                            <div className="w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            {/* Search + Filters inline on desktop, stacked on mobile */}
+                            <div className="flex-1 min-w-0">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search scholarships, locations, benefits..."
+                                        placeholder="Search scholarship"
                                         className="w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 text-sm"
                                     />
                                     {searchTerm && (
@@ -199,11 +197,10 @@ const Scholarship = () => {
                                 </div>
                             </div>
 
-                            {/* Filters - Stack on mobile, inline on larger screens */}
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex items-center gap-2">
                                 <Select onValueChange={(v) => setFilterType(v)} defaultValue={filterType}>
-                                    <SelectTrigger className="w-full sm:w-[140px]">
-                                        <SelectValue placeholder="Type" />
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="All Types" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Types</SelectItem>
@@ -214,8 +211,8 @@ const Scholarship = () => {
                                 </Select>
 
                                 <Select onValueChange={(v) => setLocationFilter(v)} defaultValue={locationFilter}>
-                                    <SelectTrigger className="w-full sm:w-[140px]">
-                                        <SelectValue placeholder="Location" />
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="All Locations" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Locations</SelectItem>
@@ -226,8 +223,8 @@ const Scholarship = () => {
                                 </Select>
 
                                 <Select onValueChange={(v) => setSortBy(v as any)} defaultValue={sortBy}>
-                                    <SelectTrigger className="w-full sm:w-[140px]">
-                                        <SelectValue placeholder="Sort by" />
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="Deadline" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="deadline">Deadline</SelectItem>
@@ -241,9 +238,9 @@ const Scholarship = () => {
                                     <Button
                                         onClick={handleClearFilters}
                                         variant="outline"
-                                        className="w-full sm:w-auto border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                        className="hidden sm:inline-flex ml-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
                                     >
-                                        Clear Filters
+                                        Clear
                                     </Button>
                                 )}
                             </div>
@@ -380,8 +377,6 @@ const Scholarship = () => {
                         </>
                     )}
                 </div>
-
-
             </div>
         </div>
     )

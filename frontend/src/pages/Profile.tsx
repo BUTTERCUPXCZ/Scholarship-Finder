@@ -103,7 +103,7 @@ const Profile = () => {
             <>
                 <StudentNavbar />
                 <div className="min-h-screen bg-gray-50">
-                    <div className="container mx-auto px-4 py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                         <Card className="max-w-md mx-auto border-gray-200 shadow-lg">
                             <CardContent className="p-8 text-center">
                                 <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -122,313 +122,315 @@ const Profile = () => {
     return (
         <>
             <StudentNavbar />
-            <div className="min-h-screen bg-gray-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
-                    {/* Header Section */}
-                    <div className="mb-8">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-                                <p className="text-gray-600">Manage your personal information and preferences</p>
-                            </div>
-                            {!isEditing ? (
-                                <Button
-                                    onClick={() => setIsEditing(true)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                                >
-                                    <Edit3 className="w-4 w-4 mr-2" />
-                                    Edit Profile
-                                </Button>
-                            ) : (
-                                <div className="flex gap-3">
+            <div className="h-screen bg-gray-50 flex flex-col">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* Header Section */}
+                        <div className="mb-8">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+                                    <p className="text-gray-600">Manage your personal information and preferences</p>
+                                </div>
+                                {!isEditing ? (
                                     <Button
-                                        onClick={handleSave}
-                                        disabled={isLoading}
+                                        onClick={() => setIsEditing(true)}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                     >
-                                        <Save className="w-4 w-4 mr-2" />
-                                        {isLoading ? 'Saving...' : 'Save Changes'}
+                                        <Edit3 className="w-4 h-4 mr-2" />
+                                        Edit Profile
                                     </Button>
-                                    <Button
-                                        onClick={handleCancel}
-                                        disabled={isLoading}
-                                        variant="outline"
-                                        className="border-gray-200"
-                                    >
-                                        <X className="w-4 w-4 mr-2" />
-                                        Cancel
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Profile Sidebar */}
-                        <div className="lg:col-span-4">
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardContent className="p-8">
-                                    {/* Profile Photo Section */}
-                                    <div className="text-center mb-8">
-                                        <div className="relative inline-block">
-                                            <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                                                <span className="text-4xl font-bold text-white">
-                                                    {user.fullname ? user.fullname.charAt(0).toUpperCase() : 'U'}
-                                                </span>
-                                            </div>
-                                            <button className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-105">
-                                                <Camera className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{user.fullname}</h2>
-                                        <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1">
-                                            <GraduationCap className="w-4 h-4 mr-1" />
-                                            {user.role}
-                                        </Badge>
+                                ) : (
+                                    <div className="flex gap-3">
+                                        <Button
+                                            onClick={handleSave}
+                                            disabled={isLoading}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        >
+                                            <Save className="w-4 h-4 mr-2" />
+                                            {isLoading ? 'Saving...' : 'Save Changes'}
+                                        </Button>
+                                        <Button
+                                            onClick={handleCancel}
+                                            disabled={isLoading}
+                                            variant="outline"
+                                            className="border-gray-200"
+                                        >
+                                            <X className="w-4 h-4 mr-2" />
+                                            Cancel
+                                        </Button>
                                     </div>
+                                )}
+                            </div>
+                        </div>
 
-                                    <Separator className="mb-6" />
-
-                                    {/* Quick Info */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                <Mail className="w-5 h-5 text-indigo-600" />
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* Profile Sidebar */}
+                            <div className="lg:col-span-4">
+                                <Card className="border-gray-200 bg-white shadow-lg">
+                                    <CardContent className="p-8">
+                                        {/* Profile Photo Section */}
+                                        <div className="text-center mb-8">
+                                            <div className="relative inline-block">
+                                                <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                                                    <span className="text-4xl font-bold text-white">
+                                                        {user.fullname ? user.fullname.charAt(0).toUpperCase() : 'U'}
+                                                    </span>
+                                                </div>
+                                                <button className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-105">
+                                                    <Camera className="w-5 h-5" />
+                                                </button>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-700">Email</p>
-                                                <p className="text-sm text-gray-900 truncate">{user.email}</p>
+                                            <h2 className="text-2xl font-bold text-gray-900 mb-2">{user.fullname}</h2>
+                                            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1">
+                                                <GraduationCap className="w-4 h-4 mr-1" />
+                                                {user.role}
+                                            </Badge>
+                                        </div>
+
+                                        <Separator className="mb-6" />
+
+                                        {/* Quick Info */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                    <Mail className="w-5 h-5 text-indigo-600" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-700">Email</p>
+                                                    <p className="text-sm text-gray-900 truncate">{user.email}</p>
+                                                </div>
+                                            </div>
+
+                                            {profileData.phone && (
+                                                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                        <Phone className="w-5 h-5 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-700">Phone</p>
+                                                        <p className="text-sm text-gray-900">{profileData.phone}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {profileData.location && (
+                                                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                        <MapPin className="w-5 h-5 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-700">Location</p>
+                                                        <p className="text-sm text-gray-900">{profileData.location}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {user.createdAt && (
+                                                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                        <Calendar className="w-5 h-5 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-700">Member Since</p>
+                                                        <p className="text-sm text-gray-900">
+                                                            {new Date(user.createdAt).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'long'
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Main Content Area */}
+                            <div className="lg:col-span-8 space-y-8">
+                                {/* Personal Information */}
+                                <Card className="border-gray-200 bg-white shadow-lg">
+                                    <CardHeader className="pb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                <User className="w-5 h-5 text-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl text-gray-900">Personal Information</CardTitle>
+                                                <CardDescription className="text-gray-600">
+                                                    Your basic personal details and contact information
+                                                </CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Full Name *</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.fullname}
+                                                        onChange={(e) => handleInputChange('fullname', e.target.value)}
+                                                        placeholder="Enter your full name"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.fullname || 'Not provided'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Email Address</Label>
+                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                    <p className="text-gray-900">{user.email}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Phone Number</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.phone}
+                                                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                                                        placeholder="Enter your phone number"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.phone || 'Not provided'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Location</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.location}
+                                                        onChange={(e) => handleInputChange('location', e.target.value)}
+                                                        placeholder="Enter your location"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.location || 'Not provided'}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        {profileData.phone && (
-                                            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                    <Phone className="w-5 h-5 text-indigo-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-gray-700">Phone</p>
-                                                    <p className="text-sm text-gray-900">{profileData.phone}</p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {profileData.location && (
-                                            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                    <MapPin className="w-5 h-5 text-indigo-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-gray-700">Location</p>
-                                                    <p className="text-sm text-gray-900">{profileData.location}</p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {user.createdAt && (
-                                            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                    <Calendar className="w-5 h-5 text-indigo-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-gray-700">Member Since</p>
-                                                    <p className="text-sm text-gray-900">
-                                                        {new Date(user.createdAt).toLocaleDateString('en-US', {
-                                                            year: 'numeric',
-                                                            month: 'long'
-                                                        })}
+                                        <div className="space-y-2">
+                                            <Label className="text-sm font-medium text-gray-700">Bio</Label>
+                                            {isEditing ? (
+                                                <Textarea
+                                                    value={profileData.bio}
+                                                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                                                    placeholder="Tell us about yourself, your interests, goals, and what you hope to achieve..."
+                                                    className="min-h-[120px] border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                            ) : (
+                                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-h-[120px]">
+                                                    <p className="text-gray-900">
+                                                        {profileData.bio || 'No bio provided yet. Add a brief description about yourself!'}
                                                     </p>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Main Content Area */}
-                        <div className="lg:col-span-8 space-y-8">
-                            {/* Personal Information */}
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardHeader className="pb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                            <User className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-xl text-gray-900">Personal Information</CardTitle>
-                                            <CardDescription className="text-gray-600">
-                                                Your basic personal details and contact information
-                                            </CardDescription>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Full Name *</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.fullname}
-                                                    onChange={(e) => handleInputChange('fullname', e.target.value)}
-                                                    placeholder="Enter your full name"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.fullname || 'Not provided'}</p>
-                                                </div>
                                             )}
                                         </div>
+                                    </CardContent>
+                                </Card>
 
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Email Address</Label>
-                                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                <p className="text-gray-900">{user.email}</p>
-                                                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                                {/* Academic Information */}
+                                <Card className="border-gray-200 bg-white shadow-lg">
+                                    <CardHeader className="pb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                <BookOpen className="w-5 h-5 text-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl text-gray-900">Academic Information</CardTitle>
+                                                <CardDescription className="text-gray-600">
+                                                    Your educational background and academic achievements
+                                                </CardDescription>
                                             </div>
                                         </div>
-
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Phone Number</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.phone}
-                                                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                                                    placeholder="Enter your phone number"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.phone || 'Not provided'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Location</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.location}
-                                                    onChange={(e) => handleInputChange('location', e.target.value)}
-                                                    placeholder="Enter your location"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.location || 'Not provided'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-gray-700">Bio</Label>
-                                        {isEditing ? (
-                                            <Textarea
-                                                value={profileData.bio}
-                                                onChange={(e) => handleInputChange('bio', e.target.value)}
-                                                placeholder="Tell us about yourself, your interests, goals, and what you hope to achieve..."
-                                                className="min-h-[120px] border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                            />
-                                        ) : (
-                                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-h-[120px]">
-                                                <p className="text-gray-900">
-                                                    {profileData.bio || 'No bio provided yet. Add a brief description about yourself!'}
-                                                </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">University/College</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.university}
+                                                        onChange={(e) => handleInputChange('university', e.target.value)}
+                                                        placeholder="Enter your university"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.university || 'Not provided'}</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
 
-                            {/* Academic Information */}
-                            <Card className="border-gray-200 bg-white shadow-lg">
-                                <CardHeader className="pb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                            <BookOpen className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-xl text-gray-900">Academic Information</CardTitle>
-                                            <CardDescription className="text-gray-600">
-                                                Your educational background and academic achievements
-                                            </CardDescription>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">University/College</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.university}
-                                                    onChange={(e) => handleInputChange('university', e.target.value)}
-                                                    placeholder="Enter your university"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.university || 'Not provided'}</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Major/Field of Study</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.major}
+                                                        onChange={(e) => handleInputChange('major', e.target.value)}
+                                                        placeholder="Enter your major"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.major || 'Not provided'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Major/Field of Study</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.major}
-                                                    onChange={(e) => handleInputChange('major', e.target.value)}
-                                                    placeholder="Enter your major"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.major || 'Not provided'}</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">Expected Graduation</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.graduationYear}
+                                                        onChange={(e) => handleInputChange('graduationYear', e.target.value)}
+                                                        placeholder="e.g., 2025"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.graduationYear || 'Not provided'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">Expected Graduation</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.graduationYear}
-                                                    onChange={(e) => handleInputChange('graduationYear', e.target.value)}
-                                                    placeholder="e.g., 2025"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.graduationYear || 'Not provided'}</p>
-                                                </div>
-                                            )}
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-700">GPA</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={profileData.gpa}
+                                                        onChange={(e) => handleInputChange('gpa', e.target.value)}
+                                                        placeholder="e.g., 3.8"
+                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                        <p className="text-gray-900">{profileData.gpa || 'Not provided'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+                                    </CardContent>
+                                </Card>
 
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-700">GPA</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={profileData.gpa}
-                                                    onChange={(e) => handleInputChange('gpa', e.target.value)}
-                                                    placeholder="e.g., 3.8"
-                                                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                                />
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-gray-900">{profileData.gpa || 'Not provided'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
 
+                            </div>
 
                         </div>
-
                     </div>
                 </div>
             </div>

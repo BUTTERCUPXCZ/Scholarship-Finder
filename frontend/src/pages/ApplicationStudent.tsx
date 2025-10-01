@@ -93,22 +93,26 @@ const ApplicationStudent = () => {
         return (
             <>
                 <StudentNavbar />
-                <div className="container mx-auto p-6">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="flex items-center gap-3">
-                            {/* SVG gradient arc spinner */}
-                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="lg-spinner-home" x1="0" y1="0" x2="1" y2="1">
-                                        <stop offset="0%" stopColor="#4F39F6" stopOpacity="1" />
-                                        <stop offset="100%" stopColor="#C7B8FF" stopOpacity="0.6" />
-                                    </linearGradient>
-                                </defs>
-                                <g className="animate-spin origin-center">
-                                    <circle cx="12" cy="12" r="9" stroke="url(#lg-spinner-home)" strokeWidth="2" strokeLinecap="round" strokeDasharray="40 120" strokeDashoffset="0" fill="none" />
-                                </g>
-                            </svg>
-                            <div className="text-lg text-gray-600">Loading...</div>
+                <div className="h-screen bg-gray-50 flex flex-col">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                            <div className="flex items-center justify-center h-64">
+                                <div className="flex items-center gap-3">
+                                    {/* SVG gradient arc spinner */}
+                                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="lg-spinner-home" x1="0" y1="0" x2="1" y2="1">
+                                                <stop offset="0%" stopColor="#4F39F6" stopOpacity="1" />
+                                                <stop offset="100%" stopColor="#C7B8FF" stopOpacity="0.6" />
+                                            </linearGradient>
+                                        </defs>
+                                        <g className="animate-spin origin-center">
+                                            <circle cx="12" cy="12" r="9" stroke="url(#lg-spinner-home)" strokeWidth="2" strokeLinecap="round" strokeDasharray="40 120" strokeDashoffset="0" fill="none" />
+                                        </g>
+                                    </svg>
+                                    <div className="text-lg text-gray-600">Loading...</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -119,116 +123,120 @@ const ApplicationStudent = () => {
     return (
         <>
             <StudentNavbar />
-            <div className="container mx-auto p-6 max-w-7xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">My Applications</h1>
-                    <p className="text-gray-600">Track your scholarship application status</p>
-                </div>
+            <div className="h-screen bg-gray-50 flex flex-col">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Applications</h1>
+                            <p className="text-gray-600">Track your scholarship application status</p>
+                        </div>
 
-                <div className="space-y-6">
-                    {applications.length === 0 ? (
-                        <Card>
-                            <CardContent className="py-12">
-                                <div className="text-center">
-                                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Applications Yet</h3>
-                                    <p className="text-gray-600 mb-4">You haven't applied to any scholarships yet.</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        applications.map((application) => (
-                            <Card key={application.id}>
-                                <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-lg">{application.scholarship.title}</CardTitle>
-                                            <CardDescription>
-                                                Applied on {new Date(application.submittedAt).toLocaleDateString()}
-                                            </CardDescription>
+                        <div className="space-y-6">
+                            {applications.length === 0 ? (
+                                <Card>
+                                    <CardContent className="py-12">
+                                        <div className="text-center">
+                                            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Applications Yet</h3>
+                                            <p className="text-gray-600 mb-4">You haven't applied to any scholarships yet.</p>
                                         </div>
-                                        <Badge className={getStatusColor(application.status)}>
-                                            <div className="flex items-center gap-1">
-                                                {getStatusIcon(application.status)}
-                                                {application.status.replace('_', ' ')}
-                                            </div>
-                                        </Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <div className="flex items-center text-sm text-gray-600">
-                                            <MapPin className="w-4 h-4 mr-2" />
-                                            {application.scholarship.location}
-                                        </div>
-                                        <div className="flex items-center text-sm text-gray-600">
-                                            <CalendarDays className="w-4 h-4 mr-2" />
-                                            Deadline: {new Date(application.scholarship.deadline).toLocaleDateString()}
-                                        </div>
-                                        <div className="flex items-center text-sm text-gray-600">
-                                            <DollarSign className="w-4 h-4 mr-2" />
-                                            {application.scholarship.type}
-                                        </div>
-                                    </div>
-
-                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                                        {application.scholarship.description}
-                                    </p>
-
-                                    <div className="flex gap-2">
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm">
-                                                    View Details
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                                <DialogHeader>
-                                                    <DialogTitle>{application.scholarship.title}</DialogTitle>
-                                                    <DialogDescription>
-                                                        Application Details
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <div className="space-y-4">
-                                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                                        <h4 className="font-semibold mb-2">Application Status</h4>
-                                                        <Badge className={getStatusColor(application.status)}>
-                                                            <div className="flex items-center gap-1">
-                                                                {getStatusIcon(application.status)}
-                                                                {application.status.replace('_', ' ')}
-                                                            </div>
-                                                        </Badge>
-                                                        <p className="text-sm text-gray-600 mt-2">
-                                                            Submitted on {new Date(application.submittedAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-semibold mb-2">Scholarship Description</h4>
-                                                        <p className="text-sm text-gray-600">{application.scholarship.description}</p>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-semibold mb-2">Benefits</h4>
-                                                        <p className="text-sm text-gray-600">{application.scholarship.benefits}</p>
-                                                    </div>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                applications.map((application) => (
+                                    <Card key={application.id}>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <CardTitle className="text-lg">{application.scholarship.title}</CardTitle>
+                                                    <CardDescription>
+                                                        Applied on {new Date(application.submittedAt).toLocaleDateString()}
+                                                    </CardDescription>
                                                 </div>
-                                            </DialogContent>
-                                        </Dialog>
+                                                <Badge className={getStatusColor(application.status)}>
+                                                    <div className="flex items-center gap-1">
+                                                        {getStatusIcon(application.status)}
+                                                        {application.status.replace('_', ' ')}
+                                                    </div>
+                                                </Badge>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                <div className="flex items-center text-sm text-gray-600">
+                                                    <MapPin className="w-4 h-4 mr-2" />
+                                                    {application.scholarship.location}
+                                                </div>
+                                                <div className="flex items-center text-sm text-gray-600">
+                                                    <CalendarDays className="w-4 h-4 mr-2" />
+                                                    Deadline: {new Date(application.scholarship.deadline).toLocaleDateString()}
+                                                </div>
+                                                <div className="flex items-center text-sm text-gray-600">
+                                                    <DollarSign className="w-4 h-4 mr-2" />
+                                                    {application.scholarship.type}
+                                                </div>
+                                            </div>
 
-                                        {application.status === 'PENDING' && (
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => handleWithdraw(application.id)}
-                                            >
-                                                <Trash2 className="w-4 h-4 mr-1" />
-                                                Withdraw
-                                            </Button>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
-                    )}
+                                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                                                {application.scholarship.description}
+                                            </p>
+
+                                            <div className="flex gap-2">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm">
+                                                            View Details
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                                        <DialogHeader>
+                                                            <DialogTitle>{application.scholarship.title}</DialogTitle>
+                                                            <DialogDescription>
+                                                                Application Details
+                                                            </DialogDescription>
+                                                        </DialogHeader>
+                                                        <div className="space-y-4">
+                                                            <div className="bg-gray-50 p-4 rounded-lg">
+                                                                <h4 className="font-semibold mb-2">Application Status</h4>
+                                                                <Badge className={getStatusColor(application.status)}>
+                                                                    <div className="flex items-center gap-1">
+                                                                        {getStatusIcon(application.status)}
+                                                                        {application.status.replace('_', ' ')}
+                                                                    </div>
+                                                                </Badge>
+                                                                <p className="text-sm text-gray-600 mt-2">
+                                                                    Submitted on {new Date(application.submittedAt).toLocaleDateString()}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-semibold mb-2">Scholarship Description</h4>
+                                                                <p className="text-sm text-gray-600">{application.scholarship.description}</p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-semibold mb-2">Benefits</h4>
+                                                                <p className="text-sm text-gray-600">{application.scholarship.benefits}</p>
+                                                            </div>
+                                                        </div>
+                                                    </DialogContent>
+                                                </Dialog>
+
+                                                {application.status === 'PENDING' && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => handleWithdraw(application.id)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-1" />
+                                                        Withdraw
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </>

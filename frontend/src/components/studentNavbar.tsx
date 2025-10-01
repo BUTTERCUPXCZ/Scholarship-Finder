@@ -8,12 +8,26 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { ChevronDown, LogOut, User, FileText } from 'lucide-react'
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from './ui/sheet'
+import {
+    ChevronDown,
+    LogOut,
+    User,
+    FileText,
+    Menu
+} from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { Button } from './ui/button'
+import { cn } from '../lib/utils'
 
 const StudentNavbar = () => {
-    const [open, setOpen] = useState(false)
+    const [mobileOpen, setMobileOpen] = useState(false)
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
@@ -26,117 +40,236 @@ const StudentNavbar = () => {
         return user?.fullname || user?.email || 'User'
     }
 
+    const getUserInitial = () => {
+        const name = getUserDisplayName()
+        return name.charAt(0).toUpperCase()
+    }
+
+    // Navigation links matching the BuildNation design
+    const navigationLinks = [
+        { href: '/home', label: 'Home' },
+        { href: '/scholarship', label: 'Scholarships' },
+    ]
+
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="container mx-auto px-4 sm:px-6 md:px-16 lg:px-24 xl:px-32">
-                <div className="grid grid-cols-3 items-center gap-4 py-2 sm:py-3">
-                    {/* Left: Logo */}
-                    <div className="col-start-1 flex items-center">
-                        <Link to="/home" className="flex items-center gap-3 group select-none">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-sm sm:shadow-lg transition-all duration-300">
-                                <img src="/graduation.png" alt="Scholarship illustration" className="w-full h-auto object-contain" />
+        <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-3 items-center h-16">
+
+                    {/* Left: Logo & Brand */}
+                    <div className="flex items-center justify-start">
+                        <Link to="/home" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                    <img
+                                        src="/graduation.png"
+                                        alt="ScholarSphere"
+                                        className="w-5 h-5 object-contain filter brightness-0 invert"
+                                    />
+                                </div>
+                                <div className="text-indigo-600 font-bold text-lg">
+                                    Scholar<span className="text-gray-800">Sphere</span>
+                                </div>
                             </div>
-                            <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-gray-900">ScholarSphere</h1>
                         </Link>
                     </div>
 
-                    {/* Center: Navigation (centered) */}
-                    <div className="col-start-2 flex justify-center">
-                        <div className="hidden md:flex items-center gap-8">
-                            <Link to="/home" className="text-gray-700 hover:text-indigo-600 font-medium text-sm md:text-base">Home</Link>
-                            <Link to="/scholarship" className="text-gray-700 hover:text-indigo-600 font-medium text-sm md:text-base">Scholarships</Link>
+                    {/* Center: Navigation Links */}
+                    <div className="flex items-center justify-center">
+                        <div className="hidden lg:flex items-center space-x-8">
+                            {navigationLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    to={link.href}
+                                    className={cn(
+                                        "text-sm font-medium transition-colors hover:text-indigo-600",
+                                        window.location.pathname === link.href
+                                            ? "text-indigo-600"
+                                            : "text-gray-700"
+                                    )}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
 
                         </div>
                     </div>
 
-                    {/* Right: Actions */}
-                    <div className="col-start-3 flex justify-end items-center gap-4">
-                        {/* show notification on all sizes (excluded from mobile menu per request) */}
-                        {user && <NotificationBell />}
+                    {/* Right: User Actions */}
+                    <div className="flex items-center justify-end gap-4">
 
-                        {/* desktop dropdown only visible on md+; mobile will use links inside the mobile menu */}
-                        <div className="hidden md:block">
+                        {/* Notification Bell for logged in users */}
+                        {user && (
+                            <div className="hidden sm:block">
+                                <NotificationBell />
+                            </div>
+                        )}
+
+                        {/* Desktop User Menu or Login */}
+                        <div className="hidden lg:block">
                             {user ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg transition-all duration-300">
-                                            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs sm:text-sm font-medium text-indigo-600">
-                                                {getUserDisplayName().charAt(0).toUpperCase()}
+                                        <Button
+                                            variant="ghost"
+                                            className="flex items-center gap-2 h-10 px-3 hover:bg-gray-50 rounded-lg"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-medium">
+                                                {getUserInitial()}
                                             </div>
-                                            {/* hide full name on very small screens to keep layout clean */}
-                                            <span className="hidden xs:block text-xs sm:text-sm font-medium truncate max-w-[8rem]">{getUserDisplayName()}</span>
-                                            <ChevronDown className="w-4 h-4" />
+                                            <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                                                {getUserDisplayName()}
+                                            </span>
+                                            <ChevronDown className="w-4 h-4 text-gray-400" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48 sm:w-56 border-gray-200 shadow-xl">
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <div className="flex items-center gap-3 p-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+                                                {getUserInitial()}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="text-sm font-medium">{getUserDisplayName()}</div>
+                                                <div className="text-xs text-gray-500">{user?.email}</div>
+                                            </div>
+                                        </div>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
                                             <Link to="/profile" className="flex items-center">
-                                                <User className="h-4 w-4 mr-2" /> Profile
+                                                <User className="h-4 w-4 mr-2" />
+                                                Profile
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link to="/my-applications" className="flex items-center">
-                                                <FileText className="h-4 w-4 mr-2" /> My Applications
+                                                <FileText className="h-4 w-4 mr-2" />
+                                                My Applications
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                                            <LogOut className="h-4 w-4 mr-2" /> Log out
+                                        <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                                            <LogOut className="h-4 w-4 mr-2" />
+                                            Log out
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             ) : (
-                                <Button onClick={() => navigate('/login')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg sm:rounded-xl px-3 py-1 sm:px-4 sm:py-2 text-sm">Login</Button>
+                                <Button
+                                    onClick={() => navigate('/login')}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 rounded-lg text-sm font-medium"
+                                >
+                                    Log In
+                                </Button>
                             )}
                         </div>
 
-                        {/* mobile hamburger - visible on small screens */}
-                        <button
-                            onClick={() => setOpen(!open)}
-                            aria-label={open ? 'Close menu' : 'Open menu'}
-                            aria-expanded={open}
-                            aria-controls="student-mobile-menu"
-                            className="md:hidden p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
-                        >
-                            <svg width="21" height="15" viewBox="0 0 21 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                <rect width="21" height="1.5" rx=".75" fill="#4F39F6" />
-                                <rect x="8" y="6" width="13" height="1.5" rx=".75" fill="#4F39F6" />
-                                <rect x="6" y="13" width="15" height="1.5" rx=".75" fill="#4F39F6" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
+                        {/* Mobile Menu Button */}
+                        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="lg:hidden w-10 h-10 p-0 hover:bg-gray-50 rounded-lg"
+                                >
+                                    <Menu className="h-5 w-5 text-gray-600" />
+                                    <span className="sr-only">Open menu</span>
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-[300px]">
+                                <SheetHeader className="text-left pb-6">
+                                    <SheetTitle className="flex items-center gap-2">
+                                        <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                                            <img
+                                                src="/graduation.png"
+                                                alt="ScholarSphere"
+                                                className="w-4 h-4 object-contain filter brightness-0 invert"
+                                            />
+                                        </div>
+                                        ScholarSphere
+                                    </SheetTitle>
+                                </SheetHeader>
 
-            {/* Mobile menu */}
-            <div
-                id="student-mobile-menu"
-                role="region"
-                aria-hidden={!open}
-                className={`${open ? 'flex' : 'hidden'} md:hidden absolute left-0 right-0 top-full bg-white border-t border-gray-200 shadow-lg py-3 transition-transform origin-top`}
-                style={{ transformOrigin: 'top' }}
-            >
-                <div className="px-4 w-full">
-                    <Link to="/home" className="block py-2 text-gray-700 hover:text-indigo-600">Home</Link>
-                    <Link to="/scholarship" className="block py-2 text-gray-700 hover:text-indigo-600">Scholarships</Link>
+                                <div className="space-y-6">
+                                    {/* User Profile Section */}
+                                    {user && (
+                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                                            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium text-lg">
+                                                {getUserInitial()}
+                                            </div>
+                                            <div>
+                                                <div className="font-medium">{getUserDisplayName()}</div>
+                                                <div className="text-sm text-gray-500">{user?.email}</div>
+                                            </div>
+                                        </div>
+                                    )}
 
-                    {/* Notifications and account actions for mobile */}
-                    <div className="mt-3 border-t border-gray-100 pt-3">
-                        {user ? (
-                            <>
-                                <div className="flex items-center justify-between py-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-sm font-medium">{getUserDisplayName()}</div>
+                                    {/* Navigation Links */}
+                                    <div className="space-y-1">
+                                        {navigationLinks.map((link) => (
+                                            <Link
+                                                key={link.href}
+                                                to={link.href}
+                                                onClick={() => setMobileOpen(false)}
+                                                className={cn(
+                                                    "block px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                                                    window.location.pathname === link.href
+                                                        ? "bg-blue-50 text-blue-600"
+                                                        : "text-gray-700 hover:bg-gray-50"
+                                                )}
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        ))}
+
+                                        {/* Additional mobile menu items */}
+                                        {user && (
+                                            <>
+                                                <Link
+                                                    to="/my-applications"
+                                                    onClick={() => setMobileOpen(false)}
+                                                    className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                                                >
+                                                    My Applications
+                                                </Link>
+                                                <Link
+                                                    to="/profile"
+                                                    onClick={() => setMobileOpen(false)}
+                                                    className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                                                >
+                                                    Profile
+                                                </Link>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Auth Actions */}
+                                    <div className="pt-4 border-t">
+                                        {user ? (
+                                            <Button
+                                                onClick={() => {
+                                                    handleLogout()
+                                                    setMobileOpen(false)
+                                                }}
+                                                variant="outline"
+                                                className="w-full justify-center text-red-600 border-red-200 hover:bg-red-50"
+                                            >
+                                                <LogOut className="w-4 h-4 mr-2" />
+                                                Log out
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                onClick={() => {
+                                                    navigate('/login')
+                                                    setMobileOpen(false)
+                                                }}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                            >
+                                                Log In
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
-
-                                <Link to="/profile" className="flex items-center gap-2 py-2 text-gray-700"><User className="h-4 w-4" /> Profile</Link>
-                                <Link to="/my-applications" className="flex items-center gap-2 py-2 text-gray-700"><FileText className="h-4 w-4" /> My Applications</Link>
-                                <button onClick={handleLogout} className="w-full text-left py-2 text-red-600">Log out</button>
-                            </>
-                        ) : (
-                            <Button onClick={() => navigate('/login')} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Login</Button>
-                        )}
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </div>
             </div>

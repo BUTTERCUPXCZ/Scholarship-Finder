@@ -118,6 +118,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    /* Prevent default scrolling on body */
   }
 }
 
@@ -141,5 +143,50 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+
+  /* Custom Scrollbar Styles */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(99 102 241) rgb(243 244 246);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgb(243 244 246);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(99 102 241);
+    border-radius: 4px;
+    border: 1px solid rgb(243 244 246);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(79 70 229);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: rgb(243 244 246);
+  }
+
+  /* Hide default scrollbar on body and html */
+  html,
+  body {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* Internet Explorer 10+ */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    /* WebKit */
   }
 }
