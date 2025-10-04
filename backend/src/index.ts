@@ -15,11 +15,17 @@ import uploadRoutes from './routes/upload.routes';
 import notificationRoutes from './routes/notification.routes';
 import rateLimit from 'express-rate-limit';
 import { initializeSocket } from './services/socketService';
+import { connectRedis } from './config/redisClient';
 
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
+
+(async () => {
+    await connectRedis();
+})();
+
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();

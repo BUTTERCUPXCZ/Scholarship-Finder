@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { createScholarSchema, CreateScholarInput } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
+import { redisClient } from "../config/redisClient";
 
 
 export const createScholar = async (req: Request, res: Response) => {
@@ -162,6 +163,16 @@ export const getAllScholars = async (req: Request, res: Response) => {
             ];
         }
 
+        // ✅ Create unique Redis cache key
+        const cacheKey = `scholars:${page}:${limit}:${status || "ALL"}:${type || "ALL"}:${search || "NONE"}:${providerIdFromToken || "public"}`;
+
+        // ✅ Try cache first
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            console.log(`⚡ Cache hit for ${cacheKey}`);
+            return res.status(200).json(JSON.parse(cached));
+        }
+
         // OPTIMIZATION 5: Use more selective fields and optimize the query
         const [scholars, totalCount] = await Promise.all([
             prisma.scholarship.findMany({
@@ -193,7 +204,7 @@ export const getAllScholars = async (req: Request, res: Response) => {
 
         const totalPages = Math.ceil(totalCount / limit);
 
-        return res.status(200).json({
+        const responseData = {
             success: true,
             data: scholars,
             pagination: {
@@ -201,9 +212,15 @@ export const getAllScholars = async (req: Request, res: Response) => {
                 totalPages,
                 totalCount,
                 hasNext: page < totalPages,
-                hasPrev: page > 1
-            }
-        });
+                hasPrev: page > 1,
+            },
+        };
+
+        // ✅ Save to Redis (10 minutes)
+        await redisClient.setEx(cacheKey, 600, JSON.stringify(responseData));
+
+        console.log(`Cached response for ${cacheKey}`);
+        return res.status(200).json(responseData);
     } catch (error: unknown) {
         console.error("Error fetching scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
@@ -218,6 +235,16 @@ export const getScholarshipById = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Scholarship ID is required" });
         }
 
+        // ✅ Build Redis cache key
+        const cacheKey = `scholarship:${id}`;
+
+        // ✅ Check Redis first
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            console.log("Cache hit ✅", cacheKey);
+            return res.status(200).json(JSON.parse(cached as string));
+        }
+
         // First, update any expired scholarships
         await updateExpiredScholarships();
 
@@ -229,8 +256,12 @@ export const getScholarshipById = async (req: Request, res: Response) => {
         if (!scholarship) {
             return res.status(404).json({ success: false, message: "Scholarship not found" });
         }
+        const responseData = { success: true, data: scholarship };
 
-        return res.status(200).json({ success: true, data: scholarship });
+        // ✅ Store in Redis with TTL (e.g. 5 minutes = 300 seconds)
+        await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+
+        return res.status(200).json(responseData);
     } catch (error) {
         console.error("Error fetching scholarship:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
@@ -251,12 +282,11 @@ export const updateScholar = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Scholarship id is required" });
         }
 
-        // Parse request body (you might want to add Zod validation here too)
         const { title, type, description, location, requirements, benefits, deadline } = req.body;
 
-        // Check if scholarship exists and belongs to the provider
+        // Check if scholarship exists
         const existingScholarship = await prisma.scholarship.findUnique({
-            where: { id: scholarshipId }
+            where: { id: scholarshipId },
         });
 
         if (!existingScholarship) {
@@ -264,13 +294,15 @@ export const updateScholar = async (req: Request, res: Response) => {
         }
 
         if (existingScholarship.providerId !== providerId) {
-            return res.status(403).json({ success: false, message: "Forbidden: You can only update your own scholarships" });
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You can only update your own scholarships",
+            });
         }
 
-        // Convert deadline to Date object
         const deadlineDate = new Date(deadline);
 
-        // Update the scholarship
+        // 📝 Update the scholarship
         const updatedScholarship = await prisma.scholarship.update({
             where: { id: scholarshipId },
             data: {
@@ -281,20 +313,40 @@ export const updateScholar = async (req: Request, res: Response) => {
                 requirements,
                 benefits,
                 deadline: deadlineDate,
-            }
+            },
         });
+
+        // 🧹 Invalidate related Redis caches
+        const cacheKeysToDelete = [
+            `scholarship:${id}`, // single scholarship cache
+            `organization:scholarships:${providerId}`, // organization cache
+        ];
+
+        try {
+            // Clear all public cached lists
+            const publicKeys = await redisClient.keys("public:scholars:*");
+            if (publicKeys.length > 0) cacheKeysToDelete.push(...publicKeys);
+
+            // Delete all related cache keys
+            if (cacheKeysToDelete.length > 0) {
+                await Promise.all(cacheKeysToDelete.map((key) => redisClient.del(key)));
+                console.log("Redis cache invalidated for:", cacheKeysToDelete);
+            }
+        } catch (err) {
+            console.warn("Redis cache invalidation warning:", err);
+        }
 
         return res.status(200).json({
             success: true,
             message: "Scholarship updated successfully",
-            data: updatedScholarship
+            data: updatedScholarship,
         });
-
     } catch (error) {
         console.error("Error updating scholarship:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
-}
+};
+
 
 export const deleteScholarship = async (req: Request, res: Response) => {
     try {
@@ -309,9 +361,8 @@ export const deleteScholarship = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Invalid scholarship id" });
         }
 
-
         const scholarship = await prisma.scholarship.findUnique({
-            where: { id: scholarshipId }
+            where: { id: scholarshipId },
         });
 
         if (!scholarship) {
@@ -319,20 +370,45 @@ export const deleteScholarship = async (req: Request, res: Response) => {
         }
 
         if (scholarship.providerId !== providerId) {
-            return res.status(403).json({ success: false, message: "Forbidden: You can only delete your own scholarships" });
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You can only delete your own scholarships",
+            });
         }
 
+        // 🗑 Delete from DB
         await prisma.scholarship.delete({ where: { id: scholarshipId } });
 
-        return res.status(200).json({ success: true, message: "Scholarship deleted successfully" });
+        // 🧹 Invalidate related Redis cache keys
+        const cacheKeysToDelete = [
+            `scholarship:${id}`, // single scholarship cache
+            `organization:scholarships:${providerId}`, // org’s scholarships list
+        ];
 
+        try {
+            // Optionally clear cached public lists
+            const publicKeys = await redisClient.keys("public:scholars:*");
+            if (publicKeys.length > 0) cacheKeysToDelete.push(...publicKeys);
 
+            // Delete all affected keys
+            if (cacheKeysToDelete.length > 0) {
+                await Promise.all(cacheKeysToDelete.map((key) => redisClient.del(key)));
+                console.log("Redis cache invalidated for:", cacheKeysToDelete);
+            }
+        } catch (err) {
+            console.warn("Redis cache invalidation error:", err);
+        }
 
+        return res.status(200).json({
+            success: true,
+            message: "Scholarship deleted successfully",
+        });
     } catch (error) {
         console.error("Error deleting scholarship:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
-}
+};
+
 
 
 export const ArchiveScholarship = async (req: Request, res: Response) => {
@@ -407,6 +483,16 @@ export const getOrganizationScholarships = async (req: Request, res: Response) =
             return res.status(401).json({ success: false, message: "Unauthorized: provider id missing" });
         }
 
+        // ✅ Create a unique cache key per provider
+        const cacheKey = `organization_scholarships:${providerId}`;
+
+        // ✅ Check Redis first
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            console.log("Cache hit ✅", cacheKey);
+            return res.status(200).json(JSON.parse(cached as string));
+        }
+
         const scholarships = await prisma.scholarship.findMany({
             where: {
                 providerId: providerId
@@ -427,11 +513,14 @@ export const getOrganizationScholarships = async (req: Request, res: Response) =
             }
         });
 
-
-        return res.status(200).json({
+        const responseData = {
             success: true,
             data: scholarships,
-        });
+        };
+
+        // ✅ Cache for 5 minutes (300 seconds)
+        await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+        return res.status(200).json(responseData);
     } catch (error) {
         console.error("Error fetching organization scholarships:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
@@ -491,6 +580,16 @@ export const getPublicScholars = async (req: Request, res: Response) => {
             ];
         }
 
+        // ✅ Build a cache key
+        const cacheKey = `public_scholarships:page=${page}:limit=${limit}:type=${type || ""}:search=${search || ""}`;
+
+        // ✅ Check Redis cache
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            console.log("Cache hit ✅", cacheKey);
+            return res.status(200).json(JSON.parse(cached as string));
+        }
+
         const [scholars, totalCount] = await Promise.all([
             prisma.scholarship.findMany({
                 where: whereCondition,
@@ -517,7 +616,7 @@ export const getPublicScholars = async (req: Request, res: Response) => {
 
         const totalPages = Math.ceil(totalCount / limit);
 
-        return res.status(200).json({
+        const responseData = {
             success: true,
             data: scholars,
             pagination: {
@@ -525,9 +624,14 @@ export const getPublicScholars = async (req: Request, res: Response) => {
                 totalPages,
                 totalCount,
                 hasNext: page < totalPages,
-                hasPrev: page > 1
-            }
-        });
+                hasPrev: page > 1,
+            },
+        };
+
+
+        await redisClient.setEx(cacheKey, 600, JSON.stringify(responseData));
+
+        return res.status(200).json(responseData);
     } catch (error) {
         console.error('Error fetching public scholarships:', error);
         return res.status(500).json({ success: false, message: 'Internal server error' });

@@ -97,6 +97,7 @@ const ManageScholar = () => {
         queryFn: async () => {
             try {
                 const response = await getOrganizationScholarships()
+                console.log(`Loaded ${response.data.length} scholarships for organization:`, user?.id)
                 return response.data
             } catch (error: any) {
                 // Handle authentication errors
@@ -285,19 +286,16 @@ const ManageScholar = () => {
         setViewingApplications(null)
     }
 
-    // Filter and sort scholarships - with multi-layer organization ownership verification
-    // 1. Backend already filters by providerId === req.userId (organization)
-    // 2. Frontend additionally verifies scholarship.providerId === user.id for extra security
+    // Filter and sort scholarships
+    // Note: Backend already filters by providerId === req.userId (organization)
+    // So we only need to apply search and status filters here
     const filteredAndSortedScholarships = (scholarships || [])
         .filter(scholarship => {
-            // Ensure the scholarship belongs to the current organization
-            const belongsToCurrentOrg = user?.id ? scholarship.providerId === user.id : true; // If no user, let backend handle it
-
             const matchesSearch = scholarship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 scholarship.description.toLowerCase().includes(searchTerm.toLowerCase())
             const matchesFilter = filterStatus === 'all' || scholarship.status === filterStatus
 
-            return belongsToCurrentOrg && matchesSearch && matchesFilter
+            return matchesSearch && matchesFilter
         })
         .sort((a, b) => {
             switch (sortBy) {

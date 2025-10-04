@@ -24,6 +24,17 @@ jest.mock('../src/services/notification', () => ({
     createNotification: jest.fn(),
 }));
 
+// Mock Redis client
+jest.mock('../src/config/redisClient', () => ({
+    redisClient: {
+        get: jest.fn(),
+        setEx: jest.fn(),
+        del: jest.fn(),
+    },
+}));
+
+import { redisClient } from '../src/config/redisClient';
+
 // Helper to mock Express req/res
 const mockResponse = () => {
     const res = {} as Response;
@@ -33,8 +44,14 @@ const mockResponse = () => {
 };
 
 describe('Application Controller', () => {
-    afterEach(() => {
+    beforeEach(() => {
+        // Reset all mocks before each test
         jest.clearAllMocks();
+
+        // Set default Redis mock behavior
+        (redisClient.get as jest.Mock).mockResolvedValue(null);
+        (redisClient.setEx as jest.Mock).mockResolvedValue('OK');
+        (redisClient.del as jest.Mock).mockResolvedValue(1);
     });
 
     describe('submitApplication', () => {

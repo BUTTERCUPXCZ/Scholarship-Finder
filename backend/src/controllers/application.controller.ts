@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { submitApplicationSchema } from '../Validators/Application';
 import { prisma } from '../lib/db';
 import { createNotification } from '../services/notification';
+import { redisClient } from '../config/redisClient';
 
 /**
  * Submit an application for a scholarship
@@ -99,6 +100,21 @@ export const getUserApplications = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
+        // ✅ Unique Redis cache key for user's applications
+        const cacheKey = `user:applications:${userId}`;
+
+        // ✅ Check if data exists in Redis (with error handling)
+        let cached = null;
+        try {
+            cached = await redisClient.get(cacheKey);
+            if (cached) {
+                console.log("Cache hit ✅", cacheKey);
+                return res.status(200).json(JSON.parse(cached as string));
+            }
+        } catch (redisError) {
+            console.log("Redis cache read failed, proceeding without cache:", redisError);
+        }
+
         const applications = await prisma.application.findMany({
             where: { userId },
             include: {
@@ -120,10 +136,20 @@ export const getUserApplications = async (req: Request, res: Response) => {
             orderBy: { submittedAt: 'desc' }
         });
 
-        res.status(200).json({
+        const responseData = {
             success: true,
-            data: applications
-        });
+            data: applications,
+        };
+
+        // ✅ Store in Redis for 5 minutes (300s) (with error handling)
+        try {
+            await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+            console.log("Cache stored ✅", cacheKey);
+        } catch (redisError) {
+            console.log("Redis cache write failed, but continuing:", redisError);
+        }
+
+        return res.status(200).json(responseData);
 
     } catch (error) {
         console.error('Get user applications error:', error);

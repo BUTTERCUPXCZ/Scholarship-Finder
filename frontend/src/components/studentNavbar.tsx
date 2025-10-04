@@ -156,7 +156,7 @@ const StudentNavbar = () => {
                             ) : (
                                 <Button
                                     onClick={() => navigate('/login')}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 rounded-lg text-sm font-medium"
+                                    className="bg-indigo-600 hover:bg-indigo-900 text-white h-10 px-6 rounded-lg text-sm font-medium"
                                 >
                                     Log In
                                 </Button>

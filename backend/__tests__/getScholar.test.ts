@@ -2,7 +2,7 @@ import request from "supertest";
 import express from "express";
 import scholarRouter from "../src/routes/scholar.routes";
 
-// Mock authentication middleware to skip JWT validation
+
 jest.mock("../src/middleware/auth", () => ({
     authenticate: (req: any, res: any, next: any) => next(),
 }));

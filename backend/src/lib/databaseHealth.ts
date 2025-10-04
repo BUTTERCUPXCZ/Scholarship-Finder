@@ -4,7 +4,7 @@ import { ConnectionMonitor } from './connectionMonitor';
 export class DatabaseHealthCheck {
     private static isConnected = false;
     private static lastHealthCheck = 0;
-    private static readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+    private static readonly HEALTH_CHECK_INTERVAL = 30000;
     private static connectionAttempts = 0;
     private static maxConnectionAttempts = 5;
 
