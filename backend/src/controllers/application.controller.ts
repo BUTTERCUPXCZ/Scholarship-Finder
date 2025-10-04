@@ -78,6 +78,15 @@ export const submitApplication = async (req: Request, res: Response) => {
             }
         });
 
+        // ✅ Invalidate user's applications cache after successful submission
+        const userCacheKey = `user:applications:${userId}`;
+        try {
+            await redisClient.del(userCacheKey);
+            console.log("Cache invalidated ✅", userCacheKey);
+        } catch (redisError) {
+            console.log("Redis cache invalidation failed, but continuing:", redisError);
+        }
+
         res.status(201).json({
             success: true,
             message: 'Application submitted successfully',
@@ -241,6 +250,15 @@ export const withdrawApplication = async (req: Request, res: Response) => {
             where: { id },
         });
 
+        // ✅ Invalidate user's applications cache after withdrawal
+        const userCacheKey = `user:applications:${userId}`;
+        try {
+            await redisClient.del(userCacheKey);
+            console.log("Cache invalidated after withdrawal ✅", userCacheKey);
+        } catch (redisError) {
+            console.log("Redis cache invalidation failed, but continuing:", redisError);
+        }
+
         res.status(200).json({
             success: true,
             message: 'Application withdrawn successfully'
@@ -385,6 +403,15 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
             message: notificationMessage,
             type: notificationType
         });
+
+        // ✅ Invalidate user's applications cache after status update
+        const userCacheKey = `user:applications:${application.userId}`;
+        try {
+            await redisClient.del(userCacheKey);
+            console.log("Cache invalidated after status update ✅", userCacheKey);
+        } catch (redisError) {
+            console.log("Redis cache invalidation failed, but continuing:", redisError);
+        }
 
         res.status(200).json({
             success: true,

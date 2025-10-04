@@ -60,12 +60,8 @@ const StudentNavbar = () => {
                     <div className="flex items-center justify-start">
                         <Link to="/home" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                    <img
-                                        src="/graduation.png"
-                                        alt="ScholarSphere"
-                                        className="w-5 h-5 object-contain filter brightness-0 invert"
-                                    />
+                                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-sm sm:shadow-lg transition-all duration-300">
+                                    <img src="/graduation.png" alt="Scholarship illustration" className="w-full h-auto object-contain" />
                                 </div>
                                 <div className="text-indigo-600 font-bold text-lg">
                                     Scholar<span className="text-gray-800">Sphere</span>
