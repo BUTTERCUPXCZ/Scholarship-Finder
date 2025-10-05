@@ -123,12 +123,17 @@ const ApplicationStudent = () => {
     return (
         <>
             <StudentNavbar />
-            <div className="h-screen bg-gray-50 flex flex-col">
+            <div className="4h-screen bg-gray-50 flex flex-col">
+                {/* Scrollable container with custom scrollbar */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         <div className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Applications</h1>
-                            <p className="text-gray-600">Track your scholarship application status</p>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                My Applications
+                            </h1>
+                            <p className="text-gray-600">
+                                Track your scholarship application status
+                            </p>
                         </div>
 
                         <div className="space-y-6">
@@ -137,8 +142,12 @@ const ApplicationStudent = () => {
                                     <CardContent className="py-12">
                                         <div className="text-center">
                                             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Applications Yet</h3>
-                                            <p className="text-gray-600 mb-4">You haven't applied to any scholarships yet.</p>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                                No Applications Yet
+                                            </h3>
+                                            <p className="text-gray-600 mb-4">
+                                                You haven't applied to any scholarships yet.
+                                            </p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -148,15 +157,20 @@ const ApplicationStudent = () => {
                                         <CardHeader>
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <CardTitle className="text-lg">{application.scholarship.title}</CardTitle>
+                                                    <CardTitle className="text-lg">
+                                                        {application.scholarship.title}
+                                                    </CardTitle>
                                                     <CardDescription>
-                                                        Applied on {new Date(application.submittedAt).toLocaleDateString()}
+                                                        Applied on{" "}
+                                                        {new Date(
+                                                            application.submittedAt
+                                                        ).toLocaleDateString()}
                                                     </CardDescription>
                                                 </div>
                                                 <Badge className={getStatusColor(application.status)}>
                                                     <div className="flex items-center gap-1">
                                                         {getStatusIcon(application.status)}
-                                                        {application.status.replace('_', ' ')}
+                                                        {application.status.replace("_", " ")}
                                                     </div>
                                                 </Badge>
                                             </div>
@@ -169,7 +183,10 @@ const ApplicationStudent = () => {
                                                 </div>
                                                 <div className="flex items-center text-sm text-gray-600">
                                                     <CalendarDays className="w-4 h-4 mr-2" />
-                                                    Deadline: {new Date(application.scholarship.deadline).toLocaleDateString()}
+                                                    Deadline:{" "}
+                                                    {new Date(
+                                                        application.scholarship.deadline
+                                                    ).toLocaleDateString()}
                                                 </div>
                                                 <div className="flex items-center text-sm text-gray-600">
                                                     <DollarSign className="w-4 h-4 mr-2" />
@@ -190,37 +207,52 @@ const ApplicationStudent = () => {
                                                     </DialogTrigger>
                                                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                                         <DialogHeader>
-                                                            <DialogTitle>{application.scholarship.title}</DialogTitle>
+                                                            <DialogTitle>
+                                                                {application.scholarship.title}
+                                                            </DialogTitle>
                                                             <DialogDescription>
                                                                 Application Details
                                                             </DialogDescription>
                                                         </DialogHeader>
                                                         <div className="space-y-4">
                                                             <div className="bg-gray-50 p-4 rounded-lg">
-                                                                <h4 className="font-semibold mb-2">Application Status</h4>
-                                                                <Badge className={getStatusColor(application.status)}>
+                                                                <h4 className="font-semibold mb-2">
+                                                                    Application Status
+                                                                </h4>
+                                                                <Badge
+                                                                    className={getStatusColor(application.status)}
+                                                                >
                                                                     <div className="flex items-center gap-1">
                                                                         {getStatusIcon(application.status)}
-                                                                        {application.status.replace('_', ' ')}
+                                                                        {application.status.replace("_", " ")}
                                                                     </div>
                                                                 </Badge>
                                                                 <p className="text-sm text-gray-600 mt-2">
-                                                                    Submitted on {new Date(application.submittedAt).toLocaleDateString()}
+                                                                    Submitted on{" "}
+                                                                    {new Date(
+                                                                        application.submittedAt
+                                                                    ).toLocaleDateString()}
                                                                 </p>
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-semibold mb-2">Scholarship Description</h4>
-                                                                <p className="text-sm text-gray-600">{application.scholarship.description}</p>
+                                                                <h4 className="font-semibold mb-2">
+                                                                    Scholarship Description
+                                                                </h4>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {application.scholarship.description}
+                                                                </p>
                                                             </div>
                                                             <div>
                                                                 <h4 className="font-semibold mb-2">Benefits</h4>
-                                                                <p className="text-sm text-gray-600">{application.scholarship.benefits}</p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {application.scholarship.benefits}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     </DialogContent>
                                                 </Dialog>
 
-                                                {application.status === 'PENDING' && (
+                                                {application.status === "PENDING" && (
                                                     <Button
                                                         variant="destructive"
                                                         size="sm"
