@@ -21,7 +21,6 @@ import {
     Phone,
     Camera,
     GraduationCap,
-    BookOpen,
 } from 'lucide-react'
 
 const Profile = () => {
