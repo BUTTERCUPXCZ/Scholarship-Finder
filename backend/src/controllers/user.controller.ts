@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { signToken } from "../middleware/auth";
 import { prisma } from "../lib/db";
-import { withDatabaseRetry, handleDatabaseError } from "../lib/databaseHealth";
+import { withDatabaseRetry, withAuthRetry, handleDatabaseError } from "../lib/databaseHealth";
+import { AuthPerformanceMonitor } from "../lib/authPerformanceMonitor";
 import crypto from "crypto";
 import { buildVerificationEmail, buildPasswordResetEmail } from "../Email/design.controller";
 import { sendEmail } from "../lib/mailer";
@@ -16,6 +17,8 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 
 export const resetPassword = async (req: Request, res: Response) => {
+    const startTime = Date.now();
+
     try {
         const { email, otp, newPassword } = req.body;
 
@@ -23,15 +26,32 @@ export const resetPassword = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Optimized query - only select necessary fields
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true
+            }
+        });
 
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) {
+            const duration = Date.now() - startTime;
+            console.log(`❌ Password reset failed for non-existent user in ${duration}ms`);
+            return res.status(404).json({ message: "User not found" });
+        }
 
         const tokenEntry = await prisma.passwordResetToken.findFirst({
             where: { userId: user.id, token: otp },
+            select: {
+                id: true,
+                expiresAt: true
+            }
         });
 
         if (!tokenEntry || tokenEntry.expiresAt < new Date()) {
+            const duration = Date.now() - startTime;
+            console.log(`❌ Invalid or expired OTP for password reset in ${duration}ms`);
             return res.status(400).json({ message: "Invalid or expired OTP" });
         }
 
@@ -45,9 +65,13 @@ export const resetPassword = async (req: Request, res: Response) => {
         // Invalidate OTP
         await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
+        const duration = Date.now() - startTime;
+        console.log(`✅ Password reset successful for ${user.email} in ${duration}ms`);
+
         return res.status(200).json({ message: "Password reset successfully" });
     } catch (error) {
-        console.error("Error resetPassword:", error);
+        const duration = Date.now() - startTime;
+        console.error(`❌ Password reset failed in ${duration}ms:`, error);
         return res.status(500).json({ message: "Failed to reset password" });
     }
 };
@@ -55,12 +79,28 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 
 export const requestPasswordReset = async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    const { email } = req.body;
+
     try {
-        const { email } = req.body;
         if (!email) return res.status(400).json({ message: "Email is required" });
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        // Optimized query - only select necessary fields
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                fullname: true
+            }
+        });
+
+        if (!user) {
+            const duration = Date.now() - startTime;
+            AuthPerformanceMonitor.recordMetric(email, 'password-reset-request', duration, false, 'user_not_found');
+            console.log(`❌ Password reset requested for non-existent email in ${duration}ms`);
+            return res.status(404).json({ message: "User not found" });
+        }
 
         // Remove old OTPs
         await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
@@ -78,32 +118,62 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
 
         await sendEmail(user.email, "Password Reset OTP", msg);
 
+        const duration = Date.now() - startTime;
+        AuthPerformanceMonitor.recordMetric(user.email, 'password-reset-request', duration, true);
+        console.log(`✅ Password reset OTP sent to ${user.email} in ${duration}ms`);
+
         return res.status(200).json({ message: "OTP sent to your email" });
     } catch (error) {
-        console.error("Error requestPasswordReset:", error);
+        const duration = Date.now() - startTime;
+        AuthPerformanceMonitor.recordMetric(email || 'unknown', 'password-reset-request', duration, false, 'system_error');
+        console.error(`❌ Password reset request failed in ${duration}ms:`, error);
         return res.status(500).json({ message: "Failed to send OTP" });
     }
 };
 
 export const verifyPasswordOtp = async (req: Request, res: Response) => {
+    const startTime = Date.now();
+
     try {
         const { email, otp } = req.body;
         if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        // Optimized query - only select necessary fields
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true
+            }
+        });
+
+        if (!user) {
+            const duration = Date.now() - startTime;
+            console.log(`❌ OTP verification failed for non-existent user in ${duration}ms`);
+            return res.status(404).json({ message: "User not found" });
+        }
 
         const tokenEntry = await prisma.passwordResetToken.findFirst({
             where: { userId: user.id, token: otp },
+            select: {
+                id: true,
+                expiresAt: true
+            }
         });
 
         if (!tokenEntry || tokenEntry.expiresAt < new Date()) {
+            const duration = Date.now() - startTime;
+            console.log(`❌ Invalid or expired OTP for ${user.email} in ${duration}ms`);
             return res.status(400).json({ message: "Invalid or expired OTP" });
         }
 
+        const duration = Date.now() - startTime;
+        console.log(`✅ OTP verified for ${user.email} in ${duration}ms`);
+
         return res.status(200).json({ message: "OTP verified successfully" });
     } catch (error: unknown) {
-        console.error("Error verifyPasswordOtp:", error);
+        const duration = Date.now() - startTime;
+        console.error(`❌ OTP verification failed in ${duration}ms:`, error);
         return res.status(500).json({ message: "Failed to verify OTP" });
     }
 };
@@ -286,26 +356,44 @@ export const userRegister = async (req: Request, res: Response) => {
 
 
 export const userLogin = async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
+    const startTime = Date.now();
+    const { email, password } = req.body;
 
+    try {
         if (!email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const result = await withDatabaseRetry(async () => {
-            const user = await prisma.user.findUnique({ where: { email } });
+        const result = await withAuthRetry(async () => {
+            // Optimized query - only fetch necessary fields for authentication
+            const user = await prisma.user.findUnique({
+                where: { email },
+                select: {
+                    id: true,
+                    email: true,
+                    password: true,
+                    role: true,
+                    isVerified: true,
+                    fullname: true
+                }
+            });
+
+            // Fast fail for non-existent users without expensive bcrypt operations
             if (!user) {
+                // To prevent timing attacks, we still perform a dummy bcrypt operation
+                // but with a predictable hash so it takes consistent time
+                await bcrypt.compare(password, '$2b$10$dummy.hash.to.prevent.timing.attacks.abcdefghijklmnopqrstuv');
                 throw new Error("INVALID_CREDENTIALS");
             }
 
+            // Check verification status early to avoid unnecessary password comparison
+            if (!user.isVerified) {
+                throw new Error("EMAIL_NOT_VERIFIED");
+            }
 
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 throw new Error("INVALID_CREDENTIALS");
-            }
-            if (!user.isVerified) {
-                throw new Error("EMAIL_NOT_VERIFIED");
             }
 
             // Exclude sensitive fields by omitting password
@@ -317,7 +405,7 @@ export const userLogin = async (req: Request, res: Response) => {
             const token = signToken({ id: user.id, email: user.email, role: user.role });
 
             return { safeUser, token };
-        });
+        }, 2, "User Login");
 
 
         res.cookie('authToken', result.token, {
@@ -328,6 +416,10 @@ export const userLogin = async (req: Request, res: Response) => {
             path: '/'
         });
 
+        const duration = Date.now() - startTime;
+        AuthPerformanceMonitor.recordMetric(email, 'login', duration, true);
+        console.log(`✅ Login successful for ${email} in ${duration}ms`);
+
         // Don't send token in response body for security
         return res.status(200).json({
             success: true,
@@ -336,11 +428,21 @@ export const userLogin = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.log("Error User Login: ", error);
-
+        const duration = Date.now() - startTime;
         const err = error as Error | undefined;
-        // Normalize the message (some errors might be wrapped)
         const msg = err?.message || String(error);
+
+        AuthPerformanceMonitor.recordMetric(
+            email || 'unknown',
+            'login',
+            duration,
+            false,
+            msg === "INVALID_CREDENTIALS" ? "invalid_credentials" :
+                msg === "EMAIL_NOT_VERIFIED" ? "email_not_verified" : "system_error"
+        );
+        console.log(`❌ Login failed in ${duration}ms:`, error);
+
+        // Normalize the message (some errors might be wrapped)
 
         if (msg === "INVALID_CREDENTIALS") {
             return res.status(400).json({ message: "Invalid credentials" });

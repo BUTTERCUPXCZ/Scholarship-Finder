@@ -110,12 +110,32 @@ export class DatabaseHealthCheck {
 export async function withDatabaseRetry<T>(
     operation: () => Promise<T>,
     maxRetries = 3,
-    operationName?: string
+    operationName?: string,
+    timeoutMs = 15000
 ): Promise<T> {
     return ConnectionMonitor.withTracking(
-        () => DatabaseHealthCheck.retryOperation(operation, maxRetries),
+        async () => {
+            // Add timeout wrapper for database operations
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error(`Operation timeout after ${timeoutMs}ms`)), timeoutMs);
+            });
+
+            return Promise.race([
+                DatabaseHealthCheck.retryOperation(operation, maxRetries),
+                timeoutPromise
+            ]);
+        },
         operationName
     );
+}
+
+// Specialized function for authentication operations with shorter timeout
+export async function withAuthRetry<T>(
+    operation: () => Promise<T>,
+    maxRetries = 2,
+    operationName?: string
+): Promise<T> {
+    return withDatabaseRetry(operation, maxRetries, operationName, 8000); // 8 second timeout for auth
 }
 
 
