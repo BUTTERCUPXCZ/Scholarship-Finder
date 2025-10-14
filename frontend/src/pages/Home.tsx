@@ -3,58 +3,54 @@ import { Users, ArrowRight, GraduationCap, Search, TrendingUp, CheckCircle } fro
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import React, { type ReactNode } from 'react'
+import React from 'react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 
-// Animation variants - memoized to prevent recreation on every render
+// Optimized animation variants for better performance
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.2
+            staggerChildren: 0.1,
+            duration: 0.3
         }
     }
 }
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.6,
+            duration: 0.4,
         }
     }
 }
 
 const fadeInUp = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.6 }
+        transition: { duration: 0.4 }
     }
 }
 
 const scaleIn = {
-    hidden: { opacity: 0, scale: 0.9 },
+    hidden: { opacity: 0, scale: 0.95 },
     visible: {
         opacity: 1,
         scale: 1,
-        transition: { duration: 0.5 }
+        transition: { duration: 0.3 }
     }
 }
 
-// Animated component wrapper - memoized to prevent unnecessary re-renders
-type AnimatedSectionProps = {
-    children: ReactNode
-    className?: string
-}
-
-const AnimatedSection: React.FC<AnimatedSectionProps> = React.memo(({ children, className = '' }) => {
+// Simplified animated section component
+function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
     const [ref, inView] = useInView({
         triggerOnce: true,
         threshold: 0.1,
@@ -62,7 +58,7 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = React.memo(({ children, 
 
     return (
         <motion.div
-            ref={ref as any}
+            ref={ref}
             initial="hidden"
             animate={inView ? 'visible' : 'hidden'}
             variants={containerVariants}
@@ -71,9 +67,7 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = React.memo(({ children, 
             {children}
         </motion.div>
     )
-})
-
-AnimatedSection.displayName = 'AnimatedSection'
+}
 
 const Home = () => {
     return (
@@ -138,11 +132,11 @@ const Home = () => {
                                 </motion.div>
                             </AnimatedSection>
 
-                            {/* Right Illustration */}
+                            {/* Right Illustration - Optimized for faster loading */}
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5, delay: 0.1 }}
                                 className="relative order-first lg:order-last"
                             >
                                 <div className="relative max-w-sm sm:max-w-md lg:max-w-full mx-auto">
@@ -150,6 +144,7 @@ const Home = () => {
                                         src="/freepik.png"
                                         alt="Student success illustration"
                                         className="relative w-full h-auto rounded-2xl sm:rounded-3xl"
+                                        loading="eager"
                                     />
                                 </div>
                             </motion.div>
