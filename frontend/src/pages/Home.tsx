@@ -144,12 +144,8 @@ const Home = () => {
                                         src="/freepik.png"
                                         alt="Student success illustration"
                                         className="relative w-full h-auto rounded-2xl sm:rounded-3xl"
-<<<<<<< HEAD
-                                        loading="eager"
-=======
                                         loading="lazy"
                                         decoding="async"
->>>>>>> 94256b010af947abfb1a10168c375365908e8bb7
                                     />
                                 </div>
                             </motion.div>

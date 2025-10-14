@@ -14,20 +14,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-<<<<<<< HEAD
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1000,
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
-  },
-=======
         manualChunks(id: string) {
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom')) return 'react-vendor'
@@ -42,5 +28,4 @@ export default defineConfig({
       }
     }
   }
->>>>>>> 94256b010af947abfb1a10168c375365908e8bb7
 })
