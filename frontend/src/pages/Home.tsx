@@ -144,7 +144,12 @@ const Home = () => {
                                         src="/freepik.png"
                                         alt="Student success illustration"
                                         className="relative w-full h-auto rounded-2xl sm:rounded-3xl"
+<<<<<<< HEAD
                                         loading="eager"
+=======
+                                        loading="lazy"
+                                        decoding="async"
+>>>>>>> 94256b010af947abfb1a10168c375365908e8bb7
                                     />
                                 </div>
                             </motion.div>
@@ -303,7 +308,7 @@ const Home = () => {
                                                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                                             </Link>
                                         </Button>
-                                        <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-indigo-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
+                                        <Button asChild variant="outline" size="lg" className="border-white text-indigo-600 hover:bg-gray-200 hover:text-indigo-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
                                             <Link to="/Register">
                                                 Create Free Account
                                             </Link>
