@@ -51,11 +51,19 @@ const scaleIn = {
 
 // Simplified animated section component
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+    const [isClient, setIsClient] = React.useState(false);
     const [ref, inView] = useInView({
         triggerOnce: true,
         threshold: 0.1,
-    })
+    });
 
+    React.useEffect(() => {
+        setIsClient(true);
+    }, []);
+    if (!isClient) {
+        // Avoid running framer-motion on the server
+        return <div className={className}>{children}</div>;
+    }
     return (
         <motion.div
             ref={ref}
@@ -66,7 +74,7 @@ function AnimatedSection({ children, className = '' }: { children: React.ReactNo
         >
             {children}
         </motion.div>
-    )
+    );
 }
 
 const Home = () => {

@@ -1,11 +1,13 @@
 // Ensure fix runs before any libraries that may access React's hooks at module init time.
-import './fixUseLayoutEffect'
+import "./fixUseLayoutEffect.ts"
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+
 
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
