@@ -426,9 +426,17 @@ export const userLogin = async (req: Request, res: Response) => {
         // on a different origin). This is safe for dev only.
         const includeToken = process.env.NODE_ENV !== 'production';
 
-        const body: any = {
+        // Define a narrow response shape for the login endpoint
+        interface LoginResponse {
+            success: boolean;
+            user: { id: string; email: string; fullname?: string; role?: string } | Record<string, unknown>;
+            message: string;
+            token?: string;
+        }
+
+        const body: LoginResponse = {
             success: true,
-            user: result.safeUser,
+            user: result.safeUser as unknown as LoginResponse['user'],
             message: "Login successful",
         };
 
