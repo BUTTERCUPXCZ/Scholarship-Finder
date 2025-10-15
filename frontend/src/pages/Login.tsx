@@ -46,6 +46,15 @@ const Login = () => {
         onSuccess: async (data) => {
             setError(null);
             setFieldErrors({});
+            // Persist token (dev-only) if backend included it
+            try {
+                if (data?.token) {
+                    localStorage.setItem('token', data.token);
+                }
+            } catch (e) {
+                /* ignore */
+            }
+
             login(data.user);
 
 

@@ -420,12 +420,23 @@ export const userLogin = async (req: Request, res: Response) => {
         AuthPerformanceMonitor.recordMetric(email, 'login', duration, true);
         console.log(`✅ Login successful for ${email} in ${duration}ms`);
 
-        // Don't send token in response body for security
-        return res.status(200).json({
+        // For production we avoid sending raw tokens in the response body.
+        // During local development, include the token in the response to
+        // support dev setups where cookies may not be sent (Vite dev server
+        // on a different origin). This is safe for dev only.
+        const includeToken = process.env.NODE_ENV !== 'production';
+
+        const body: any = {
             success: true,
             user: result.safeUser,
-            message: "Login successful"
-        });
+            message: "Login successful",
+        };
+
+        if (includeToken) {
+            body.token = result.token;
+        }
+
+        return res.status(200).json(body);
 
     } catch (error) {
         const duration = Date.now() - startTime;

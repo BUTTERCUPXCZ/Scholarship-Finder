@@ -24,10 +24,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const checkAuthStatus = async (): Promise<User | null> => {
     try {
+        // If an auth cookie isn't being sent (e.g., development on different origins),
+        // allow a fallback Authorization header using a token persisted to localStorage.
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        try {
+            const token = localStorage.getItem('token');
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+        } catch (e) {
+            // ignore localStorage errors
+        }
+
         const response = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
             method: 'GET',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
         });
 
         if (response.status === 401) {
