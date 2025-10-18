@@ -198,12 +198,12 @@ const orgdashboard = () => {
                                             <p className="text-3xl font-bold text-gray-900">
                                                 {statsLoading ? '...' : stats?.totalScholarships || 0}
                                             </p>
-                                            <p className="text-sm text-indigo-600 mt-1 font-medium">
+                                            <p className="text-sm text-blue-600 mt-1 font-medium">
                                                 {stats?.activeScholarships || 0} currently active
                                             </p>
                                         </div>
-                                        <div className="bg-indigo-100 p-3 rounded-xl">
-                                            <GraduationCap className="w-6 h-6 text-indigo-600" />
+                                        <div className="bg-blue-100 p-3 rounded-xl">
+                                            <GraduationCap className="w-6 h-6 text-blue-600" />
                                         </div>
                                     </div>
                                 </CardContent>
@@ -330,8 +330,8 @@ const orgdashboard = () => {
                                     ) : (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-center">
-                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                                    <FileText className="w-8 h-8 text-indigo-600" />
+                                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <FileText className="w-8 h-8 text-blue-600" />
                                                 </div>
                                                 <p className="text-gray-500 text-sm font-medium">No recent applications</p>
                                                 <p className="text-gray-400 text-xs">Applications will appear here when students apply</p>
@@ -424,8 +424,8 @@ const orgdashboard = () => {
                                     ) : (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-center">
-                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                                    <BarChart3 className="w-8 h-8 text-indigo-600" />
+                                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <BarChart3 className="w-8 h-8 text-blue-600" />
                                                 </div>
                                                 <p className="text-gray-500 text-sm font-medium">No application data available</p>
                                                 <p className="text-gray-400 text-xs">Statistics will appear when you receive applications</p>
@@ -441,7 +441,7 @@ const orgdashboard = () => {
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-xl text-gray-900">Upcoming Deadlines</CardTitle>
-                                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-0">
+                                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0">
                                         Next 30 days
                                     </Badge>
                                 </div>
@@ -492,8 +492,8 @@ const orgdashboard = () => {
                                     ) : (
                                         <div className="flex items-center justify-center py-8">
                                             <div className="text-center">
-                                                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                                    <Calendar className="w-8 h-8 text-indigo-600" />
+                                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <Calendar className="w-8 h-8 text-blue-600" />
                                                 </div>
                                                 <p className="text-gray-500 text-sm font-medium">No upcoming deadlines</p>
                                                 <p className="text-gray-400 text-xs">

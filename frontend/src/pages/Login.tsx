@@ -238,7 +238,7 @@ const Login = () => {
                                     <input
                                         type="checkbox"
                                         id="remember"
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                         disabled={mutation.isPending}
                                     />
                                     <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
@@ -247,7 +247,7 @@ const Login = () => {
                                 </div>
                                 <Link
                                     to="/forgot-password"
-                                    className="text-sm text-indigo-500 hover:text-indigo-600 hover:underline"
+                                    className="text-sm text-blue-500 hover:text-blue-600 hover:underline"
                                 >
                                     Forgot password?
                                 </Link>
@@ -256,7 +256,7 @@ const Login = () => {
                         <Button
                             type="submit"
                             disabled={mutation.isPending || !validation.isValid}
-                            className="w-full h-11 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold transition"
+                            className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold transition"
                         >
                             {mutation.isPending ? (
                                 <span className="flex items-center justify-center">
@@ -275,7 +275,7 @@ const Login = () => {
 
                         <div className="mt-4 text-sm text-gray-600 text-center">
                             Don't have an account?{' '}
-                            <Link to="/register" className="text-indigo-600 hover:underline font-medium">
+                            <Link to="/register" className="text-blue-600 hover:underline font-medium">
                                 Sign up
                             </Link>
                         </div>
@@ -283,7 +283,7 @@ const Login = () => {
                 </div>
             </div>
             {/* Right - Abstract Image */}
-            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-12">
+            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50 p-12">
                 <img
                     src="/project-amico.png"
                     alt="Abstract background"

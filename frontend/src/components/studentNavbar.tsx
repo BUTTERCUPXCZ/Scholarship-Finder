@@ -63,7 +63,7 @@ const StudentNavbar = () => {
                                 <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-sm sm:shadow-lg transition-all duration-300">
                                     <img src="/graduation.png" alt="Scholarship illustration" className="w-full h-auto object-contain" loading="lazy" decoding="async" />
                                 </div>
-                                <div className="text-indigo-600 font-bold text-lg">
+                                <div className="text-blue-600 font-bold text-lg">
                                     Scholar<span className="text-gray-800">Sphere</span>
                                 </div>
                             </div>
@@ -78,9 +78,9 @@ const StudentNavbar = () => {
                                     key={link.href}
                                     to={link.href}
                                     className={cn(
-                                        "text-sm font-medium transition-colors hover:text-indigo-600",
+                                        "text-sm font-medium transition-colors hover:text-blue-600",
                                         window.location.pathname === link.href
-                                            ? "text-indigo-600"
+                                            ? "text-blue-600"
                                             : "text-gray-700"
                                     )}
                                 >
@@ -110,7 +110,7 @@ const StudentNavbar = () => {
                                             variant="ghost"
                                             className="flex items-center gap-2 h-10 px-3 hover:bg-gray-50 rounded-lg"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-medium">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
                                                 {getUserInitial()}
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
@@ -152,7 +152,7 @@ const StudentNavbar = () => {
                             ) : (
                                 <Button
                                     onClick={() => navigate('/login')}
-                                    className="bg-indigo-600 hover:bg-indigo-900 text-white h-10 px-6 rounded-lg text-sm font-medium"
+                                    className="bg-blue-600 hover:bg-blue-900 text-white h-10 px-6 rounded-lg text-sm font-medium"
                                 >
                                     Log In
                                 </Button>

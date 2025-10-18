@@ -233,7 +233,7 @@ export default function Register() {
                                 <Button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="w-full h-11 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+                                    className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
                                 >
                                     {isSubmitting ? (
                                         <span>
@@ -249,13 +249,13 @@ export default function Register() {
 
                                 <div className="text-xs text-gray-500 text-center pt-1">
                                     By creating an account, you agree to our{' '}
-                                    <Link to="#" className="text-indigo-500 hover:underline">Terms of Service</Link>{' '}and{' '}
-                                    <Link to="#" className="text-indigo-500 hover:underline">Privacy Policy</Link>.
+                                    <Link to="#" className="text-blue-500 hover:underline">Terms of Service</Link>{' '}and{' '}
+                                    <Link to="#" className="text-blue-500 hover:underline">Privacy Policy</Link>.
                                 </div>
 
                                 <div className="mt-4 text-sm text-gray-600 text-center">
                                     Already have an account?{' '}
-                                    <Link to="/login" className="text-indigo-600 hover:underline font-medium">
+                                    <Link to="/login" className="text-blue-600 hover:underline font-medium">
                                         Sign in
                                     </Link>
                                 </div>
@@ -264,7 +264,7 @@ export default function Register() {
                     </div>
                 </div>
                 {/* Right - Abstract Image */}
-                <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-12">
+                <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50 p-12">
                     <img
                         src="/project-amico.png"
                         alt="Abstract background"

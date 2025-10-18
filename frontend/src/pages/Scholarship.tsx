@@ -150,14 +150,14 @@ const Scholarship = () => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {/* Hero */}
-                <div className="bg-indigo-600">
+                <div className="bg-blue-600">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
                         <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
                             <div className="flex-1 text-white py-6 lg:py-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-extrabold leading-tight mb-3">
                                     Find the right scholarship or grant for you.
                                 </h1>
-                                <p className="text-indigo-100 max-w-2xl text-base">
+                                <p className="text-blue-100 max-w-2xl text-base">
                                     Easily search available scholarships, student financial assistance programs and learn how you can apply.
                                 </p>
 
@@ -183,7 +183,7 @@ const Scholarship = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Search scholarship"
-                                        className="w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 text-sm"
+                                        className="w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm"
                                     />
                                     {searchTerm && (
                                         <button
@@ -238,7 +238,7 @@ const Scholarship = () => {
                                     <Button
                                         onClick={handleClearFilters}
                                         variant="outline"
-                                        className="hidden sm:inline-flex ml-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                        className="hidden sm:inline-flex ml-2 border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         Clear
                                     </Button>
@@ -292,7 +292,7 @@ const Scholarship = () => {
                                         <Button
                                             onClick={handleClearFilters}
                                             variant="outline"
-                                            className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
                                         >
                                             Clear All Filters
                                         </Button>
@@ -353,7 +353,7 @@ const Scholarship = () => {
                                                         <button
                                                             key={page}
                                                             onClick={() => setCurrentPage(page)}
-                                                            className={`px-3 py-1 rounded ${page === currentPage ? 'bg-indigo-600 text-white' : 'bg-white border'}`}
+                                                            className={`px-3 py-1 rounded ${page === currentPage ? 'bg-blue-600 text-white' : 'bg-white border'}`}
                                                             aria-current={page === currentPage}
                                                         >
                                                             {page}

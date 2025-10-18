@@ -105,8 +105,8 @@ const Profile = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                         <Card className="max-w-md mx-auto border-gray-200 shadow-lg">
                             <CardContent className="p-8 text-center">
-                                <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <User className="w-8 h-8 text-indigo-600" />
+                                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <User className="w-8 h-8 text-blue-600" />
                                 </div>
                                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Required</h2>
                                 <p className="text-gray-600">Please log in to view your profile.</p>
@@ -134,7 +134,7 @@ const Profile = () => {
                                 {!isEditing ? (
                                     <Button
                                         onClick={() => setIsEditing(true)}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
                                     >
                                         <Edit3 className="w-4 h-4 mr-2" />
                                         Edit Profile
@@ -144,7 +144,7 @@ const Profile = () => {
                                         <Button
                                             onClick={handleSave}
                                             disabled={isLoading}
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
                                         >
                                             <Save className="w-4 h-4 mr-2" />
                                             {isLoading ? 'Saving...' : 'Save Changes'}
@@ -171,17 +171,17 @@ const Profile = () => {
                                         {/* Profile Photo Section */}
                                         <div className="text-center mb-8">
                                             <div className="relative inline-block">
-                                                <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                                                <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                                                     <span className="text-4xl font-bold text-white">
                                                         {user.fullname ? user.fullname.charAt(0).toUpperCase() : 'U'}
                                                     </span>
                                                 </div>
-                                                <button className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-105">
+                                                <button className="absolute bottom-2 right-2 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-105">
                                                     <Camera className="w-5 h-5" />
                                                 </button>
                                             </div>
                                             <h2 className="text-2xl font-bold text-gray-900 mb-2">{user.fullname}</h2>
-                                            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1">
+                                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1">
                                                 <GraduationCap className="w-4 h-4 mr-1" />
                                                 {user.role}
                                             </Badge>
@@ -192,8 +192,8 @@ const Profile = () => {
                                         {/* Quick Info */}
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                    <Mail className="w-5 h-5 text-indigo-600" />
+                                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <Mail className="w-5 h-5 text-blue-600" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-gray-700">Email</p>
@@ -203,8 +203,8 @@ const Profile = () => {
 
                                             {profileData.phone && (
                                                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                        <Phone className="w-5 h-5 text-indigo-600" />
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                        <Phone className="w-5 h-5 text-blue-600" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-medium text-gray-700">Phone</p>
@@ -215,8 +215,8 @@ const Profile = () => {
 
                                             {profileData.location && (
                                                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                        <MapPin className="w-5 h-5 text-indigo-600" />
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                        <MapPin className="w-5 h-5 text-blue-600" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-medium text-gray-700">Location</p>
@@ -227,8 +227,8 @@ const Profile = () => {
 
                                             {user.createdAt && (
                                                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                        <Calendar className="w-5 h-5 text-indigo-600" />
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                        <Calendar className="w-5 h-5 text-blue-600" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-medium text-gray-700">Member Since</p>
@@ -252,8 +252,8 @@ const Profile = () => {
                                 <Card className="border-gray-200 bg-white shadow-lg">
                                     <CardHeader className="pb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                <User className="w-5 h-5 text-indigo-600" />
+                                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <User className="w-5 h-5 text-blue-600" />
                                             </div>
                                             <div>
                                                 <CardTitle className="text-xl text-gray-900">Personal Information</CardTitle>
@@ -272,7 +272,7 @@ const Profile = () => {
                                                         value={profileData.fullname}
                                                         onChange={(e) => handleInputChange('fullname', e.target.value)}
                                                         placeholder="Enter your full name"
-                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                        className="border-gray-200 focus:border-blue-600 focus:ring-blue-600"
                                                     />
                                                 ) : (
                                                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -296,7 +296,7 @@ const Profile = () => {
                                                         value={profileData.phone}
                                                         onChange={(e) => handleInputChange('phone', e.target.value)}
                                                         placeholder="Enter your phone number"
-                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                        className="border-gray-200 focus:border-blue-600 focus:ring-blue-600"
                                                     />
                                                 ) : (
                                                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -312,7 +312,7 @@ const Profile = () => {
                                                         value={profileData.location}
                                                         onChange={(e) => handleInputChange('location', e.target.value)}
                                                         placeholder="Enter your location"
-                                                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                        className="border-gray-200 focus:border-blue-600 focus:ring-blue-600"
                                                     />
                                                 ) : (
                                                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -329,7 +329,7 @@ const Profile = () => {
                                                     value={profileData.bio}
                                                     onChange={(e) => handleInputChange('bio', e.target.value)}
                                                     placeholder="Tell us about yourself, your interests, goals, and what you hope to achieve..."
-                                                    className="min-h-[120px] border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                                    className="min-h-[120px] border-gray-200 focus:border-blue-600 focus:ring-blue-600"
                                                 />
                                             ) : (
                                                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-h-[120px]">

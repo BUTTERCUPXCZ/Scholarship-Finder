@@ -300,7 +300,7 @@ const ScholarshipDetails = () => {
                                 </CardTitle>
                                 <p className="text-gray-700 mb-6">{error.message}</p>
                                 <div className="flex gap-3 justify-center">
-                                    <Button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                                    <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
                                         Try Again
                                     </Button>
                                     <Button variant="outline" onClick={handleBack} className="border-gray-300 text-gray-700 rounded-lg">
@@ -334,7 +334,7 @@ const ScholarshipDetails = () => {
                                 <p className="text-gray-600 mb-8 text-lg">
                                     The scholarship you're looking for doesn't exist or may have been removed.
                                 </p>
-                                <Button onClick={handleBack} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 text-lg rounded-lg">
+                                <Button onClick={handleBack} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg">
                                     Browse All Scholarships
                                 </Button>
                             </CardContent>
@@ -370,7 +370,7 @@ const ScholarshipDetails = () => {
                         <div className="lg:col-span-2 space-y-8">
                             {/* Scholarship Header */}
                             <Card className="border border-gray-200 bg-white shadow-sm rounded-xl overflow-hidden">
-                                <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6">
+                                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
                                     <h1 className="text-3xl font-bold text-white leading-tight mb-3">
                                         {scholarship.title}
                                     </h1>
@@ -453,22 +453,22 @@ const ScholarshipDetails = () => {
                                             ? 'bg-red-50 border-red-200'
                                             : isUrgent
                                                 ? 'bg-orange-50 border-orange-200'
-                                                : 'bg-indigo-50 border-indigo-200'
+                                                : 'bg-blue-50 border-blue-200'
                                             }`}>
                                             <div className="flex items-center gap-3 mb-2">
-                                                <Clock className={`h-5 w-5 ${isExpired ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-indigo-600'
+                                                <Clock className={`h-5 w-5 ${isExpired ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-blue-600'
                                                     }`} />
-                                                <span className={`font-semibold text-sm ${isExpired ? 'text-red-800' : isUrgent ? 'text-orange-800' : 'text-indigo-800'
+                                                <span className={`font-semibold text-sm ${isExpired ? 'text-red-800' : isUrgent ? 'text-orange-800' : 'text-blue-800'
                                                     }`}>
                                                     Application Deadline
                                                 </span>
                                             </div>
-                                            <div className={`font-bold text-lg ${isExpired ? 'text-red-700' : isUrgent ? 'text-orange-700' : 'text-indigo-700'
+                                            <div className={`font-bold text-lg ${isExpired ? 'text-red-700' : isUrgent ? 'text-orange-700' : 'text-blue-700'
                                                 }`}>
                                                 {formatDate(scholarship.deadline)}
                                             </div>
                                             {!isExpired && (
-                                                <div className={`text-sm mt-2 font-medium ${isUrgent ? 'text-orange-600' : 'text-indigo-600'
+                                                <div className={`text-sm mt-2 font-medium ${isUrgent ? 'text-orange-600' : 'text-blue-600'
                                                     }`}>
                                                     {daysUntilDeadline > 0 ? (
                                                         `${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} remaining`
@@ -484,7 +484,7 @@ const ScholarshipDetails = () => {
                                             <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
                                                 <Button
                                                     size="lg"
-                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 mb-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 mb-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                                                     onClick={() => setIsApplyOpen(true)}
                                                 >
                                                     Apply Now
@@ -518,7 +518,7 @@ const ScholarshipDetails = () => {
                                                                             ...prev,
                                                                             [field.key]: e.target.value
                                                                         }))}
-                                                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                                                                         placeholder={field.placeholder}
                                                                     />
                                                                 </div>
@@ -534,7 +534,7 @@ const ScholarshipDetails = () => {
                                                                     ...prev,
                                                                     email: e.target.value
                                                                 }))}
-                                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                                                                 placeholder="your.email@example.com"
                                                             />
                                                         </div>
@@ -549,7 +549,7 @@ const ScholarshipDetails = () => {
                                                                         ...prev,
                                                                         phone: e.target.value
                                                                     }))}
-                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                                                                     placeholder="Your phone number"
                                                                 />
                                                             </div>
@@ -561,7 +561,7 @@ const ScholarshipDetails = () => {
                                                                         ...prev,
                                                                         city: e.target.value
                                                                     }))}
-                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                                                                     placeholder="Your city"
                                                                 />
                                                             </div>
@@ -574,8 +574,7 @@ const ScholarshipDetails = () => {
                                                                 onChange={(e) => setApplicationData(prev => ({
                                                                     ...prev,
                                                                     address: e.target.value
-                                                                }))}
-                                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors"
+                                                                }))} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                                                                 placeholder="Your full address"
                                                             />
                                                         </div>
@@ -592,7 +591,7 @@ const ScholarshipDetails = () => {
                                                                 tabIndex={0}
                                                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
                                                                 className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${isDragOver
-                                                                    ? 'border-indigo-600 bg-indigo-50'
+                                                                    ? 'border-blue-600 bg-blue-50'
                                                                     : 'border-gray-300 hover:border-gray-400 bg-gray-50'
                                                                     }`}
                                                             >
@@ -609,7 +608,7 @@ const ScholarshipDetails = () => {
                                                                     Drag & drop your PDF here
                                                                 </p>
                                                                 <p className="text-gray-500 text-sm">
-                                                                    or <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="text-indigo-600 font-medium underline-offset-2 hover:underline">browse files</button>
+                                                                    or <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="text-blue-600 font-medium underline-offset-2 hover:underline">browse files</button>
                                                                 </p>
                                                                 <p className="text-gray-400 text-xs mt-1">Max file size: 5MB</p>
                                                             </div>
@@ -638,7 +637,7 @@ const ScholarshipDetails = () => {
                                                         <Button
                                                             onClick={handleApplicationSubmit}
                                                             disabled={applicationMutation.isPending}
-                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-6"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6"
                                                         >
                                                             {applicationMutation.isPending ? (
                                                                 <div className="flex items-center gap-2">

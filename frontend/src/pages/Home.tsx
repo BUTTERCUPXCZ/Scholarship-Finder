@@ -84,7 +84,7 @@ const Home = () => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">{/* Hero Section */}
                 {/* Responsive hero section with optimized spacing and typography */}
-                <section className="relative bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50 pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-28 overflow-hidden">
+                <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-100/50 pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-28 overflow-hidden">
                     <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
@@ -94,9 +94,9 @@ const Home = () => {
 
                                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4 sm:mb-6">
                                         Unlock Your{' '}
-                                        <span className="text-indigo-600 relative">
+                                        <span className="text-blue-600 relative">
                                             Future
-                                            <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full h-2 sm:h-3 text-indigo-200" viewBox="0 0 100 12" fill="currentColor">
+                                            <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full h-2 sm:h-3 text-blue-200" viewBox="0 0 100 12" fill="currentColor">
                                                 <path d="M0 8c30-4 70-4 100 0v4H0z" />
                                             </svg>
                                         </span>{' '}
@@ -109,13 +109,13 @@ const Home = () => {
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
-                                        <Button asChild size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
+                                        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
                                             <Link to="/scholarship">
                                                 <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                                 Explore Scholarships
                                             </Link>
                                         </Button>
-                                        <Button asChild variant="outline" size="lg" className="border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
+                                        <Button asChild variant="outline" size="lg" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
                                             <Link to="/register">
                                                 Join Free Today
                                             </Link>
@@ -166,7 +166,7 @@ const Home = () => {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                         <AnimatedSection className="text-center mb-12 sm:mb-16">
                             <motion.div variants={fadeInUp}>
-                                <Badge variant="outline" className="mb-3 sm:mb-4 border-indigo-200 text-indigo-600 text-xs sm:text-sm">
+                                <Badge variant="outline" className="mb-3 sm:mb-4 border-blue-200 text-blue-600 text-xs sm:text-sm">
                                     Platform Features
                                 </Badge>
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
@@ -192,8 +192,8 @@ const Home = () => {
                                     icon: GraduationCap,
                                     title: "Seamless Applications",
                                     description: "Streamlined application process with document management, auto-fill capabilities, and progress tracking.",
-                                    color: "bg-indigo-50 text-indigo-600",
-                                    borderColor: "border-indigo-200"
+                                    color: "bg-blue-50 text-blue-600",
+                                    borderColor: "border-blue-200"
                                 },
                                 {
                                     icon: TrendingUp,
@@ -204,7 +204,7 @@ const Home = () => {
                                 }
                             ].map((feature, index) => (
                                 <motion.div key={index} variants={scaleIn}>
-                                    <Card className={`h-full border-2 ${feature.borderColor} hover:shadow-xl transition-all duration-300 group hover:border-indigo-300`}>
+                                    <Card className={`h-full border-2 ${feature.borderColor} hover:shadow-xl transition-all duration-300 group hover:border-blue-300`}>
                                         <CardHeader className="text-center pb-3 sm:pb-4 px-4 sm:px-6">
                                             <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl ${feature.color} flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
                                                 <feature.icon className="h-6 w-6 sm:h-8 sm:w-8" />
@@ -226,11 +226,11 @@ const Home = () => {
 
 
                 {/* How It Works Section */}
-                <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-indigo-50 via-white to-indigo-100/50">
+                <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-blue-50 via-white to-blue-100/50">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                         <AnimatedSection>
                             <div className="text-center mb-12 sm:mb-16">
-                                <Badge variant="outline" className="mb-3 sm:mb-4 border-indigo-200 text-indigo-600 text-xs sm:text-sm">
+                                <Badge variant="outline" className="mb-3 sm:mb-4 border-blue-200 text-blue-600 text-xs sm:text-sm">
                                     Simple Process
                                 </Badge>
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
@@ -243,7 +243,7 @@ const Home = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 relative">
                                 {/* Connection lines for desktop */}
-                                <div className="hidden lg:block absolute top-20 sm:top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-indigo-200 to-indigo-300"></div>
+                                <div className="hidden lg:block absolute top-20 sm:top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-blue-200 to-blue-300"></div>
                                 {[
                                     {
                                         step: "01",
@@ -265,14 +265,14 @@ const Home = () => {
                                     }
                                 ].map((step, index) => (
                                     <motion.div key={index} variants={scaleIn} className="relative">
-                                        <Card className="text-center border-2 border-indigo-100 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 relative z-10 bg-white h-full">
+                                        <Card className="text-center border-2 border-blue-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 relative z-10 bg-white h-full">
                                             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
                                                 <div className="relative mx-auto mb-3 sm:mb-4">
-                                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto shadow-lg">
                                                         <step.icon className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                                                     </div>
-                                                    <div className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                                        <span className="text-xs sm:text-sm font-bold text-indigo-600">{step.step}</span>
+                                                    <div className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                        <span className="text-xs sm:text-sm font-bold text-blue-600">{step.step}</span>
                                                     </div>
                                                 </div>
                                                 <CardTitle className="text-lg sm:text-xl text-gray-900">{step.title}</CardTitle>
@@ -292,8 +292,8 @@ const Home = () => {
 
 
                 {/* CTA Section */}
-                <section className="py-12 sm:py-16 lg:py-20 bg-indigo-600 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-700"></div>
+                <section className="py-12 sm:py-16 lg:py-20 bg-blue-600 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700"></div>
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
                         <AnimatedSection>
                             <div className="text-center">
@@ -301,18 +301,18 @@ const Home = () => {
                                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
                                         Start Your Scholarship Journey Today
                                     </h2>
-                                    <p className="text-base sm:text-lg lg:text-xl text-indigo-100 mb-6 sm:mb-8 max-w-2xl mx-auto">
+                                    <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto">
                                         Join thousands of students who have already transformed their educational future.
                                         Your perfect scholarship is waiting.
                                     </p>
                                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                                        <Button asChild size="lg" className="bg-white text-indigo-600 hover:bg-gray-50 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
+                                        <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-50 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
                                             <Link to="/scholarship">
                                                 Browse Scholarships
                                                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                                             </Link>
                                         </Button>
-                                        <Button asChild variant="outline" size="lg" className="border-white text-indigo-600 hover:bg-gray-200 hover:text-indigo-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
+                                        <Button asChild variant="outline" size="lg" className="border-white text-blue-600 hover:bg-gray-200 hover:text-blue-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
                                             <Link to="/Register">
                                                 Create Free Account
                                             </Link>
@@ -330,7 +330,7 @@ const Home = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
                             <div className="col-span-1 sm:col-span-2 lg:col-span-2">
                                 <div className="flex items-center gap-2 mb-4 sm:mb-6 justify-center sm:justify-start">
-                                    <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-400" />
+                                    <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
                                     <span className="text-xl sm:text-2xl font-bold">ScholarSphere</span>
                                 </div>
                                 <p className="text-gray-400 mb-4 sm:mb-6 leading-relaxed max-w-md text-center sm:text-left text-sm sm:text-base mx-auto sm:mx-0">

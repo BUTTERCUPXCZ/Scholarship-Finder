@@ -148,7 +148,7 @@
   /* Custom Scrollbar Styles */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgb(99 102 241) rgb(243 244 246);
+    scrollbar-color: rgb(37, 99, 235) rgb(243 244 246);
   }
 
   .custom-scrollbar::-webkit-scrollbar {

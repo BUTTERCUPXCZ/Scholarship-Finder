@@ -189,8 +189,8 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
                         <button
                             className="cursor-pointer px-6 py-2 mt-2 text-white rounded-full text-sm transition"
                             style={{ backgroundColor: '#4F39F6' }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3D2DB8'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4F39F6'}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0677f0ff'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0677f0ff'}
                             onClick={() => navigate('/login')}
                         >
                             Login

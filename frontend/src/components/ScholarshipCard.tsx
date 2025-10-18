@@ -68,7 +68,7 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     // Standardized button classes to keep list and grid layouts consistent
     const primaryBtnClass = isExpired
         ? 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200'
-        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+        : 'bg-blue-600 hover:bg-blue-700 text-white'
 
     const getStatusBadge = () => {
         if (isExpired) {
@@ -111,15 +111,15 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
 
     if (layout === 'list') {
         return (
-            <Card className="w-full hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200 rounded-lg">
+            <Card className="w-full hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-blue-200 rounded-lg">
                 <CardContent className="flex gap-4 items-start p-4">
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="border-indigo-200 text-indigo-600 bg-indigo-50">
+                                <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50">
                                     {scholarship.type}
                                 </Badge>
-                                <h3 className="text-md font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                                <h3 className="text-md font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
                                     {scholarship.title}
                                 </h3>
                             </div>
@@ -150,9 +150,9 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
                     </div>
 
                     <div className="w-40 flex-shrink-0 flex flex-col gap-2">
-                        <div className="p-2 bg-indigo-50 rounded-md border border-indigo-100 text-indigo-700 text-sm">
+                        <div className="p-2 bg-blue-50 rounded-md border border-blue-100 text-blue-700 text-sm">
                             <div className="font-medium">Benefits</div>
-                            <div className="line-clamp-3 text-xs text-indigo-600">{scholarship.benefits}</div>
+                            <div className="line-clamp-3 text-xs text-blue-600">{scholarship.benefits}</div>
                         </div>
                         <Button
                             onClick={handleClick}
@@ -168,17 +168,17 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onViewDe
     }
 
     return (
-        <Card className={`${layout === 'grid' ? 'h-full' : ''} flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-indigo-200 rounded-lg`}>
+        <Card className={`${layout === 'grid' ? 'h-full' : ''} flex flex-col hover:shadow-lg transition-all duration-300 border-gray-200 bg-white group hover:border-blue-200 rounded-lg`}>
             {/* Header */}
             <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
-                    <Badge variant="outline" className="border-indigo-200 text-indigo-600 bg-indigo-50">
+                    <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50">
                         {scholarship.type}
                     </Badge>
                     {getStatusBadge()}
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
                     {scholarship.title}
                 </h3>
             </CardHeader>
