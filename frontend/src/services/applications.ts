@@ -47,7 +47,8 @@ interface ApplicationData {
 
 export const submitApplication = async (
     applicationData: ApplicationData,
-    userId?: string
+    userId?: string,
+    token?: string
 ): Promise<Application> => {
     try {
         // Step 1: Upload documents to backend if any
@@ -65,9 +66,15 @@ export const submitApplication = async (
                     formData.append('documents', file)
                 })
 
+                const headers: HeadersInit = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/files`, {
                     method: 'POST',
                     credentials: 'include',
+                    headers: headers,
                     body: formData
                 })
 
@@ -104,12 +111,17 @@ export const submitApplication = async (
             }))
         }
 
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/submit`, {
             method: 'POST',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: JSON.stringify(submitData)
         });
 
@@ -149,13 +161,18 @@ export const submitApplication = async (
     }
 };
 
-export const getUserApplications = async (): Promise<Application[]> => {
+export const getUserApplications = async (token?: string): Promise<Application[]> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/my-applications`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -178,13 +195,18 @@ export const getUserApplications = async (): Promise<Application[]> => {
     return data.data;
 };
 
-export const getApplicationStatus = async (applicationId: string): Promise<Application> => {
+export const getApplicationStatus = async (applicationId: string, token?: string): Promise<Application> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/${applicationId}`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -207,13 +229,18 @@ export const getApplicationStatus = async (applicationId: string): Promise<Appli
     return data.data;
 };
 
-export const withdrawApplication = async (applicationId: string): Promise<void> => {
+export const withdrawApplication = async (applicationId: string, token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/${applicationId}/withdraw`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -255,13 +282,18 @@ export interface BackendApplication {
     };
 }
 
-export const getScholarshipApplications = async (scholarshipId: string): Promise<BackendApplication[]> => {
+export const getScholarshipApplications = async (scholarshipId: string, token?: string): Promise<BackendApplication[]> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/scholarship/${scholarshipId}`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -290,14 +322,20 @@ export const getScholarshipApplications = async (scholarshipId: string): Promise
 
 export const updateApplicationStatus = async (
     applicationId: string,
-    status: 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'
+    status: 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED',
+    token?: string
 ): Promise<Application> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/${applicationId}/status`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({ status })
     });
 
@@ -325,13 +363,18 @@ export const updateApplicationStatus = async (
     return data.data;
 };
 
-export const getApplicants = async (): Promise<BackendApplication[]> => {
+export const getApplicants = async (token?: string): Promise<BackendApplication[]> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/get-applicants`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {

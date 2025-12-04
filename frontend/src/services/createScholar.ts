@@ -8,13 +8,18 @@ interface CreateScholarInput {
     deadline: string;
 }
 
-export const createScholar = async (data: CreateScholarInput) => {
+export const createScholar = async (data: CreateScholarInput, token?: string) => {
+    const headers: HeadersInit = {
+        "Content-Type": "application/json",
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/create-scholar`, {
         method: "POST",
         credentials: 'include', // Include cookies
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: headers,
         body: JSON.stringify(data),
     });
 

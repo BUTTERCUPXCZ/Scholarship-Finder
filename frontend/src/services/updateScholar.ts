@@ -10,14 +10,19 @@ interface UpdateScholarInput {
     deadline: string;
 }
 
-export const updateScholar = async (id: string, data: UpdateScholarInput) => {
+export const updateScholar = async (id: string, data: UpdateScholarInput, token?: string) => {
     try {
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/update-scholar/${id}`, {
             method: "PUT",
             credentials: 'include', // Include cookies
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: headers,
             body: JSON.stringify(data),
         });
 

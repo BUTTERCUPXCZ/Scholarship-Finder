@@ -14,6 +14,7 @@ import {
 } from './ui/dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createScholar } from '../services/createScholar'
+import { useAuth } from '../AuthProvider/AuthProvider'
 import toast from 'react-hot-toast'
 import {
     type ScholarshipFormData,
@@ -29,6 +30,7 @@ interface CreateScholarshipModalProps {
 
 const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps) => {
     const queryClient = useQueryClient()
+    const { getToken } = useAuth()
 
     const [formData, setFormData] = useState<ScholarshipFormData>({
         title: '',
@@ -43,7 +45,10 @@ const CreateScholarshipModal = ({ isOpen, onClose }: CreateScholarshipModalProps
     const [errors, setErrors] = useState<Partial<Record<keyof ScholarshipFormData, string>>>({})
 
     const createScholarshipMutation = useMutation({
-        mutationFn: createScholar,
+        mutationFn: async (data: any) => {
+            const token = await getToken();
+            return createScholar(data, token || undefined);
+        },
         onSuccess: () => {
             toast.success('Scholarship created successfully!')
             // Invalidate and refetch scholarships

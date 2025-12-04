@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../AuthProvider/AuthProvider'
 import toast from 'react-hot-toast'
 import { getDownloadUrl, getDownloadUrlFromBackend } from '../services/supabaseStorage'
 import {
@@ -65,6 +66,7 @@ interface ApplicationManagementProps {
 
 const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: ApplicationManagementProps) => {
     const queryClient = useQueryClient()
+    const { getToken } = useAuth()
 
 
     const [searchTerm, setSearchTerm] = useState('')
@@ -98,7 +100,10 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
         refetch
     } = useQuery<BackendApplication[], Error>({
         queryKey: ['scholarship-applications', scholarshipId],
-        queryFn: () => getScholarshipApplications(scholarshipId),
+        queryFn: async () => {
+            const token = await getToken();
+            return getScholarshipApplications(scholarshipId, token || undefined);
+        },
         enabled: !!scholarshipId,
         staleTime: 1000 * 60 * 5,
         retry: 1
@@ -109,8 +114,10 @@ const ApplicationManagement = ({ scholarshipId, scholarshipTitle, onBack }: Appl
 
     // Update application status mutation
     const updateStatusMutation = useMutation({
-        mutationFn: ({ applicationId, status }: { applicationId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' }) =>
-            updateApplicationStatus(applicationId, status),
+        mutationFn: async ({ applicationId, status }: { applicationId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' }) => {
+            const token = await getToken();
+            return updateApplicationStatus(applicationId, status, token || undefined);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['scholarship-applications', scholarshipId] })
         },

@@ -59,6 +59,12 @@ if (process.env.DATABASE_URL) {
     if (!url.searchParams.has('socket_timeout')) {
         url.searchParams.set('socket_timeout', '30');
     }
+    
+    // Fix for "prepared statement already exists" error
+    // pgbouncer=true disables prepared statements which can cause conflicts
+    if (!url.searchParams.has('pgbouncer')) {
+        url.searchParams.set('pgbouncer', 'true');
+    }
 
     prismaOptions.datasourceUrl = url.toString();
 }

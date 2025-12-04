@@ -127,14 +127,15 @@ export const useInfiniteScholarships = (filters: ScholarshipFilters = {}) => {
 
 
 export const useArchivedScholarships = () => {
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useQuery<Archive[]>({
         queryKey: scholarshipKeys.archived(),
         queryFn: async () => {
             try {
-                const response = await getArchiveScholarships()
+                const token = await getToken();
+                const response = await getArchiveScholarships(token)
                 return response
             } catch (error: any) {
                 if (error.message?.includes('401') || error.message?.includes('UNAUTHORIZED')) {
@@ -158,11 +159,14 @@ export const useArchivedScholarships = () => {
 
 export const useCreateScholarship = () => {
     const queryClient = useQueryClient()
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useMutation({
-        mutationFn: createScholar,
+        mutationFn: async (data: any) => {
+            const token = await getToken();
+            return createScholar(data, token);
+        },
         onMutate: async (newScholarship) => {
 
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
@@ -213,11 +217,14 @@ export const useCreateScholarship = () => {
 
 export const useUpdateScholarship = () => {
     const queryClient = useQueryClient()
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => updateScholar(id, data),
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const token = await getToken();
+            return updateScholar(id, data, token);
+        },
         onMutate: async ({ id, data }) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
 
@@ -257,11 +264,14 @@ export const useUpdateScholarship = () => {
 // ✅ Hook for deleting scholarships with optimistic updates
 export const useDeleteScholarship = () => {
     const queryClient = useQueryClient()
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useMutation({
-        mutationFn: deleteScholarship,
+        mutationFn: async (scholarshipId: string) => {
+            const token = await getToken();
+            return deleteScholarship(scholarshipId, token);
+        },
         onMutate: async (scholarshipId) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
 
@@ -297,11 +307,14 @@ export const useDeleteScholarship = () => {
 // ✅ Hook for archiving scholarships
 export const useArchiveScholarship = () => {
     const queryClient = useQueryClient()
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useMutation({
-        mutationFn: archiveScholarship,
+        mutationFn: async (scholarshipId: string) => {
+            const token = await getToken();
+            return archiveScholarship(scholarshipId, token);
+        },
         onMutate: async (scholarshipId) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
 
@@ -342,11 +355,14 @@ export const useArchiveScholarship = () => {
 // ✅ Hook for updating expired scholarships
 export const useUpdateExpiredScholarships = () => {
     const queryClient = useQueryClient()
-    const { logout } = useAuth()
+    const { logout, getToken } = useAuth()
     const navigate = useNavigate()
 
     return useMutation({
-        mutationFn: updateExpiredScholarships,
+        mutationFn: async () => {
+            const token = await getToken();
+            return updateExpiredScholarships(token);
+        },
         onError: (error: any) => {
             if (error?.message?.includes('UNAUTHORIZED')) {
                 toast.error('Your session has expired. Please log in again.')

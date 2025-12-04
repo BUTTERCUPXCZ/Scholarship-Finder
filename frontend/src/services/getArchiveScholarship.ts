@@ -17,13 +17,18 @@ interface Archive {
     originalUpdatedAt: string
 }
 
-export const getArchiveScholarships = async (): Promise<Archive[]> => {
+export const getArchiveScholarships = async (token?: string): Promise<Archive[]> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/get-archived`, {
         method: 'POST',
         credentials: 'include', // Include cookies in request
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -49,13 +54,18 @@ export const getArchiveScholarships = async (): Promise<Archive[]> => {
 // Keep the old function for backward compatibility
 export const getArchiveScholarship = getArchiveScholarships;
 
-export const deleteArchiveScholarship = async (archiveId: string): Promise<void> => {
+export const deleteArchiveScholarship = async (archiveId: string, token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/delete-archived/${encodeURIComponent(archiveId)}`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {

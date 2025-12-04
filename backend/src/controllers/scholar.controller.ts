@@ -54,19 +54,27 @@ export const updateExpiredScholarships = async () => {
     try {
         const now = new Date();
 
-        // Use a more efficient query with proper indexing
-        const result = await prisma.scholarship.updateMany({
-            where: {
-                AND: [
-                    { deadline: { lt: now } },
-                    { status: 'ACTIVE' }
-                ]
+        // Use transaction to avoid prepared statement conflicts
+        const result = await prisma.$transaction(
+            async (tx) => {
+                return await tx.scholarship.updateMany({
+                    where: {
+                        AND: [
+                            { deadline: { lt: now } },
+                            { status: 'ACTIVE' }
+                        ]
+                    },
+                    data: {
+                        status: 'EXPIRED',
+                        updatedAt: now
+                    }
+                });
             },
-            data: {
-                status: 'EXPIRED',
-                updatedAt: now
+            {
+                maxWait: 5000, // 5 seconds max wait
+                timeout: 10000, // 10 seconds timeout
             }
-        });
+        );
 
         console.log(`Updated ${result.count} expired scholarships`);
         return result;

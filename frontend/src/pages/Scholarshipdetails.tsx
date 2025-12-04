@@ -49,13 +49,19 @@ interface Scholarship {
     eligibleStudents?: string;
 }
 
-const getScholarshipDetails = async (id: string): Promise<Scholarship> => {
+const getScholarshipDetails = async (id: string, token: string | null): Promise<Scholarship> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/get-scholarship/${id}`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers
     });
 
     if (!response.ok) {
@@ -89,11 +95,14 @@ const formatBulletPoints = (text: string): string[] => {
 const ScholarshipDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, getToken } = useAuth();
 
     const { data: scholarship, isLoading, error } = useQuery<Scholarship, Error>({
         queryKey: ['scholarship', id],
-        queryFn: () => getScholarshipDetails(id!),
+        queryFn: async () => {
+            const token = await getToken();
+            return getScholarshipDetails(id!, token);
+        },
         enabled: !!id,
         staleTime: 1000 * 60 * 5,
         retry: 1
@@ -174,7 +183,10 @@ const ScholarshipDetails = () => {
 
     // Application submission
     const applicationMutation = useMutation({
-        mutationFn: (submissionData: any) => submitApplication(submissionData, user?.id),
+        mutationFn: async (submissionData: any) => {
+            const token = await getToken();
+            return submitApplication(submissionData, user?.id, token || undefined);
+        },
         onSuccess: () => {
             toast.success('Application submitted successfully!');
             setIsApplyOpen(false);

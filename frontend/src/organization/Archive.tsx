@@ -5,6 +5,7 @@ import OrgSidebar from '../components/orgSidebar'
 import Navbar from '../components/Navbar'
 import { useArchivedScholarships } from '../hooks/useScholarshipQueries'
 import { useOptimizedFilter, useDebounce } from '../hooks/useOptimizations'
+import { useAuth } from '../AuthProvider/AuthProvider'
 import toast from 'react-hot-toast'
 import {
     Dialog,
@@ -45,6 +46,7 @@ interface ArchiveScholarship {
 }
 
 const Archive: React.FC = () => {
+    const { getToken } = useAuth()
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [selectedScholarships, setSelectedScholarships] = useState<string[]>([])
@@ -126,17 +128,19 @@ const Archive: React.FC = () => {
 
         setIsProcessing(true)
         try {
+            const token = await getToken();
+
             if (confirmMode === 'delete') {
                 if (confirmTarget.type === 'single' && confirmTarget.id) {
                     toast.loading('Deleting archived scholarship...', { id: `delete-${confirmTarget.id}` })
-                    await deleteArchiveScholarship(confirmTarget.id)
+                    await deleteArchiveScholarship(confirmTarget.id, token || undefined)
                     toast.success('Archived scholarship deleted', { id: `delete-${confirmTarget.id}` })
                     setSelectedScholarships(prev => prev.filter(id => id !== confirmTarget.id))
                 } else {
                     toast.loading('Deleting selected archived scholarships...')
                     for (const id of selectedScholarships) {
                         // eslint-disable-next-line no-await-in-loop
-                        await deleteArchiveScholarship(id)
+                        await deleteArchiveScholarship(id, token || undefined)
                     }
                     toast.success('Selected archived scholarships deleted')
                     setSelectedScholarships([])
@@ -144,13 +148,13 @@ const Archive: React.FC = () => {
             } else if (confirmMode === 'restore') {
                 if (confirmTarget.type === 'single' && confirmTarget.id) {
                     toast.loading('Restoring archived scholarship...', { id: `restore-${confirmTarget.id}` })
-                    await RestoreArchivedScholarship(confirmTarget.id)
+                    await RestoreArchivedScholarship(confirmTarget.id, token || undefined)
                     toast.success('Archived scholarship restored', { id: `restore-${confirmTarget.id}` })
                 } else {
                     toast.loading('Restoring selected archived scholarships...')
                     for (const id of selectedScholarships) {
                         // eslint-disable-next-line no-await-in-loop
-                        await RestoreArchivedScholarship(id)
+                        await RestoreArchivedScholarship(id, token || undefined)
                     }
                     toast.success('Selected archived scholarships restored')
                     setSelectedScholarships([])

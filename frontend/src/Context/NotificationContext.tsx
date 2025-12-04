@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
+    import React, { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthProvider/AuthProvider';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, type Notification } from '../services/notification';
@@ -35,7 +35,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [unreadCount, setUnreadCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [isPolling, setIsPolling] = useState(false);
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, getToken } = useAuth();
     const { isOnline } = useNetworkStatus();
 
     // Refs for cleanup and optimization
@@ -66,7 +66,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         setIsLoading(true);
 
         try {
-            const fetchedNotifications = await getNotifications();
+            const token = await getToken();
+            const fetchedNotifications = await getNotifications(undefined, token || undefined);
             setNotifications(fetchedNotifications);
             setUnreadCount(fetchedNotifications.filter(n => !n.read).length);
             lastFetchRef.current = now;
@@ -90,7 +91,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             setIsLoading(false);
             isRefreshingRef.current = false;
         }
-    }, [isAuthenticated, user, isOnline]);
+    }, [isAuthenticated, user, isOnline, getToken]);
 
     const markAsRead = useCallback(async (notificationId: string) => {
         // Optimistic update
@@ -104,7 +105,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         setUnreadCount(prev => Math.max(0, prev - 1));
 
         try {
-            await markNotificationAsRead(notificationId);
+            const token = await getToken();
+            await markNotificationAsRead(notificationId, token || undefined);
         } catch (error) {
             console.error('Error marking notification as read:', error);
             // Revert optimistic update on error
@@ -117,8 +119,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             );
             setUnreadCount(prev => prev + 1);
         }
-    }, []);
-
+    }, [getToken]);
     const markAllAsRead = useCallback(async () => {
         // Store previous state for rollback
         const previousNotifications = notifications;
@@ -131,14 +132,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         setUnreadCount(0);
 
         try {
-            await markAllNotificationsAsRead();
+            const token = await getToken();
+            await markAllNotificationsAsRead(token || undefined);
         } catch (error) {
             console.error('Error marking all notifications as read:', error);
             // Revert optimistic update on error
             setNotifications(previousNotifications);
             setUnreadCount(previousUnreadCount);
         }
-    }, [notifications, unreadCount]);
+    }, [notifications, unreadCount, getToken]);
 
     const removeNotification = useCallback(async (notificationId: string) => {
         // Store notification for rollback
@@ -154,7 +156,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }
 
         try {
-            await deleteNotification(notificationId);
+            const token = await getToken();
+            await deleteNotification(notificationId, token || undefined);
         } catch (error) {
             console.error('Error deleting notification:', error);
             // Revert optimistic update on error
@@ -163,7 +166,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 setUnreadCount(prev => prev + 1);
             }
         }
-    }, [notifications]);
+    }, [notifications, getToken]);
 
     // Smart polling based on document visibility and user activity
     const startPolling = useCallback(() => {

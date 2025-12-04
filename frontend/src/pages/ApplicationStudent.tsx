@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { getUserApplications, withdrawApplication } from '../services/applications';
 import { CalendarDays, MapPin, DollarSign, FileText, Clock, CheckCircle, XCircle, AlertCircle, Send, Eye, Trash2 } from 'lucide-react';
 import StudentNavbar from '../components/studentNavbar';
+import { useAuth } from '../AuthProvider/AuthProvider';
 
 interface Application {
     id: string;
@@ -27,6 +28,7 @@ interface Application {
 }
 
 const ApplicationStudent = () => {
+    const { getToken } = useAuth();
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -37,7 +39,8 @@ const ApplicationStudent = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const applicationsData = await getUserApplications();
+            const token = await getToken();
+            const applicationsData = await getUserApplications(token || undefined);
             setApplications(applicationsData);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -82,7 +85,8 @@ const ApplicationStudent = () => {
 
     const handleWithdraw = async (applicationId: string) => {
         try {
-            await withdrawApplication(applicationId);
+            const token = await getToken();
+            await withdrawApplication(applicationId, token || undefined);
             await fetchData(); // Refresh data
         } catch (error) {
             console.error('Error withdrawing application:', error);

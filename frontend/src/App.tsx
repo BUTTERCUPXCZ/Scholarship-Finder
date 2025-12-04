@@ -24,6 +24,8 @@ import { useNetworkStatus } from './hooks/useNetworkStatus'
 import { NetworkStatusBanner } from './components/NetworkStatusBanner'
 import ProfileOrg from './organization/ProfileOrg'
 import EmailVerify from './pages/EmailVerify'
+import  RegisterSuccess  from './pages/RegisterSuccess'
+import  ResetPassword  from './pages/ResetPassword'
 
 function App() {
   const { isOnline } = useNetworkStatus()
@@ -202,8 +204,11 @@ function App() {
                 {/* Root redirect - smart redirect based on auth state */}
                 <Route path="/" element={<AuthenticatedRedirect />} />
 
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/register-success" element={<RegisterSuccess />} />
                 {/* Catch all - redirect to login */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
+
               </Routes>
             </Suspense>
           </NotificationProvider>

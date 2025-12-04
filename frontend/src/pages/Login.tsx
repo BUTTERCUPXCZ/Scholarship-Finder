@@ -1,12 +1,14 @@
 import React, { useCallback, useState, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { loginUser, type LoginData } from '../services/auth';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthProvider/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+type LoginData = { email: string; password: string };
 
 
 
@@ -17,6 +19,7 @@ const Login = () => {
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+    const [isEmailNotVerified, setIsEmailNotVerified] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useAuth();
@@ -42,22 +45,51 @@ const Login = () => {
     }, [form.email, form.password]);
 
     const mutation = useMutation({
-        mutationFn: loginUser,
+        mutationFn: async (credentials: LoginData) => {
+            // Sign in with Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                email: credentials.email,
+                password: credentials.password,
+            });
+
+            if (authError) throw authError;
+            if (!authData.user || !authData.session) throw new Error('Login failed');
+
+            // Check if email is verified
+            if (!authData.user.email_confirmed_at) {
+                throw new Error('EMAIL_NOT_VERIFIED: Please verify your email before logging in.');
+            }
+
+            // Get user profile from backend (also syncs verification status)
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${authData.session.access_token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch user profile');
+            }
+
+            const userData = await response.json();
+            return { 
+                user: userData.user || userData, 
+                session: authData.session,
+                token: authData.session.access_token 
+            };
+        },
         onSuccess: async (data) => {
             setError(null);
             setFieldErrors({});
-            // Persist token (dev-only) if backend included it
-            try {
-                if (data?.token) {
-                    localStorage.setItem('token', data.token);
-                }
-            } catch (e) {
-                /* ignore */
-            }
+            setIsEmailNotVerified(false);
 
+            // Store token for API calls
+            localStorage.setItem('token', data.token);
+
+            // Store session
             login(data.user);
-
-
 
             await new Promise(resolve => setTimeout(resolve, 100));
             let redirectPath = from;
@@ -70,6 +102,16 @@ const Login = () => {
         onError: (error: Error) => {
             const err: any = error;
             const serverMsg = err?.response?.data?.message || err?.message || String(err);
+
+            // Check if email is not verified
+            if (/EMAIL_NOT_VERIFIED|not verified|verify your email/i.test(serverMsg)) {
+                setIsEmailNotVerified(true);
+                setError('Please verify your email before logging in. Check your inbox for the verification link.');
+                return;
+            }
+
+            // Reset email verification flag for other errors
+            setIsEmailNotVerified(false);
 
             // Handle specific error types for better UX
             if (serverMsg.toLowerCase().includes('email')) {
@@ -102,11 +144,12 @@ const Login = () => {
 
             // Clear errors when user starts typing
             if (error) setError(null);
+            if (isEmailNotVerified) setIsEmailNotVerified(false);
             if (fieldErrors[name as keyof typeof fieldErrors]) {
                 setFieldErrors(prev => ({ ...prev, [name]: undefined }));
             }
         },
-        [error, fieldErrors]
+        [error, fieldErrors, isEmailNotVerified]
     );
 
     const handleSubmit = useCallback(
@@ -172,7 +215,19 @@ const Login = () => {
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
                             <Alert variant="destructive">
-                                <AlertDescription className="text-sm text-center">{error}</AlertDescription>
+                                <AlertDescription className="text-sm">
+                                    {error}
+                                    {isEmailNotVerified && (
+                                        <div className="mt-2">
+                                            <Link 
+                                                to={`/register-success?email=${encodeURIComponent(form.email)}`}
+                                                className="text-sm font-medium underline hover:no-underline"
+                                            >
+                                                Resend verification email
+                                            </Link>
+                                        </div>
+                                    )}
+                                </AlertDescription>
                             </Alert>
                         )}
                         <div>

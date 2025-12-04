@@ -6,7 +6,6 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes';
-import { warmUpTransport } from './lib/mailer';
 import { startScholarshipJobs } from './controllers/job/scholarshipJobs';
 import { startExpiredScholarshipJob } from './jobs/expiredScholarshipJob';
 import scholarRoutes from './routes/scholar.routes';
@@ -110,10 +109,8 @@ const server = http.createServer(app);
 // Initialize Socket.IO (we don't need the returned instance here)
 initializeSocket(server);
 
-// Warm up SMTP transport to avoid first-email latency (fire-and-forget)
-warmUpTransport().catch(err => console.error('Warm up transport error:', err));
-
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log('Socket.IO server initialized for real-time notifications');
+    console.log('Using Supabase Auth for authentication');
 });

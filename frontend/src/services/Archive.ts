@@ -1,13 +1,19 @@
 import { isNetworkError } from '../hooks/useNetworkStatus'
 
-export const archiveScholarship = async (id: string) => {
+export const archiveScholarship = async (id: string, token?: string) => {
     try {
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/archive-scholar/${id}`, {
             method: "POST",
             credentials: 'include', // Include cookies
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: headers,
         });
 
         if (!res.ok) {
@@ -37,14 +43,20 @@ export const archiveScholarship = async (id: string) => {
 };
 
 // Interface for fetching archived scholarships
-export const getArchivedScholarships = async () => {
+export const getArchivedScholarships = async (token?: string) => {
     try {
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/archived-scholarships`, {
             method: "GET",
             credentials: 'include', // Include cookies
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: headers,
         });
 
         if (!res.ok) {
@@ -74,14 +86,20 @@ export const getArchivedScholarships = async () => {
 };
 
 // Interface for restoring archived scholarships (if needed)
-export const restoreScholarship = async (id: string) => {
+export const restoreScholarship = async (id: string, token?: string) => {
     try {
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/restore-scholar/${id}`, {
             method: "POST",
             credentials: 'include', // Include cookies
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: headers,
         });
 
         if (!res.ok) {

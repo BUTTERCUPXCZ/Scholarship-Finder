@@ -40,6 +40,22 @@ export const registerUser = async (data: RegisterData) => {
     return res.json();
 };
 
+// Resend verification email
+export const resendVerificationEmail = async (email: string) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/resend-verification`, {
+        method: "POST",
+        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to resend verification email");
+    }
+    return res.json();
+};
+
 export interface UpdateProfileData {
     fullname: string;
     email: string;
@@ -60,21 +76,7 @@ export const updateUserProfile = async (data: UpdateProfileData) => {
     return res.json();
 };
 
-export const resendVerificationEmail = async (email: string) => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/resend-verification`, {
-        method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-    });
-
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to resend verification email");
-    }
-    return res.json();
-};
-
+// Request password reset - Supabase will send email
 export const requestPasswordReset = async (email: string) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/users/request-password-reset`, {
         method: 'POST',
@@ -91,28 +93,13 @@ export const requestPasswordReset = async (email: string) => {
     return res.json();
 };
 
-export const verifyPasswordOtp = async (email: string, otp: string) => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/verify-password-otp`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-    });
-
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: 'Failed to verify OTP' }));
-        throw new Error(err.message || 'Failed to verify OTP');
-    }
-
-    return res.json();
-};
-
-export const resetPassword = async (email: string, otp: string, newPassword: string) => {
+// Reset password with new password (no OTP needed, handled by Supabase magic link)
+export const resetPassword = async (token: string, newPassword: string) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/users/reset-password`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, newPassword }),
+        body: JSON.stringify({ token, newPassword }),
     });
 
     if (!res.ok) {

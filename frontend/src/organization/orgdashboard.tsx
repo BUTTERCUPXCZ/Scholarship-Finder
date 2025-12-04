@@ -62,14 +62,18 @@ interface Scholarship {
 }
 
 const orgdashboard = () => {
-    const { user } = useAuth()
+    const { user, getToken } = useAuth()
 
     // Fetch organization statistics
     const { data: stats, isLoading: statsLoading } = useQuery<OrganizationStats>({
         queryKey: ['organization-stats', user?.id],
         queryFn: async () => {
+            const token = await getToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/users/organization/stats`, {
-                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             if (!response.ok) {
                 throw new Error('Failed to fetch stats');
@@ -83,8 +87,12 @@ const orgdashboard = () => {
     const { data: scholarships, isLoading: scholarshipsLoading } = useQuery<Scholarship[]>({
         queryKey: ['organization-scholarships', user?.id],
         queryFn: async () => {
+            const token = await getToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/organization`, {
-                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             if (!response.ok) {
                 throw new Error('Failed to fetch scholarships');
@@ -101,12 +109,16 @@ const orgdashboard = () => {
         queryFn: async () => {
             if (!scholarships || scholarships.length === 0) return [];
 
+            const token = await getToken();
             // Get applications for all scholarships
             const allApplications: Application[] = [];
             for (const scholarship of scholarships) {
                 try {
                     const response = await fetch(`${import.meta.env.VITE_API_URL}/applications/scholarship/${scholarship.id}`, {
-                        credentials: 'include',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
                     });
                     if (response.ok) {
                         const data = await response.json();

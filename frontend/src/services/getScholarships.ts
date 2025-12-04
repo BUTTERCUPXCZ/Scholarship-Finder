@@ -112,13 +112,19 @@ export const getPublicScholars = async (filters: ScholarshipFilters = {}): Promi
 }
 
 // Organization/Provider endpoint - gets scholarships with application counts
-export const getOrganizationScholarships = async (): Promise<ScholarshipResponse> => {
+export const getOrganizationScholarships = async (token?: string): Promise<ScholarshipResponse> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/organization`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -135,13 +141,19 @@ export const getOrganizationScholarships = async (): Promise<ScholarshipResponse
     return await response.json();
 }
 
-export const RestoreArchivedScholarship = async (archiveId: string): Promise<void> => {
+export const RestoreArchivedScholarship = async (archiveId: string, token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/scholar/restore-archived/${encodeURIComponent(archiveId)}`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
     if (!response.ok) {
         if (response.status === 401) {

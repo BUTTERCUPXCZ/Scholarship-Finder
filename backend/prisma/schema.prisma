@@ -19,28 +19,8 @@ model User {
   archivedScholarships Archive[]            @relation("ArchivedScholarships")
   scholarships         Scholarship[]        @relation("ScholarshipOrg")
   notifications        Notification[]
-  VerificationToken    VerificationToken[]
-  PasswordResetToken   PasswordResetToken[]
 
   @@index([email])
-}
-
-model VerificationToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  token     String   @unique
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-}
-
-model PasswordResetToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  token     String
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-
-  @@index([userId])
 }
 
 model Scholarship {

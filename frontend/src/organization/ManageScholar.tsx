@@ -68,7 +68,7 @@ interface Scholarship {
 
 const ManageScholar = () => {
     const navigate = useNavigate()
-    const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth()
+    const { user, logout, isAuthenticated, isLoading: authLoading, getToken } = useAuth()
     const queryClient = useQueryClient()
 
     // State management
@@ -96,7 +96,8 @@ const ManageScholar = () => {
         queryKey: ['organization-scholarships'],
         queryFn: async () => {
             try {
-                const response = await getOrganizationScholarships()
+                const token = await getToken();
+                const response = await getOrganizationScholarships(token || undefined)
                 console.log(`Loaded ${response.data.length} scholarships for organization:`, user?.id)
                 return response.data
             } catch (error: any) {
@@ -140,8 +141,10 @@ const ManageScholar = () => {
 
     // Delete scholarship mutation
     const deleteScholarshipMutation = useMutation({
-        mutationFn: (id: string) =>
-            deleteScholarship(id),
+        mutationFn: async (id: string) => {
+            const token = await getToken();
+            return deleteScholarship(id, token || undefined);
+        },
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list
             queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
@@ -162,8 +165,10 @@ const ManageScholar = () => {
 
     // Archive scholarship mutation
     const archiveScholarshipMutation = useMutation({
-        mutationFn: (id: string) =>
-            archiveScholarship(id),
+        mutationFn: async (id: string) => {
+            const token = await getToken();
+            return archiveScholarship(id, token || undefined);
+        },
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list
             queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })
@@ -184,8 +189,10 @@ const ManageScholar = () => {
 
     // Update expired scholarships mutation
     const updateExpiredMutation = useMutation({
-        mutationFn: () =>
-            updateExpiredScholarships(),
+        mutationFn: async () => {
+            const token = await getToken();
+            return updateExpiredScholarships(token || undefined);
+        },
         onSuccess: (data) => {
             // Invalidate and refetch scholarships list to show updated statuses
             queryClient.invalidateQueries({ queryKey: ['organization-scholarships'] })

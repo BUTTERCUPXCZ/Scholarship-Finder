@@ -13,18 +13,24 @@ export const getNotifications = async (options?: {
     page?: number;
     limit?: number;
     onlyUnread?: boolean;
-}): Promise<Notification[]> => {
+}, token?: string): Promise<Notification[]> => {
     const params = new URLSearchParams();
     if (options?.page) params.append('page', options.page.toString());
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.onlyUnread) params.append('onlyUnread', 'true');
 
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/notifications?${params}`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers,
     });
 
     if (!response.ok) {
@@ -35,13 +41,19 @@ export const getNotifications = async (options?: {
     return data.data;
 };
 
-export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+export const markNotificationAsRead = async (notificationId: string, token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers,
     });
 
     if (!response.ok) {
@@ -49,13 +61,19 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
     }
 };
 
-export const markAllNotificationsAsRead = async (): Promise<void> => {
+export const markAllNotificationsAsRead = async (token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers,
     });
 
     if (!response.ok) {
@@ -63,13 +81,19 @@ export const markAllNotificationsAsRead = async (): Promise<void> => {
     }
 };
 
-export const deleteNotification = async (notificationId: string): Promise<void> => {
+export const deleteNotification = async (notificationId: string, token?: string): Promise<void> => {
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers,
     });
 
     if (!response.ok) {

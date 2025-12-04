@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Bell, Check, CheckCheck, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../Context/NotificationContext';
-import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } from '../services/notification';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,8 +18,7 @@ const NotificationBell: React.FC = () => {
 
     const handleMarkAsRead = async (notificationId: string) => {
         try {
-            await markNotificationAsRead(notificationId);
-            markAsRead(notificationId);
+            await markAsRead(notificationId);
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -41,8 +39,7 @@ const NotificationBell: React.FC = () => {
 
     const handleRemoveNotification = async (notificationId: string) => {
         try {
-            await deleteNotification(notificationId);
-            removeNotification(notificationId);
+            await removeNotification(notificationId);
         } catch (error) {
             console.error('Error removing notification:', error);
         }
@@ -50,13 +47,11 @@ const NotificationBell: React.FC = () => {
 
     const handleMarkAllAsRead = async () => {
         try {
-            await markAllNotificationsAsRead();
-            markAllAsRead();
+            await markAllAsRead();
         } catch (error) {
             console.error('Error marking all notifications as read:', error);
         }
     };
-
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'SCHOLARSHIP_ACCEPTED':

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { registerUser, type RegisterData } from '../services/auth';
+import { supabase } from '../lib/supabase';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,20 +45,56 @@ export default function Register() {
     const { handleSubmit, watch, formState: { isSubmitting, errors } } = methods;
 
     const mutation = useMutation({
-        mutationFn: (data: RegisterData) => registerUser(data),
-        onSuccess: (_data, _vars) => {
-            toast.success('Account created! Please verify your email.');
-            // navigate to verify page with email from submitted vars is handled below
+        mutationFn: async (data: FormValues) => {
+            // Sign up with Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        fullname: data.fullname,
+                        role: data.role,
+                    },
+                    emailRedirectTo: `${window.location.origin}/login`,
+                },
+            });
+
+            if (authError) throw authError;
+            if (!authData.user) throw new Error('Registration failed');
+
+            // Create user profile in backend database
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/users/register`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: authData.user.id,
+                    fullname: data.fullname,
+                    email: data.email,
+                    role: data.role,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to create user profile');
+            }
+
+            return { user: authData.user, email: data.email };
         },
-        onError: (error: Error) => toast.error(error.message),
-    });
+        onSuccess: (data) => {
+            toast.success('Account created! Please check your email to verify your account.');
+            navigate('/register-success?email=' + encodeURIComponent(data.email));
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Registration failed');
+        },
+    }); 
 
     const passwordValue = watch('password', '');
 
     const onSubmit = (values: FormValues) => {
-        const { confirmPassword, ...data } = values;
-        mutation.mutate(data);
-        navigate('/verify?status=pending&email=' + encodeURIComponent(data.email));
+        mutation.mutate(values);
     };
 
     return (

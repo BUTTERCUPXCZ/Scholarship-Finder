@@ -16,7 +16,7 @@ interface OrganizationStats {
 }
 
 const ProfileOrg = () => {
-    const { user, refetchUser } = useAuth();
+    const { user, refetchUser, getToken } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         fullname: user?.fullname || '',
@@ -28,8 +28,12 @@ const ProfileOrg = () => {
     const { data: stats, isLoading: statsLoading } = useQuery<OrganizationStats>({
         queryKey: ['organization-stats', user?.id],
         queryFn: async () => {
+            const token = await getToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/users/organization/stats`, {
-                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             if (!response.ok) {
                 throw new Error('Failed to fetch stats');
@@ -52,10 +56,11 @@ const ProfileOrg = () => {
 
         setIsUpdating(true);
         try {
+            const token = await getToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
                 method: 'PATCH',
-                credentials: 'include',
                 headers: {
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(formData),

@@ -1,13 +1,19 @@
 import { isNetworkError } from '../hooks/useNetworkStatus'
 
-export const deleteScholarship = async (id: string) => {
+export const deleteScholarship = async (id: string, token?: string) => {
     try {
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scholar/delete-scholar/${id}`, {
             method: "DELETE",
             credentials: 'include', // Include cookies
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: headers,
         });
 
         if (!res.ok) {

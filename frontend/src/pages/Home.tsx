@@ -184,7 +184,7 @@ const Home = () => {
                                 {
                                     icon: Search,
                                     title: "Smart Discovery",
-                                    description: "AI-powered search and filtering to find scholarships perfectly matched to your academic profile and career goals.",
+                                    description: "Advanced search and filtering to find scholarships perfectly matched to your academic profile and career goals.",
                                     color: "bg-blue-50 text-blue-600",
                                     borderColor: "border-blue-200"
                                 },

@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Storage bucket name - use consistent naming without spaces
-export const STORAGE_BUCKET = 'application-documents'
+export const STORAGE_BUCKET = 'Scholarship-finder'
 
 // Helper function to generate file path in storage
 export const generateFilePath = (userId: string, applicationId: string, originalFilename: string): string => {
