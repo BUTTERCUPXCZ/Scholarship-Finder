@@ -64,7 +64,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         }
 
         // Update password using Supabase
-        const { data, error } = await supabaseAdmin.auth.updateUser({
+        const { error } = await supabaseAdmin.auth.updateUser({
             password: newPassword
         });
 
@@ -189,7 +189,7 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
         const duration = Date.now() - startTime;
         console.log(`✅ Verification email resent to ${email} in ${duration}ms`);
 
-        const responseBody: any = {
+        const responseBody: { success: boolean; message: string; confirmationLink?: string; note?: string } = {
             success: true,
             message: "Verification email sent. Please check your inbox."
         };
