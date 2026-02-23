@@ -1,349 +1,499 @@
-import React, { useCallback, useState, useMemo } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
-import { toast } from 'react-hot-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { loginUser } from '@/services/auth';
+import React, { useCallback, useState, useMemo } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
+import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { loginUser } from "@/services/auth";
+import MfaChallenge from "@/components/MfaChallenge";
 
-interface LoginData { email: string; password: string };
-
-
+interface LoginData {
+  email: string;
+  password: string;
+}
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Login = () => {
-    const [form, setForm] = useState<LoginData>({ email: '', password: '' });
-    const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-    const [isEmailNotVerified, setIsEmailNotVerified] = useState(false);
-    const navigate = useNavigate();
-    const location = useLocation();
+  const [form, setForm] = useState<LoginData>({ email: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+  const [isEmailNotVerified, setIsEmailNotVerified] = useState(false);
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [pendingLoginData, setPendingLoginData] = useState<any>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const from = location.state?.from?.pathname;
+  const from = location.state?.from?.pathname;
 
-    // Memoized validation to prevent unnecessary re-renders
-    const validation = useMemo(() => {
-        const errors: { email?: string; password?: string } = {};
+  // Memoized validation to prevent unnecessary re-renders
+  const validation = useMemo(() => {
+    const errors: { email?: string; password?: string } = {};
 
-        if (form.email && !EMAIL_REGEX.test(form.email)) {
-            errors.email = 'Please enter a valid email address';
+    if (form.email && !EMAIL_REGEX.test(form.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (form.password && form.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+
+    return {
+      errors,
+      isValid: !errors.email && !errors.password && form.email && form.password,
+    };
+  }, [form.email, form.password]);
+
+  //LOGIN FUNCTIONALITY USING TANSTACK
+  const mutation = useMutation({
+    mutationFn: async (credentials: LoginData) => {
+      // Sign in with Supabase Auth
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
+
+      if (authError) throw authError;
+      if (!authData.user || !authData.session) throw new Error("Login failed");
+
+      // Check if email is verified
+      if (!authData.user.email_confirmed_at) {
+        throw new Error(
+          "EMAIL_NOT_VERIFIED: Please verify your email before logging in.",
+        );
+      }
+
+      // Call backend to create/validate session and get server-side user (contains role)
+      const serverResp = await loginUser({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (!authData.session?.access_token) {
+        throw new Error("No access token found");
+      }
+
+      return {
+        user: authData.user,
+        session: authData.session,
+        serverUser: serverResp?.user,
+      };
+    },
+    onSuccess: async (data) => {
+      setError(null);
+      setFieldErrors({});
+      setIsEmailNotVerified(false);
+
+      // Check MFA status before proceeding
+      const { data: aalData, error: aalError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+      if (
+        !aalError &&
+        aalData.currentLevel === "aal1" &&
+        aalData.nextLevel === "aal2"
+      ) {
+        // User has MFA enrolled — show TOTP challenge
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const totpFactors = factorsData?.totp || [];
+        if (totpFactors.length > 0) {
+          setMfaFactorId(totpFactors[0].id);
+          setPendingLoginData(data);
+          setMfaStep(true);
+          return;
         }
+      }
 
-        if (form.password && form.password.length < 6) {
-            errors.password = 'Password must be at least 6 characters';
-        }
+      // No MFA required — complete login normally
+      await completeLogin(data);
+    },
+    onError: (error: Error) => {
+      const err: any = error;
+      const serverMsg =
+        err?.response?.data?.message || err?.message || String(err);
 
-        return {
-            errors,
-            isValid: !errors.email && !errors.password && form.email && form.password
+      // Check if email is not verified
+      if (
+        /EMAIL_NOT_VERIFIED|not verified|verify your email/i.test(serverMsg)
+      ) {
+        setIsEmailNotVerified(true);
+        setError(
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+        );
+        return;
+      }
+
+      // Reset email verification flag for other errors
+      setIsEmailNotVerified(false);
+
+      // Handle specific error types for better UX
+      if (serverMsg.toLowerCase().includes("email")) {
+        setFieldErrors({ email: "Email not found or invalid" });
+      } else if (serverMsg.toLowerCase().includes("password")) {
+        setFieldErrors({ password: "Incorrect password" });
+      } else if (serverMsg.toLowerCase().includes("credentials")) {
+        setError("Invalid email or password. Please check your credentials.");
+      } else {
+        setError(serverMsg);
+      }
+
+      if (!/EMAIL_NOT_VERIFIED|not verified/i.test(serverMsg)) {
+        toast.error(serverMsg);
+      }
+    },
+    // Add retry configuration for better resilience
+    retry: (failureCount, error: any) => {
+      // Only retry on network errors, not authentication errors
+      const isAuthError =
+        error?.response?.status === 401 || error?.response?.status === 403;
+      return !isAuthError && failureCount < 2;
+    },
+    retryDelay: 1000, // 1 second delay between retries
+  });
+
+  const completeLogin = useCallback(
+    async (data: any) => {
+      localStorage.setItem("token", data.session.access_token);
+
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      let redirectPath = from;
+      if (!redirectPath) {
+        const role =
+          (data as any)?.serverUser?.role ??
+          (data as any)?.user?.user_metadata?.role ??
+          "";
+        redirectPath =
+          role === "ORGANIZATION" ? "/orgdashboard" : "/scholarship";
+      }
+      navigate(redirectPath, { replace: true });
+    },
+    [from, navigate],
+  );
+
+  // Called after successful MFA verification
+  const handleMfaSuccess = useCallback(async () => {
+    if (pendingLoginData) {
+      // After MFA verify, the session is now aal2 — get the refreshed session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        const updatedData = {
+          ...pendingLoginData,
+          session,
         };
-    }, [form.email, form.password]);
+        await completeLogin(updatedData);
+      } else {
+        await completeLogin(pendingLoginData);
+      }
+    }
+  }, [pendingLoginData, completeLogin]);
 
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setForm((prev) => ({ ...prev, [name]: value }));
 
-    //LOGIN FUNCTIONALITY USING TANSTACK
-    const mutation = useMutation({
-        mutationFn: async (credentials: LoginData) => {
-            // Sign in with Supabase Auth
-            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                email: credentials.email,
-                password: credentials.password,
-            });
+      // Clear errors when user starts typing
+      if (error) setError(null);
+      if (isEmailNotVerified) setIsEmailNotVerified(false);
+      if (fieldErrors[name as keyof typeof fieldErrors]) {
+        setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    },
+    [error, fieldErrors, isEmailNotVerified],
+  );
 
-            if (authError) throw authError;
-            if (!authData.user || !authData.session) throw new Error('Login failed');
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setError(null);
+      setFieldErrors({});
 
-            // Check if email is verified
-            if (!authData.user.email_confirmed_at) {
-                throw new Error('EMAIL_NOT_VERIFIED: Please verify your email before logging in.');
-            }
+      const email = form.email.trim();
+      const password = form.password;
 
-            // Call backend to create/validate session and get server-side user (contains role)
-            const serverResp = await loginUser({ email: credentials.email, password: credentials.password });
+      // Enhanced client-side validation
+      if (!email) {
+        setFieldErrors({ email: "Email is required" });
+        return;
+      }
 
-            if (!authData.session?.access_token) {
-                throw new Error('No access token found');
-            }
+      if (!EMAIL_REGEX.test(email)) {
+        setFieldErrors({ email: "Please enter a valid email address" });
+        return;
+      }
 
-            return {
-                user: authData.user,
-                session: authData.session,
-                serverUser: serverResp?.user,
-            };
-        },
-        onSuccess: async (data) => {
-            setError(null);
-            setFieldErrors({});
-            setIsEmailNotVerified(false);
+      if (!password) {
+        setFieldErrors({ password: "Password is required" });
+        return;
+      }
 
+      if (password.length < 6) {
+        setFieldErrors({ password: "Password must be at least 6 characters" });
+        return;
+      }
 
-            localStorage.setItem('token', data.session.access_token);
+      mutation.mutate({ email, password });
+    },
+    [form, mutation],
+  );
 
-            await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-            });
+  // Auto-dismiss loading toast on completion
+  React.useEffect(() => {
+    if (!mutation.isPending) {
+      toast.dismiss("login-toast");
+    }
+  }, [mutation.isPending]);
 
-            await new Promise(resolve => setTimeout(resolve, 100));
-            let redirectPath = from;
-            if (!redirectPath) {
-                
-                const role = (data as any)?.serverUser?.role ?? (data as any)?.user?.user_metadata?.role ?? '';
-                redirectPath = role === 'ORGANIZATION' ? '/orgdashboard' : '/scholarship';
-            }
-            navigate(redirectPath, { replace: true });
-        },
-        onError: (error: Error) => {
-            const err: any = error;
-            const serverMsg = err?.response?.data?.message || err?.message || String(err);
-
-            // Check if email is not verified
-            if (/EMAIL_NOT_VERIFIED|not verified|verify your email/i.test(serverMsg)) {
-                setIsEmailNotVerified(true);
-                setError('Please verify your email before logging in. Check your inbox for the verification link.');
-                return;
-            }
-
-            // Reset email verification flag for other errors
-            setIsEmailNotVerified(false);
-
-            // Handle specific error types for better UX
-            if (serverMsg.toLowerCase().includes('email')) {
-                setFieldErrors({ email: 'Email not found or invalid' });
-            } else if (serverMsg.toLowerCase().includes('password')) {
-                setFieldErrors({ password: 'Incorrect password' });
-            } else if (serverMsg.toLowerCase().includes('credentials')) {
-                setError('Invalid email or password. Please check your credentials.');
-            } else {
-                setError(serverMsg);
-            }
-
-            if (!/EMAIL_NOT_VERIFIED|not verified/i.test(serverMsg)) {
-                toast.error(serverMsg);
-            }
-        },
-        // Add retry configuration for better resilience
-        retry: (failureCount, error: any) => {
-            // Only retry on network errors, not authentication errors
-            const isAuthError = error?.response?.status === 401 || error?.response?.status === 403;
-            return !isAuthError && failureCount < 2;
-        },
-        retryDelay: 1000, // 1 second delay between retries
-    });
-
-    const handleChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const { name, value } = e.target;
-            setForm(prev => ({ ...prev, [name]: value }));
-
-            // Clear errors when user starts typing
-            if (error) setError(null);
-            if (isEmailNotVerified) setIsEmailNotVerified(false);
-            if (fieldErrors[name as keyof typeof fieldErrors]) {
-                setFieldErrors(prev => ({ ...prev, [name]: undefined }));
-            }
-        },
-        [error, fieldErrors, isEmailNotVerified]
-    );
-
-    const handleSubmit = useCallback(
-        (e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-            setError(null);
-            setFieldErrors({});
-
-            const email = form.email.trim();
-            const password = form.password;
-
-            // Enhanced client-side validation
-            if (!email) {
-                setFieldErrors({ email: 'Email is required' });
-                return;
-            }
-
-            if (!EMAIL_REGEX.test(email)) {
-                setFieldErrors({ email: 'Please enter a valid email address' });
-                return;
-            }
-
-            if (!password) {
-                setFieldErrors({ password: 'Password is required' });
-                return;
-            }
-
-            if (password.length < 6) {
-                setFieldErrors({ password: 'Password must be at least 6 characters' });
-                return;
-            }
-
-            mutation.mutate({ email, password });
-        },
-        [form, mutation]
-    );
-
-    // Auto-dismiss loading toast on completion
-    React.useEffect(() => {
-        if (!mutation.isPending) {
-            toast.dismiss('login-toast');
-        }
-    }, [mutation.isPending]);
-
+  // If MFA challenge is needed, show that instead of the login form
+  if (mfaStep && mfaFactorId) {
     return (
-        <div className="min-h-screen w-full flex">
-            {/* Left - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white px-8 py-12">
-                <div className="max-w-md w-full">
-                    {/* Left: Logo */}
-                    <div className="col-start-1 flex items-center">
-                        <Link to="/home" className="flex items-center gap-3 group select-none">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-sm sm:shadow-lg transition-all duration-300">
-                                <img src="/graduation.png" alt="Scholarship illustration" className="w-full h-auto object-contain" loading="lazy" decoding="async" />
-                            </div>
-                            <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-gray-900">ScholarSphere</h1>
-                        </Link>
-                    </div>
-                    <div className="mb-10">
-                        <h2 className="text-2xl font-semibold text-gray-800 mb-2">Start your College journey</h2>
-                        <p className="text-sm text-gray-600">Access thousands of scholarships and financial aid opportunities.</p>
-                    </div>
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <Alert variant="destructive">
-                                <AlertDescription className="text-sm">
-                                    {error}
-                                    {isEmailNotVerified && (
-                                        <div className="mt-2">
-                                            <Link 
-                                                to={`/register-success?email=${encodeURIComponent(form.email)}`}
-                                                className="text-sm font-medium underline hover:no-underline"
-                                            >
-                                                Resend verification email
-                                            </Link>
-                                        </div>
-                                    )}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                        <div>
-                            <label htmlFor="email" className="block text-sm text-gray-900 mb-1">
-                                Email
-                            </label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                placeholder="example@email.com"
-                                required
-                                disabled={mutation.isPending}
-                                className={`mt-1 ${fieldErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
-                            />
-                            {fieldErrors.email && (
-                                <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>
-                            )}
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="block text-sm text-gray-900 mb-1">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={form.password}
-                                    onChange={handleChange}
-                                    placeholder="Enter your password"
-                                    required
-                                    disabled={mutation.isPending}
-                                    className={fieldErrors.password ? 'border-red-500 focus:border-red-500' : ''}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2 text-gray-400 hover:text-gray-600"
-                                    disabled={mutation.isPending}
-                                >
-                                    {showPassword ? (
-                                        <span aria-label="Hide password">🙈</span>
-                                    ) : (
-                                        <span aria-label="Show password">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" id="Eye" className="w-5 h-5">
-                                                <path fill="none" d="M0 0h48v48H0z"></path>
-                                                <path d="M24 9C14 9 5.46 15.22 2 24c3.46 8.78 12 15 22 15 10.01 0 18.54-6.22 22-15-3.46-8.78-11.99-15-22-15zm0 25c-5.52 0-10-4.48-10-10s4.48-10 10-10 10 4.48 10 10-4.48 10-10 10zm0-16c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" fill="#7f8c8d" className="color000000 svgShape"></path>
-                                            </svg>
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
-                            {fieldErrors.password && (
-                                <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>
-                            )}
-
-                            {/* Remember Me & Forgot Password */}
-                            <div className="flex items-center justify-between mt-3">
-                                <div className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        id="remember"
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                        disabled={mutation.isPending}
-                                    />
-                                    <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-                                        Remember me
-                                    </label>
-                                </div>
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-sm text-blue-500 hover:text-blue-600 hover:underline"
-                                >
-                                    Forgot password?
-                                </Link>
-                            </div>
-                        </div>
-                        <Button
-                            type="submit"
-                            disabled={mutation.isPending || !validation.isValid}
-                            className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold transition"
-                        >
-                            {mutation.isPending ? (
-                                <span className="flex items-center justify-center">
-                                    <svg className="mr-2 w-5 h-5 animate-spin" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="31.416" strokeDashoffset="31.416">
-                                            <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite" />
-                                            <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite" />
-                                        </circle>
-                                    </svg>
-                                    Signing in...
-                                </span>
-                            ) : (
-                                'Sign In'
-                            )}
-                        </Button>
-
-                        <div className="mt-4 text-sm text-gray-600 text-center">
-                            Don't have an account?{' '}
-                            <Link to="/register" className="text-blue-600 hover:underline font-medium">
-                                Sign up
-                            </Link>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {/* Right - Abstract Image */}
-            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50 p-12">
-                <img
-                    src="/project-amico.png"
-                    alt="Abstract background"
-                    className="max-w-[500px] max-h-[80vh] mx-auto object-contain"
-                />
-            </div>
-        </div>
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
+        <MfaChallenge
+          factorId={mfaFactorId}
+          onSuccess={handleMfaSuccess}
+          onCancel={() => {
+            setMfaStep(false);
+            setMfaFactorId(null);
+            setPendingLoginData(null);
+            supabase.auth.signOut();
+          }}
+        />
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen w-full flex">
+      {/* Left - Login Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white px-8 py-12">
+        <div className="max-w-md w-full">
+          {/* Left: Logo */}
+          <div className="col-start-1 flex items-center">
+            <Link
+              to="/home"
+              className="flex items-center gap-3 group select-none"
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-sm sm:shadow-lg transition-all duration-300">
+                <img
+                  src="/graduation.png"
+                  alt="Scholarship illustration"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-gray-900">
+                ScholarSphere
+              </h1>
+            </Link>
+          </div>
+          <div className="mb-10">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+              Start your College journey
+            </h2>
+            <p className="text-sm text-gray-600">
+              Access thousands of scholarships and financial aid opportunities.
+            </p>
+          </div>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-sm">
+                  {error}
+                  {isEmailNotVerified && (
+                    <div className="mt-2">
+                      <Link
+                        to={`/register-success?email=${encodeURIComponent(form.email)}`}
+                        className="text-sm font-medium underline hover:no-underline"
+                      >
+                        Resend verification email
+                      </Link>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm text-gray-900 mb-1"
+              >
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="example@email.com"
+                required
+                disabled={mutation.isPending}
+                className={`mt-1 ${fieldErrors.email ? "border-red-500 focus:border-red-500" : ""}`}
+              />
+              {fieldErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm text-gray-900 mb-1"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  required
+                  disabled={mutation.isPending}
+                  className={
+                    fieldErrors.password
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2 text-gray-400 hover:text-gray-600"
+                  disabled={mutation.isPending}
+                >
+                  {showPassword ? (
+                    <span aria-label="Hide password">🙈</span>
+                  ) : (
+                    <span aria-label="Show password">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 48 48"
+                        id="Eye"
+                        className="w-5 h-5"
+                      >
+                        <path fill="none" d="M0 0h48v48H0z"></path>
+                        <path
+                          d="M24 9C14 9 5.46 15.22 2 24c3.46 8.78 12 15 22 15 10.01 0 18.54-6.22 22-15-3.46-8.78-11.99-15-22-15zm0 25c-5.52 0-10-4.48-10-10s4.48-10 10-10 10 4.48 10 10-4.48 10-10 10zm0-16c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z"
+                          fill="#7f8c8d"
+                          className="color000000 svgShape"
+                        ></path>
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="text-red-500 text-xs mt-1">
+                  {fieldErrors.password}
+                </p>
+              )}
+
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={mutation.isPending}
+                  />
+                  <label
+                    htmlFor="remember"
+                    className="text-sm text-gray-600 cursor-pointer"
+                  >
+                    Remember me
+                  </label>
+                </div>
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-blue-500 hover:text-blue-600 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || !validation.isValid}
+              className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold transition"
+            >
+              {mutation.isPending ? (
+                <span className="flex items-center justify-center">
+                  <svg
+                    className="mr-2 w-5 h-5 animate-spin"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeDasharray="31.416"
+                      strokeDashoffset="31.416"
+                    >
+                      <animate
+                        attributeName="stroke-dasharray"
+                        dur="2s"
+                        values="0 31.416;15.708 15.708;0 31.416"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        dur="2s"
+                        values="0;-15.708;-31.416"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+
+            <div className="mt-4 text-sm text-gray-600 text-center">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-blue-600 hover:underline font-medium"
+              >
+                Sign up
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+      {/* Right - Abstract Image */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50 p-12">
+        <img
+          src="/project-amico.png"
+          alt="Abstract background"
+          className="max-w-[500px] max-h-[80vh] mx-auto object-contain"
+        />
+      </div>
+    </div>
+  );
 };
 
 export default Login;

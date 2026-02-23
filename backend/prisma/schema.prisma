@@ -19,6 +19,7 @@ model User {
   archivedScholarships Archive[]            @relation("ArchivedScholarships")
   scholarships         Scholarship[]        @relation("ScholarshipOrg")
   notifications        Notification[]
+  recoveryCodes        RecoveryCode[]
 
   @@index([email])
 }
@@ -146,4 +147,15 @@ enum NotificationType {
   SCHOLARSHIP_ACCEPTED
   SCHOLARSHIP_REJECTED
   SCHOLARSHIP_UPDATE
+}
+
+model RecoveryCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  codeHash  String
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
