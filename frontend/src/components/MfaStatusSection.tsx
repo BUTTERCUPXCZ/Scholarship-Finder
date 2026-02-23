@@ -10,8 +10,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Shield, ShieldCheck, ShieldAlert, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
+import MfaEnroll from "./MfaEnroll";
+import RecoveryCodesDialog from "./RecoveryCodesDialog";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -27,10 +36,14 @@ interface MfaStatus {
 }
 
 const MfaStatusSection = () => {
-  const { getToken } = useAuth();
+  const { getToken, refreshMfaStatus } = useAuth();
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
+  const [confirmRegenOpen, setConfirmRegenOpen] = useState(false);
+  const [recoveryCodesDialogOpen, setRecoveryCodesDialogOpen] = useState(false);
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
 
   const fetchStatus = async () => {
     try {
@@ -62,11 +75,7 @@ const MfaStatusSection = () => {
   }, []);
 
   const handleRegenerateRecoveryCodes = async () => {
-    const confirmed = window.confirm(
-      "This will invalidate all your existing recovery codes and generate new ones. Continue?",
-    );
-    if (!confirmed) return;
-
+    setConfirmRegenOpen(false);
     setIsRegenerating(true);
     try {
       const token = await getToken();
@@ -82,32 +91,24 @@ const MfaStatusSection = () => {
       if (!response.ok) throw new Error("Failed to regenerate recovery codes");
 
       const data = await response.json();
-
-      // Show codes in a dialog
-      const codesText = data.codes.join("\n");
-      const copied = await navigator.clipboard
-        .writeText(codesText)
-        .then(() => true)
-        .catch(() => false);
-
-      toast.success(
-        copied
-          ? "New recovery codes generated and copied to clipboard!"
-          : "New recovery codes generated! Please copy them manually.",
-        { duration: 5000 },
-      );
-
-      // Show an alert with the codes (since they won't be shown again)
-      alert(
-        `Your new recovery codes:\n\n${data.codes.map((c: string, i: number) => `${i + 1}. ${c}`).join("\n")}\n\nThese codes have been copied to your clipboard. Save them in a safe place — they will not be shown again.`,
-      );
-
-      await fetchStatus();
+      setGeneratedCodes(data.codes);
+      setRecoveryCodesDialogOpen(true);
     } catch {
       toast.error("Failed to regenerate recovery codes");
     } finally {
       setIsRegenerating(false);
     }
+  };
+
+  const handleRecoveryCodesDone = async () => {
+    setGeneratedCodes([]);
+    await fetchStatus();
+  };
+
+  const handleEnrollComplete = async () => {
+    setEnrollDialogOpen(false);
+    await fetchStatus();
+    await refreshMfaStatus();
   };
 
   if (isLoading) {
@@ -182,7 +183,7 @@ const MfaStatusSection = () => {
                 </div>
               </div>
               <Button
-                onClick={handleRegenerateRecoveryCodes}
+                onClick={() => setConfirmRegenOpen(true)}
                 disabled={isRegenerating}
                 variant="outline"
                 size="sm"
@@ -210,15 +211,81 @@ const MfaStatusSection = () => {
             )}
           </>
         ) : (
-          <Alert className="border-amber-200 bg-amber-50">
-            <ShieldAlert className="w-4 h-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              Two-factor authentication is not set up. You will be prompted to
-              set it up on your next login.
-            </AlertDescription>
-          </Alert>
+          <>
+            <Alert className="border-amber-200 bg-amber-50">
+              <ShieldAlert className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                Two-factor authentication is not set up. Enable it now to
+                secure your account.
+              </AlertDescription>
+            </Alert>
+
+            <Button
+              onClick={() => setEnrollDialogOpen(true)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Enable Two-Factor Authentication
+            </Button>
+
+            <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+              <DialogContent className="max-w-lg p-0 overflow-hidden">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Set Up Two-Factor Authentication</DialogTitle>
+                  <DialogDescription>
+                    Follow the steps to enable two-factor authentication on
+                    your account.
+                  </DialogDescription>
+                </DialogHeader>
+                {enrollDialogOpen && (
+                  <MfaEnroll onComplete={handleEnrollComplete} />
+                )}
+              </DialogContent>
+            </Dialog>
+          </>
         )}
       </CardContent>
+
+      {/* Confirm regeneration dialog */}
+      <Dialog open={confirmRegenOpen} onOpenChange={setConfirmRegenOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="w-8 h-8 text-blue-600" />
+            </div>
+            <DialogTitle className="text-center text-2xl text-gray-900">
+              Regenerate Recovery Codes?
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
+              This will invalidate all your existing recovery codes and generate
+              new ones. Make sure to save the new codes in a safe place.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-2">
+            <Button
+              onClick={() => setConfirmRegenOpen(false)}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRegenerateRecoveryCodes}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Regenerate
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recovery codes display dialog */}
+      <RecoveryCodesDialog
+        open={recoveryCodesDialogOpen}
+        onOpenChange={setRecoveryCodesDialogOpen}
+        codes={generatedCodes}
+        onDone={handleRecoveryCodesDone}
+      />
     </Card>
   );
 };

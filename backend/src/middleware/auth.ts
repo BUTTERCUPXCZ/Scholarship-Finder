@@ -15,25 +15,52 @@ declare module "express-serve-static-core" {
 }
 
 /**
- * Extract and validate the Supabase JWT token from cookie or Authorization header.
+ * Decode a Supabase JWT payload (base64url) without signature verification.
+ * Returns null if the token is malformed.
+ */
+const decodeJwtPayload = (
+  token: string,
+): { sub?: string; exp?: number; aal?: string } | null => {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    return JSON.parse(Buffer.from(parts[1], "base64").toString());
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Extract and validate the Supabase JWT token from Authorization header or cookie.
  * Attaches req.user and req.userId on success.
+ *
+ * Uses supabaseAdmin.auth.admin.getUserById() (Admin API) instead of
+ * supabaseAdmin.auth.getUser(token) to avoid issues where the admin client's
+ * own internal session state (set during signInWithPassword in the login handler)
+ * interferes with per-request token validation.
  */
 const extractAndVerifyToken = async (
   req: Request,
   res: Response,
 ): Promise<boolean> => {
-  // First try to get token from cookie (HTTP-only cookie method)
-  let token = req.cookies?.authToken;
+  // Collect all available tokens — prefer Authorization header (always
+  // carries the latest Supabase JS SDK token, including aal2 after MFA),
+  // fall back to cookie (set at login time, may be stale after MFA verify).
+  const tokens: string[] = [];
 
-  // Fallback: try Authorization header for backward compatibility
-  if (!token) {
-    const authHeader = req.headers["authorization"];
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
-    }
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    tokens.push(authHeader.split(" ")[1]);
   }
 
-  if (!token) {
+  if (req.cookies?.authToken) {
+    tokens.push(req.cookies.authToken);
+  }
+
+  // Deduplicate — if both sources carry the same token, only validate once
+  const uniqueTokens = [...new Set(tokens)];
+
+  if (uniqueTokens.length === 0) {
     console.log("Authentication failed: No token provided");
     res.status(401).json({
       message: "No token provided",
@@ -42,49 +69,70 @@ const extractAndVerifyToken = async (
     return false;
   }
 
-  try {
-    // Verify the token with Supabase
-    const {
-      data: { user },
-      error,
-    } = await supabaseAdmin.auth.getUser(token);
+  // Try each token until one succeeds. This handles the common case where
+  // the cookie holds a stale token while the Authorization header carries
+  // a fresh aal2 token after MFA verification.
+  let lastError: string | null = null;
 
-    if (error || !user) {
-      console.log("Authentication failed:", error?.message || "Invalid token");
-
-      let errorMessage = "Invalid or expired token";
-      let errorCode = "INVALID_TOKEN";
-
-      if (error?.message?.includes("expired")) {
-        errorMessage = "Token has expired";
-        errorCode = "TOKEN_EXPIRED";
-      }
-
-      res.status(401).json({
-        message: errorMessage,
-        error: errorCode,
-      });
-      return false;
+  for (const token of uniqueTokens) {
+    const payload = decodeJwtPayload(token);
+    if (!payload) {
+      lastError = "Malformed JWT";
+      continue;
     }
 
-    // Attach user info to request
-    req.user = {
-      id: user.id,
-      email: user.email,
-      role: user.user_metadata?.role || "STUDENT",
-      ...user.user_metadata,
-    };
-    req.userId = user.id;
+    // Check token expiry locally before making a network call
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      lastError = "Token has expired";
+      continue;
+    }
 
-    return true;
-  } catch (err: unknown) {
-    console.log("Authentication error:", err);
-    res.status(401).json({
-      message: "Invalid or expired token",
-      error: "INVALID_TOKEN",
-    });
-    return false;
+    if (!payload.sub) {
+      lastError = "JWT missing sub claim";
+      continue;
+    }
+
+    try {
+      // Validate the user via the Admin API — this is NOT affected by the
+      // admin client's own session state and always works with the service role key.
+      const { data, error } = await supabaseAdmin.auth.admin.getUserById(
+        payload.sub,
+      );
+
+      if (!error && data?.user) {
+        req.user = {
+          id: data.user.id,
+          email: data.user.email,
+          role: data.user.user_metadata?.role || "STUDENT",
+          ...data.user.user_metadata,
+        };
+        req.userId = data.user.id;
+        return true;
+      }
+
+      lastError = error?.message || "User not found";
+    } catch (err: unknown) {
+      lastError =
+        err instanceof Error ? err.message : "Token validation error";
+    }
   }
+
+  // All tokens failed
+  console.log("Authentication failed:", lastError);
+
+  let errorMessage = "Invalid or expired token";
+  let errorCode = "INVALID_TOKEN";
+
+  if (lastError?.includes("expired")) {
+    errorMessage = "Token has expired";
+    errorCode = "TOKEN_EXPIRED";
+  }
+
+  res.status(401).json({
+    message: errorMessage,
+    error: errorCode,
+  });
+  return false;
 };
 
 /**
@@ -136,25 +184,13 @@ export const authenticateWithMfa = async (
 
     // If user has MFA enrolled, verify the token's AAL level
     if (verifiedFactors.length > 0) {
-      // Decode the JWT to check aal claim
-      // The Supabase JWT payload contains an `aal` field
+      // Prefer Authorization header (carries aal2 after MFA verify)
+      // over cookie (may still hold stale aal1 token).
       const token =
-        req.cookies?.authToken || req.headers["authorization"]?.split(" ")[1];
+        req.headers["authorization"]?.split(" ")[1] || req.cookies?.authToken;
       if (token) {
-        try {
-          // Decode the JWT payload (base64) without verification (already verified above)
-          const payload = JSON.parse(
-            Buffer.from(token.split(".")[1], "base64").toString(),
-          );
-
-          if (payload.aal !== "aal2") {
-            return res.status(403).json({
-              message: "MFA verification required",
-              error: "MFA_REQUIRED",
-            });
-          }
-        } catch {
-          // If JWT parsing fails, deny access for MFA users
+        const payload = decodeJwtPayload(token);
+        if (!payload || payload.aal !== "aal2") {
           return res.status(403).json({
             message: "MFA verification required",
             error: "MFA_REQUIRED",

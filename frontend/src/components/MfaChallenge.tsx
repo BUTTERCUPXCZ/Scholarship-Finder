@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../AuthProvider/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,6 +23,7 @@ interface MfaChallengeProps {
 }
 
 const MfaChallenge = ({ factorId, onSuccess, onCancel }: MfaChallengeProps) => {
+  const { refreshMfaStatus } = useAuth();
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +73,28 @@ const MfaChallenge = ({ factorId, onSuccess, onCancel }: MfaChallengeProps) => {
       });
 
       if (verifyError) throw verifyError;
+
+      // Supabase has upgraded the session to aal2 in localStorage.
+      // Sync the new aal2 token to the backend HTTP-only cookie so that
+      // cookie-based API calls pass the MFA enforcement check.
+      const { data: { session: aal2Session } } = await supabase.auth.getSession();
+      if (aal2Session?.access_token) {
+        // Send the aal2 token as the Authorization header so the
+        // authenticate middleware can validate it even if the cookie
+        // from the initial login is not sent (e.g., cross-port in dev).
+        await fetch(`${API_URL}/users/refresh-session`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${aal2Session.access_token}`,
+          },
+          body: JSON.stringify({ token: aal2Session.access_token }),
+        });
+      }
+
+      // Update AuthProvider MFA state so protected routes reflect aal2
+      await refreshMfaStatus();
 
       toast.success("MFA verification successful");
       onSuccess();
@@ -126,23 +150,8 @@ const MfaChallenge = ({ factorId, onSuccess, onCancel }: MfaChallengeProps) => {
         throw new Error(data.message || "Invalid recovery code");
       }
 
-      // Recovery code verified — now complete the MFA challenge via Supabase
-      const { error: challengeError } = await supabase.auth.mfa.challenge({
-        factorId,
-      });
-
-      if (challengeError) {
-        // Recovery code was used but MFA challenge failed
-        // The user's recovery code is consumed; they need to try a different approach
-        toast.error(
-          "Recovery code accepted but MFA challenge failed. Please try again.",
-        );
-        throw challengeError;
-      }
-
-      // For recovery flow, we need to unenroll and re-enroll
-      // Since we can't bypass TOTP with recovery codes in Supabase directly,
-      // we unenroll the factor via admin API and redirect to re-enrollment
+      // Recovery code accepted — unenroll the TOTP factor via backend admin API.
+      // After this the factor no longer exists, so we must NOT call mfa.challenge().
       const unenrollResponse = await fetch(`${API_URL}/mfa/unenroll`, {
         method: "POST",
         credentials: "include",
@@ -157,16 +166,26 @@ const MfaChallenge = ({ factorId, onSuccess, onCancel }: MfaChallengeProps) => {
         throw new Error("Failed to reset MFA after recovery");
       }
 
-      if (data.remainingCodes !== undefined) {
-        toast.success(
-          `Recovery code accepted. ${data.remainingCodes} codes remaining.`,
-        );
-      } else {
-        toast.success("Recovery code accepted. MFA has been reset.");
+      // Refresh the Supabase session — now that the TOTP factor is gone,
+      // the session drops back to aal1. Sync the refreshed token to the cookie.
+      const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+      if (refreshedSession?.access_token) {
+        await fetch(`${API_URL}/users/refresh-session`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          // This will return 403 (aal1) but that's expected — we just want
+          // to clear the old cookie. Use a plain cookie-clear approach instead.
+          body: JSON.stringify({ token: refreshedSession.access_token }),
+        }).catch(() => {
+          // Ignore 403 MFA_NOT_VERIFIED — the cookie will be updated on next login
+        });
       }
 
-      // Refresh the session to get updated auth state
-      await supabase.auth.refreshSession();
+      // Refresh AuthProvider MFA state (mfaEnrolled will now be false)
+      await refreshMfaStatus();
+
+      toast.success("Recovery code accepted. MFA has been reset. Please set up MFA again.");
       onSuccess();
     } catch (err: unknown) {
       setError(

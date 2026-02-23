@@ -168,7 +168,10 @@ const Login = () => {
         refresh_token: data.session.refresh_token,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for onAuthStateChange to fire and AuthProvider to update
+      // user state before navigating — prevents 401s from API requests
+      // that fire immediately on mount of the destination page.
+      await new Promise((resolve) => setTimeout(resolve, 300));
       let redirectPath = from;
       if (!redirectPath) {
         const role =
@@ -186,19 +189,17 @@ const Login = () => {
   // Called after successful MFA verification
   const handleMfaSuccess = useCallback(async () => {
     if (pendingLoginData) {
-      // After MFA verify, the session is now aal2 — get the refreshed session
+      // After mfa.verify(), Supabase upgrades the session to aal2 internally.
+      // Use refreshSession() (not getSession()) to force-fetch the latest
+      // aal2 token from the server so we're guaranteed to have a fresh token
+      // before navigating and firing authenticated API requests.
       const {
         data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const updatedData = {
-          ...pendingLoginData,
-          session,
-        };
-        await completeLogin(updatedData);
-      } else {
-        await completeLogin(pendingLoginData);
-      }
+      } = await supabase.auth.refreshSession();
+      const updatedData = session
+        ? { ...pendingLoginData, session }
+        : pendingLoginData;
+      await completeLogin(updatedData);
     }
   }, [pendingLoginData, completeLogin]);
 

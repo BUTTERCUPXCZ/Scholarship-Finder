@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserProfile = async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/users/me`, {
+        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -190,7 +191,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
-    return data.session?.access_token || null;
+    if (data.session?.access_token) {
+      return data.session.access_token;
+    }
+    // Fallback: token stored by completeLogin during the login flow.
+    // Covers the brief window after setSession() before onAuthStateChange
+    // has fired and the Supabase client's internal cache is warm.
+    return localStorage.getItem("token");
   }, []);
 
   const login = useCallback((u: User) => {

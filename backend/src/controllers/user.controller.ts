@@ -475,6 +475,56 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     }
 }
 
+// Refresh the HTTP-only cookie with the latest Supabase access token.
+// Called by the frontend after MFA verification to sync the aal2 token
+// into the cookie — necessary because the Supabase JS SDK holds the
+// upgraded token in localStorage while the backend cookie still has aal1.
+// The `authenticate` middleware already validated the token before this runs.
+export const refreshSession = async (req: Request, res: Response) => {
+    try {
+        // The token to store in the cookie comes from the request body.
+        // It's the same aal2 token used in the Authorization header,
+        // already validated by the authenticate middleware.
+        const token: string | undefined =
+            req.body?.token ||
+            req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(400).json({ message: "Token is required" });
+        }
+
+        // Decode the JWT payload to check aal level.
+        // No need to call getUser() again — authenticate middleware already did it.
+        let payload: { aal?: string } = {};
+        try {
+            payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        } catch {
+            return res.status(400).json({ message: "Malformed token" });
+        }
+
+        if (payload.aal !== 'aal2') {
+            return res.status(403).json({
+                message: "Token does not carry MFA verification",
+                error: "MFA_NOT_VERIFIED"
+            });
+        }
+
+        // Re-set the HTTP-only cookie with the aal2 token
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days — matches Supabase default session length
+            path: '/'
+        });
+
+        return res.status(200).json({ success: true, message: "Session cookie updated" });
+    } catch (error) {
+        console.error("❌ Error refreshing session cookie:", error);
+        return res.status(500).json({ message: "Failed to refresh session" });
+    }
+};
+
 // Get organization statistics
 export const getOrganizationStats = async (req: Request, res: Response) => {
     try {

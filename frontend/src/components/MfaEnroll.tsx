@@ -139,7 +139,16 @@ const MfaEnroll = ({ onComplete }: MfaEnrollProps) => {
   };
 
   const downloadRecoveryCodes = () => {
-    const codesText = `ScholarSphere Recovery Codes\n${"=".repeat(30)}\n\nSave these codes in a safe place. Each code can only be used once.\n\n${recoveryCodes.map((code, i) => `${i + 1}. ${code}`).join("\n")}\n\nGenerated: ${new Date().toISOString()}`;
+    const codesText = [
+      "ScholarSphere Recovery Codes",
+      "=".repeat(30),
+      "",
+      "Save these codes in a safe place. Each code can only be used once.",
+      "",
+      ...recoveryCodes.map((code, i) => `${i + 1}. ${code}`),
+      "",
+      `Generated: ${new Date().toISOString()}`,
+    ].join("\n");
     const blob = new Blob([codesText], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
