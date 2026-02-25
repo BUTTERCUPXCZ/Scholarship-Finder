@@ -15,6 +15,8 @@ import scholarRoutes from "./routes/scholar.routes";
 import applicationRoutes from "./routes/application.routes";
 import uploadRoutes from "./routes/upload.routes";
 import notificationRoutes from "./routes/notification.routes";
+import auditLogRoutes from "./routes/auditLog.routes";
+import adminRoutes from "./routes/admin.routes";
 import rateLimit from "express-rate-limit";
 import { initializeSocket } from "./services/socketService";
 import { connectRedis } from "./config/redisClient";
@@ -98,6 +100,8 @@ app.use("/scholar", scholarRoutes);
 app.use("/applications", applicationRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/audit-logs", auditLogRoutes);
+app.use("/admin", adminRoutes);
 
 const server = http.createServer(app);
 

@@ -20,6 +20,7 @@ model User {
   scholarships         Scholarship[]        @relation("ScholarshipOrg")
   notifications        Notification[]
   recoveryCodes        RecoveryCode[]
+  auditLogs            AuditLog[]           @relation("UserAuditLogs")
 
   @@index([email])
 }
@@ -158,4 +159,57 @@ model RecoveryCode {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String?     @db.Uuid
+  action     AuditAction
+  resource   String?
+  resourceId String?     @db.Uuid
+  ipAddress  String
+  userAgent  String
+  status     AuditStatus
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  user User? @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, action])
+  @@index([action, status])
+  @@index([createdAt, action])
+}
+
+enum AuditAction {
+  USER_REGISTER
+  USER_LOGIN
+  USER_LOGOUT
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_COMPLETE
+  EMAIL_VERIFICATION_RESEND
+  SESSION_REFRESH
+  MFA_RECOVERY_CODES_GENERATED
+  MFA_RECOVERY_CODE_USED
+  MFA_UNENROLLED
+  MFA_STATUS_CHECKED
+  PROFILE_UPDATED
+  SCHOLARSHIP_CREATED
+  SCHOLARSHIP_UPDATED
+  SCHOLARSHIP_DELETED
+  SCHOLARSHIP_ARCHIVED
+  SCHOLARSHIP_RESTORED
+  ARCHIVED_SCHOLARSHIP_DELETED
+  APPLICATION_SUBMITTED
+  APPLICATION_WITHDRAWN
+  APPLICATION_STATUS_UPDATED
+  FILE_UPLOADED
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
 }

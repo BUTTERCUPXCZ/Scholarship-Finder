@@ -13,7 +13,8 @@
     "type-check": "tsc --noEmit",
     "render-build": "npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build",
     "test": "jest --config jest.config.ts --runInBand",
-    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'"
+    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'",
+    "seed": "ts-node --skip-project prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

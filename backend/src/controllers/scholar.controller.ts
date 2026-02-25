@@ -9,6 +9,8 @@ import {
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
 import { redisClient } from "../config/redisClient";
+import { createAuditLog, extractIpAddress } from "../services/auditLog.service";
+import { AuditAction, AuditStatus } from "@prisma/client";
 
 export const createScholar = async (req: Request, res: Response) => {
   try {
@@ -60,6 +62,7 @@ export const createScholar = async (req: Request, res: Response) => {
       );
     }
 
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_CREATED, resource: 'SCHOLARSHIP', resourceId: scholar.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { title: scholar.title, type: scholar.type } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res
       .status(201)
       .json({ success: true, message: "Scholarship Created", data: scholar });
@@ -79,6 +82,7 @@ export const createScholar = async (req: Request, res: Response) => {
         .json({ message: "Invalid providerId (foreign key failed)" });
     }
     console.error("Error Create Scholar:", error);
+    createAuditLog({ userId: (req.userId as string) ?? null, action: AuditAction.SCHOLARSHIP_CREATED, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'internal_error' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -365,6 +369,7 @@ export const updateScholar = async (req: Request, res: Response) => {
     }
 
     if (existingScholarship.providerId !== providerId) {
+      createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_UPDATED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'forbidden_not_owner' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(403).json({
         success: false,
         message: "Forbidden: You can only update your own scholarships",
@@ -407,6 +412,7 @@ export const updateScholar = async (req: Request, res: Response) => {
       console.warn("Redis cache invalidation warning:", err);
     }
 
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_UPDATED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Scholarship updated successfully",
@@ -448,6 +454,7 @@ export const deleteScholarship = async (req: Request, res: Response) => {
     }
 
     if (scholarship.providerId !== providerId) {
+      createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_DELETED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'forbidden_not_owner' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(403).json({
         success: false,
         message: "Forbidden: You can only delete your own scholarships",
@@ -477,6 +484,7 @@ export const deleteScholarship = async (req: Request, res: Response) => {
       console.warn("Redis cache invalidation error:", err);
     }
 
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_DELETED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Scholarship deleted successfully",
@@ -550,6 +558,7 @@ export const ArchiveScholarship = async (req: Request, res: Response) => {
       data: { status: "EXPIRED" },
     });
 
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_ARCHIVED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { archiveId: archivedScholarship.id } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Scholarship archived successfully",
@@ -770,6 +779,7 @@ export const DeleteArchivedScholarship = async (
           "Archive record not found or you don't have permission to delete it",
       });
     }
+    createAuditLog({ userId: providerId, action: AuditAction.ARCHIVED_SCHOLARSHIP_DELETED, resource: 'ARCHIVE', resourceId: archiveId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Archived scholarship record deleted successfully",
@@ -830,6 +840,7 @@ export const RestoreArchivedScholarship = async (
     await prisma.archive.delete({
       where: { id: archiveId },
     });
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_RESTORED, resource: 'SCHOLARSHIP', resourceId: restoredScholarship.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { fromArchiveId: archiveId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Archived scholarship restored successfully",

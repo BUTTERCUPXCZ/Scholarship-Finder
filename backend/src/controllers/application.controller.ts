@@ -3,6 +3,8 @@ import { submitApplicationSchema } from '../Validators/Application';
 import { prisma } from '../lib/db';
 import { createNotification } from '../services/notification';
 import { redisClient } from '../config/redisClient';
+import { createAuditLog, extractIpAddress } from '../services/auditLog.service';
+import { AuditAction, AuditStatus } from '@prisma/client';
 
 /**
  * Submit an application for a scholarship
@@ -87,6 +89,7 @@ export const submitApplication = async (req: Request, res: Response) => {
             console.log("Redis cache invalidation failed, but continuing:", redisError);
         }
 
+        createAuditLog({ userId, action: AuditAction.APPLICATION_SUBMITTED, resource: 'APPLICATION', resourceId: application.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { scholarshipId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(201).json({
             success: true,
             message: 'Application submitted successfully',
@@ -259,6 +262,7 @@ export const withdrawApplication = async (req: Request, res: Response) => {
             console.log("Redis cache invalidation failed, but continuing:", redisError);
         }
 
+        createAuditLog({ userId, action: AuditAction.APPLICATION_WITHDRAWN, resource: 'APPLICATION', resourceId: id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
             success: true,
             message: 'Application withdrawn successfully'
@@ -413,6 +417,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
             console.log("Redis cache invalidation failed, but continuing:", redisError);
         }
 
+        createAuditLog({ userId, action: AuditAction.APPLICATION_STATUS_UPDATED, resource: 'APPLICATION', resourceId: id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { newStatus: status, applicationUserId: application.userId, scholarshipId: application.scholarshipId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
             success: true,
             message: 'Application status updated successfully',

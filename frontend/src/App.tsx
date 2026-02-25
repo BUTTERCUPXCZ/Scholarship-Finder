@@ -18,6 +18,9 @@ const ManageScholar = React.lazy(() => import("./organization/ManageScholar"));
 const Archive = React.lazy(() => import("./organization/Archive"));
 const MfaSetup = React.lazy(() => import("./pages/MfaSetup"));
 const MfaVerify = React.lazy(() => import("./pages/MfaVerify"));
+const AdminDashboard = React.lazy(() => import("./admin/AdminDashboard"));
+const AdminUsers = React.lazy(() => import("./admin/AdminUsers"));
+const AdminAuditLogs = React.lazy(() => import("./admin/AdminAuditLogs"));
 import { AuthProvider } from "./AuthProvider/AuthProvider";
 import { NotificationProvider } from "./Context/NotificationContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -234,6 +237,38 @@ function App() {
                     <ProtectedRoute>
                       <div className={!isOnline ? "pt-16" : ""}>
                         <MfaVerify />
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin routes */}
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <div className={!isOnline ? "pt-16" : ""}>
+                        <AdminDashboard />
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <div className={!isOnline ? "pt-16" : ""}>
+                        <AdminUsers />
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/audit-logs"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <div className={!isOnline ? "pt-16" : ""}>
+                        <AdminAuditLogs />
                       </div>
                     </ProtectedRoute>
                   }

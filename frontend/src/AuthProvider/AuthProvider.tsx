@@ -15,7 +15,7 @@ interface User {
   id: string;
   fullname: string;
   email: string;
-  role: "STUDENT" | "ORGANIZATION";
+  role: "STUDENT" | "ORGANIZATION" | "ADMIN";
   createdAt?: string;
   updatedAt?: string;
   [key: string]: any;

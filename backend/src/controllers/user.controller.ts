@@ -3,6 +3,8 @@ import { prisma } from "../lib/db";
 import { withDatabaseRetry, handleDatabaseError } from "../lib/databaseHealth";
 import { AuthPerformanceMonitor } from "../lib/authPerformanceMonitor";
 import { supabaseAdmin } from "../config/supabaseClient";
+import { createAuditLog, extractIpAddress } from "../services/auditLog.service";
+import { AuditAction, AuditStatus } from "@prisma/client";
 
 
 
@@ -24,6 +26,7 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
             const duration = Date.now() - startTime;
             AuthPerformanceMonitor.recordMetric(email, 'password-reset-request', duration, false, 'user_not_found');
             console.log(`❌ Password reset requested for non-existent email in ${duration}ms`);
+            createAuditLog({ userId: null, action: AuditAction.PASSWORD_RESET_REQUEST, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { email, reason: 'user_not_found' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
             return res.status(404).json({ message: "User not found" });
         }
 
@@ -42,6 +45,7 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
         const duration = Date.now() - startTime;
         AuthPerformanceMonitor.recordMetric(email, 'password-reset-request', duration, true);
         console.log(`✅ Password reset email sent to ${email} in ${duration}ms`);
+        createAuditLog({ userId: null, action: AuditAction.PASSWORD_RESET_REQUEST, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { email } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
         return res.status(200).json({ message: "Password reset email sent. Please check your inbox." });
     } catch (error) {
@@ -71,11 +75,13 @@ export const resetPassword = async (req: Request, res: Response) => {
         if (error) {
             const duration = Date.now() - startTime;
             console.error(`❌ Password reset failed in ${duration}ms:`, error);
+            createAuditLog({ userId: null, action: AuditAction.PASSWORD_RESET_COMPLETE, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'invalid_or_expired_token' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
             return res.status(400).json({ message: "Failed to reset password. Token may be invalid or expired." });
         }
 
         const duration = Date.now() - startTime;
         console.log(`✅ Password reset successful in ${duration}ms`);
+        createAuditLog({ userId: null, action: AuditAction.PASSWORD_RESET_COMPLETE, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
         return res.status(200).json({ message: "Password reset successfully" });
     } catch (error) {
@@ -119,6 +125,7 @@ export const userRegister = async (req: Request, res: Response) => {
 
         const duration = Date.now() - startTime;
         console.log(`✅ User profile created successfully in ${duration}ms`);
+        createAuditLog({ userId: response.id, action: AuditAction.USER_REGISTER, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { email: response.email, role: response.role } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
         return res.status(201).json({
             success: true,
@@ -134,6 +141,7 @@ export const userRegister = async (req: Request, res: Response) => {
     } catch (error: unknown) {
         const duration = Date.now() - startTime;
         console.error(`❌ User profile creation failed in ${duration}ms:`, error);
+        createAuditLog({ userId: null, action: AuditAction.USER_REGISTER, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { email: req.body?.email ?? null, reason: 'system_error' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
         const dbError = handleDatabaseError(error, "User Registration");
         return res.status(500).json({
@@ -200,6 +208,7 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
             responseBody.note = "⚠️ Development mode: Use the confirmationLink to verify your email";
         }
 
+        createAuditLog({ userId: user.id, action: AuditAction.EMAIL_VERIFICATION_RESEND, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { email } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         return res.status(200).json(responseBody);
 
     } catch (error) {
@@ -229,9 +238,10 @@ export const userLogin = async (req: Request, res: Response) => {
             const duration = Date.now() - startTime;
             AuthPerformanceMonitor.recordMetric(email, 'login', duration, false, 'invalid_credentials');
             console.log(`❌ Login failed for ${email} in ${duration}ms:`, authError?.message);
-            
-            return res.status(400).json({ 
-                message: authError?.message || "Invalid credentials" 
+            createAuditLog({ userId: null, action: AuditAction.USER_LOGIN, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { email, reason: authError?.message ?? 'invalid_credentials' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
+
+            return res.status(400).json({
+                message: authError?.message || "Invalid credentials"
             });
         }
 
@@ -240,9 +250,10 @@ export const userLogin = async (req: Request, res: Response) => {
             const duration = Date.now() - startTime;
             AuthPerformanceMonitor.recordMetric(email, 'login', duration, false, 'email_not_verified');
             console.log(`❌ Login failed - email not verified for ${email} in ${duration}ms`);
-            
-            return res.status(403).json({ 
-                message: "Email is not verified. Please check your inbox." 
+            createAuditLog({ userId: null, action: AuditAction.USER_LOGIN, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { email, reason: 'email_not_verified' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
+
+            return res.status(403).json({
+                message: "Email is not verified. Please check your inbox."
             });
         }
 
@@ -299,6 +310,7 @@ export const userLogin = async (req: Request, res: Response) => {
         const duration = Date.now() - startTime;
         AuthPerformanceMonitor.recordMetric(email, 'login', duration, true);
         console.log(`✅ Login successful for ${email} in ${duration}ms`);
+        createAuditLog({ userId: user?.id ?? null, action: AuditAction.USER_LOGIN, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { email } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
         return res.status(200).json({
             success: true,
@@ -345,6 +357,7 @@ export const userLogout = async (req: Request, res: Response) => {
             path: '/'
         });
 
+        createAuditLog({ userId: req.userId ?? null, action: AuditAction.USER_LOGOUT, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
             success: true,
             message: "Logged out successfully"
@@ -465,6 +478,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
             }
         });
 
+        createAuditLog({ userId: updatedUser.id, action: AuditAction.PROFILE_UPDATED, resource: 'USER', resourceId: updatedUser.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { updatedFields: ['fullname', 'email'] } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
             success: true,
             user: updatedUser
@@ -518,6 +532,7 @@ export const refreshSession = async (req: Request, res: Response) => {
             path: '/'
         });
 
+        createAuditLog({ userId: req.userId ?? null, action: AuditAction.SESSION_REFRESH, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS }).catch((err) => console.error('[AuditLog] Write failed:', err));
         return res.status(200).json({ success: true, message: "Session cookie updated" });
     } catch (error) {
         console.error("❌ Error refreshing session cookie:", error);

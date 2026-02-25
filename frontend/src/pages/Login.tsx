@@ -178,8 +178,9 @@ const Login = () => {
           (data as any)?.serverUser?.role ??
           (data as any)?.user?.user_metadata?.role ??
           "";
-        redirectPath =
-          role === "ORGANIZATION" ? "/orgdashboard" : "/scholarship";
+        if (role === "ORGANIZATION") redirectPath = "/orgdashboard";
+        else if (role === "ADMIN") redirectPath = "/admin/dashboard";
+        else redirectPath = "/scholarship";
       }
       navigate(redirectPath, { replace: true });
     },

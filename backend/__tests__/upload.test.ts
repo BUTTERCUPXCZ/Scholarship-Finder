@@ -16,6 +16,11 @@ jest.mock("../src/middleware/auth", () => ({
     }),
 }));
 
+jest.mock("../src/services/auditLog.service", () => ({
+    createAuditLog: jest.fn().mockResolvedValue(undefined),
+    extractIpAddress: jest.fn().mockReturnValue('127.0.0.1'),
+}));
+
 // Mock Supabase client methods
 jest.mock("@supabase/supabase-js", () => {
     const mStorage = {

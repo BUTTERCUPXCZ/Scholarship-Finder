@@ -15,7 +15,9 @@ const AuthenticatedRedirect = () => {
 
         // If authenticated, redirect based on role
         const userRole = user?.role?.toString?.() ?? '';
-        return userRole === 'ORGANIZATION' ? '/orgdashboard' : '/home';
+        if (userRole === 'ORGANIZATION') return '/orgdashboard';
+        if (userRole === 'ADMIN') return '/admin/dashboard';
+        return '/home';
     }, [isAuthenticated, isLoading, user?.role]);
 
     // Show loading while checking auth state

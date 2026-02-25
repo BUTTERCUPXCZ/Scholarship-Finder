@@ -3,6 +3,8 @@ import { prisma } from "../lib/db";
 import { supabaseAdmin } from "../config/supabaseClient";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { createAuditLog, extractIpAddress } from "../services/auditLog.service";
+import { AuditAction, AuditStatus } from "@prisma/client";
 
 // Generate 10 random recovery codes
 const generateRecoveryCodes = (): string[] => {
@@ -39,6 +41,7 @@ export const storeRecoveryCodes = async (req: Request, res: Response) => {
     await prisma.recoveryCode.createMany({ data: hashedCodes });
 
     console.log(`✅ Recovery codes generated for user ${userId}`);
+    createAuditLog({ userId, action: AuditAction.MFA_RECOVERY_CODES_GENERATED, resource: 'USER', resourceId: userId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { codesCount: 10 } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
     return res.status(200).json({
       success: true,
@@ -89,6 +92,7 @@ export const verifyRecoveryCode = async (req: Request, res: Response) => {
     }
 
     if (!matchedCode) {
+      createAuditLog({ userId, action: AuditAction.MFA_RECOVERY_CODE_USED, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'invalid_recovery_code' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(400).json({ message: "Invalid recovery code" });
     }
 
@@ -103,6 +107,7 @@ export const verifyRecoveryCode = async (req: Request, res: Response) => {
     console.log(
       `✅ Recovery code used for user ${userId}. ${remainingCodes} codes remaining.`,
     );
+    createAuditLog({ userId, action: AuditAction.MFA_RECOVERY_CODE_USED, resource: 'USER', resourceId: userId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { remainingCodes } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
     return res.status(200).json({
       success: true,
@@ -183,6 +188,7 @@ export const unenrollMfa = async (req: Request, res: Response) => {
 
     if (error) {
       console.error("❌ Error unenrolling MFA:", error);
+      createAuditLog({ userId, action: AuditAction.MFA_UNENROLLED, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { factorId, reason: 'supabase_error' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(500).json({ message: "Failed to unenroll MFA" });
     }
 
@@ -190,6 +196,7 @@ export const unenrollMfa = async (req: Request, res: Response) => {
     await prisma.recoveryCode.deleteMany({ where: { userId } });
 
     console.log(`✅ MFA unenrolled for user ${userId}`);
+    createAuditLog({ userId, action: AuditAction.MFA_UNENROLLED, resource: 'USER', resourceId: userId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { factorId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
 
     return res.status(200).json({
       success: true,

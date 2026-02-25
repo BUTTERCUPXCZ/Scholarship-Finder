@@ -1,6 +1,8 @@
 import { Request, RequestHandler } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import multer, { FileFilterCallback } from 'multer';
+import { createAuditLog, extractIpAddress } from '../services/auditLog.service';
+import { AuditAction, AuditStatus } from '@prisma/client';
 
 interface AuthenticatedRequest extends Request {
     userId?: string; // set by your auth middleware
@@ -166,6 +168,7 @@ export const uploadFiles: RequestHandler = async (req, res) => {
         }
 
         console.log(`Successfully uploaded ${uploadResults.length} files`);
+        createAuditLog({ userId: userId ?? null, action: AuditAction.FILE_UPLOADED, resource: 'DOCUMENT', ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { fileCount: uploadResults.length, files: uploadResults.map(f => ({ filename: f.filename, size: f.size, contentType: f.contentType })) } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
             success: true,
             message: 'Files uploaded successfully',

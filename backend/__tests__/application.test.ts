@@ -24,6 +24,11 @@ jest.mock('../src/services/notification', () => ({
     createNotification: jest.fn(),
 }));
 
+jest.mock('../src/services/auditLog.service', () => ({
+    createAuditLog: jest.fn().mockResolvedValue(undefined),
+    extractIpAddress: jest.fn().mockReturnValue('127.0.0.1'),
+}));
+
 // Mock Redis client
 jest.mock('../src/config/redisClient', () => ({
     redisClient: {
