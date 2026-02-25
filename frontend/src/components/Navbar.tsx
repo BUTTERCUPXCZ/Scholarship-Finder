@@ -118,13 +118,6 @@ const Navbar = ({ showSidebarToggle = false, pageTitle }: NavbarProps) => {
                             </svg>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
-                                <span>Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-                                <span>Settings</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="cursor-pointer text-red-600 focus:text-red-600"
                                 onClick={handleLogout}

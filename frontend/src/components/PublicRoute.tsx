@@ -14,6 +14,8 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
         const userRole = user.role?.toString?.() ?? '';
         if (userRole === 'ORGANIZATION') {
             return <Navigate to="/orgdashboard" replace />;
+        } else if (userRole === 'ADMIN') {
+            return <Navigate to="/admin/dashboard" replace />;
         } else {
             return <Navigate to="/home" replace />;
         }
