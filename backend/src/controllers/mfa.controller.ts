@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/db";
+import { withRLS } from "../lib/rls";
 import { supabaseAdmin } from "../config/supabaseClient";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -34,11 +35,13 @@ export const storeRecoveryCodes = async (req: Request, res: Response) => {
       }),
     );
 
-    // Delete any existing recovery codes for this user
-    await prisma.recoveryCode.deleteMany({ where: { userId } });
+    const role = (req.user?.role as string) || 'STUDENT';
 
-    // Store new hashed codes
-    await prisma.recoveryCode.createMany({ data: hashedCodes });
+    // deleteMany + createMany in one atomic RLS-enforced transaction.
+    await withRLS(userId, role, async (tx) => {
+      await tx.recoveryCode.deleteMany({ where: { userId } });
+      await tx.recoveryCode.createMany({ data: hashedCodes });
+    });
 
     console.log(`✅ Recovery codes generated for user ${userId}`);
     createAuditLog({ userId, action: AuditAction.MFA_RECOVERY_CODES_GENERATED, resource: 'USER', resourceId: userId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { codesCount: 10 } }).catch((err) => console.error('[AuditLog] Write failed:', err));
@@ -70,9 +73,11 @@ export const verifyRecoveryCode = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Recovery code is required" });
     }
 
-    // Get unused recovery codes for this user
-    const recoveryCodes = await prisma.recoveryCode.findMany({
-      where: { userId, used: false },
+    const role = (req.user?.role as string) || 'STUDENT';
+
+    // Read codes under RLS (recoverycode_select_own policy enforces ownership).
+    const recoveryCodes = await withRLS(userId, role, async (tx) => {
+      return tx.recoveryCode.findMany({ where: { userId, used: false } });
     });
 
     if (recoveryCodes.length === 0) {
@@ -96,10 +101,13 @@ export const verifyRecoveryCode = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid recovery code" });
     }
 
-    // Mark code as used
-    await prisma.recoveryCode.update({
-      where: { id: matchedCode.id },
-      data: { used: true },
+    // Mark code as used under RLS in a separate transaction.
+    // bcrypt.compare runs between the two withRLS calls (CPU-bound, not DB).
+    await withRLS(userId, role, async (tx) => {
+      await tx.recoveryCode.update({
+        where: { id: matchedCode.id },
+        data: { used: true },
+      });
     });
 
     const remainingCodes = recoveryCodes.length - 1;
@@ -143,9 +151,11 @@ export const getMfaStatus = async (req: Request, res: Response) => {
         f.factor_type === "totp" && f.status === "verified",
     );
 
-    // Count remaining recovery codes
-    const remainingCodes = await prisma.recoveryCode.count({
-      where: { userId, used: false },
+    const role = (req.user?.role as string) || 'STUDENT';
+
+    // Count remaining recovery codes under RLS.
+    const remainingCodes = await withRLS(userId, role, async (tx) => {
+      return tx.recoveryCode.count({ where: { userId, used: false } });
     });
 
     return res.status(200).json({
@@ -192,8 +202,12 @@ export const unenrollMfa = async (req: Request, res: Response) => {
       return res.status(500).json({ message: "Failed to unenroll MFA" });
     }
 
-    // Delete recovery codes since MFA is being reset
-    await prisma.recoveryCode.deleteMany({ where: { userId } });
+    const role = (req.user?.role as string) || 'STUDENT';
+
+    // Delete recovery codes under RLS.
+    await withRLS(userId, role, async (tx) => {
+      await tx.recoveryCode.deleteMany({ where: { userId } });
+    });
 
     console.log(`✅ MFA unenrolled for user ${userId}`);
     createAuditLog({ userId, action: AuditAction.MFA_UNENROLLED, resource: 'USER', resourceId: userId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { factorId } }).catch((err) => console.error('[AuditLog] Write failed:', err));

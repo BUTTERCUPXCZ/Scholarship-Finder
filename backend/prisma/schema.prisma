@@ -80,7 +80,7 @@ model ApplicationDocument {
   filename      String
   contentType   String
   size          Int
-  fileUrl       String
+  fileUrl       String?
   storagePath   String
   uploadedAt    DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id])

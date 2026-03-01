@@ -21,6 +21,8 @@ const MfaVerify = React.lazy(() => import("./pages/MfaVerify"));
 const AdminDashboard = React.lazy(() => import("./admin/AdminDashboard"));
 const AdminUsers = React.lazy(() => import("./admin/AdminUsers"));
 const AdminAuditLogs = React.lazy(() => import("./admin/AdminAuditLogs"));
+const AdminAnalytics = React.lazy(() => import("./admin/AdminAnalytics"));
+const AdminReports = React.lazy(() => import("./admin/AdminReports"));
 import { AuthProvider } from "./AuthProvider/AuthProvider";
 import { NotificationProvider } from "./Context/NotificationContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -269,6 +271,27 @@ function App() {
                     <ProtectedRoute allowedRoles={["ADMIN"]}>
                       <div className={!isOnline ? "pt-16" : ""}>
                         <AdminAuditLogs />
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <div className={!isOnline ? "pt-16" : ""}>
+                        <AdminAnalytics />
+                      </div>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <div className={!isOnline ? "pt-16" : ""}>
+                        <AdminReports />
                       </div>
                     </ProtectedRoute>
                   }

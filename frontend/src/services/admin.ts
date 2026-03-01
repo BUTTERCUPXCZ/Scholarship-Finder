@@ -1,6 +1,8 @@
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// ─── Existing interfaces ──────────────────────────────────────────────────────
+
 export interface AdminStats {
   users: { total: number; students: number; organizations: number };
   scholarships: { total: number; active: number };
@@ -36,6 +38,30 @@ export interface Pagination {
   hasNext: boolean;
   hasPrev: boolean;
 }
+
+// ─── Analytics interfaces ─────────────────────────────────────────────────────
+
+export interface TimeSeriesPoint {
+  date: string;
+  count: number;
+}
+
+export interface ScholarshipPerf {
+  id: string;
+  title: string;
+  status: string;
+  applications: number;
+  accepted: number;
+  rejected: number;
+  underReview: number;
+}
+
+export interface FunnelSlice {
+  status: string;
+  count: number;
+}
+
+// ─── Existing fetch functions ─────────────────────────────────────────────────
 
 export const fetchAdminStats = async (token: string): Promise<{ success: boolean; data: AdminStats }> => {
   const res = await fetch(`${API}/admin/stats`, {
@@ -79,4 +105,72 @@ export const fetchAuditLogs = async (
   });
   if (!res.ok) throw new Error('Failed to fetch audit logs');
   return res.json();
+};
+
+// ─── Analytics fetch functions ────────────────────────────────────────────────
+
+export const fetchApplicationsOverTime = async (
+  token: string,
+  period: 7 | 30 | 90 = 30,
+): Promise<{ success: boolean; data: TimeSeriesPoint[] }> => {
+  const res = await fetch(`${API}/admin/analytics/applications-over-time?period=${period}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch application trends');
+  return res.json();
+};
+
+export const fetchScholarshipPerformance = async (
+  token: string,
+): Promise<{ success: boolean; data: ScholarshipPerf[] }> => {
+  const res = await fetch(`${API}/admin/analytics/scholarship-performance`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch scholarship performance');
+  return res.json();
+};
+
+export const fetchUserRegistrations = async (
+  token: string,
+  period: 7 | 30 | 90 = 30,
+): Promise<{ success: boolean; data: TimeSeriesPoint[] }> => {
+  const res = await fetch(`${API}/admin/analytics/user-registrations?period=${period}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch user registrations');
+  return res.json();
+};
+
+export const fetchApplicationFunnel = async (
+  token: string,
+): Promise<{ success: boolean; data: FunnelSlice[] }> => {
+  const res = await fetch(`${API}/admin/analytics/application-funnel`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch application funnel');
+  return res.json();
+};
+
+// ─── Report download helper ───────────────────────────────────────────────────
+
+export const downloadReport = async (
+  token: string,
+  type: 'applications' | 'scholarships' | 'users' | 'summary',
+): Promise<void> => {
+  const ext = type === 'summary' ? 'pdf' : 'csv';
+  const res = await fetch(`${API}/admin/reports/${type}.${ext}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error(`Failed to download ${type} report`);
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${type}-${new Date().toISOString().slice(0, 10)}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };

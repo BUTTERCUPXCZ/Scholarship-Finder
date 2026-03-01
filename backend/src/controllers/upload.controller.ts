@@ -1,6 +1,7 @@
 import { Request, RequestHandler } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import multer, { FileFilterCallback } from 'multer';
+import { withRLS } from '../lib/rls';
 import { createAuditLog, extractIpAddress } from '../services/auditLog.service';
 import { AuditAction, AuditStatus } from '@prisma/client';
 
@@ -185,14 +186,29 @@ export const uploadFiles: RequestHandler = async (req, res) => {
 };
 
 /**
- * Download a file from Supabase storage with proper authentication
+ * Download a file from Supabase storage with ownership verification.
+ *
+ * Security: two-layer ownership check before a signed URL is generated.
+ *
+ * Layer 1 — Path prefix guard (students only):
+ *   Files are stored as "<userId>/documents/<file>". A student's storagePath
+ *   must begin with their own userId. This catches the obvious cross-user case
+ *   cheaply without a DB round-trip.
+ *
+ * Layer 2 — DB ownership check via withRLS:
+ *   Queries ApplicationDocument with the exact storagePath. RLS policies
+ *   appdoc_select_student and appdoc_select_org enforce that:
+ *   - Students can only see documents on their own applications.
+ *   - Organizations can only see documents on applications to their scholarships.
+ *   If the row is not visible under the acting user's context, findFirst returns
+ *   null and the request is rejected with 403.
  */
 export const downloadFile: RequestHandler = async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        // Extract the storage path from the request body
         const { storagePath } = req.body;
         const userId = authReq.userId as string | undefined;
+        const role = ((authReq as any).user?.role as string | undefined) || 'STUDENT';
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
@@ -202,12 +218,30 @@ export const downloadFile: RequestHandler = async (req, res) => {
             return res.status(400).json({ message: 'Storage path is required in request body' });
         }
 
+        // Layer 1: Students' files always start with their userId in the path.
+        // Reject immediately if the prefix doesn't match — no DB query needed.
+        if (role === 'STUDENT' && !storagePath.startsWith(`${userId}/`)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Layer 2: DB ownership check enforced by RLS policies.
+        // findFirst returns null if the document is not visible to the acting user.
+        const owned = await withRLS(userId, role, async (tx) => {
+            return tx.applicationDocument.findFirst({
+                where: { storagePath },
+                select: { id: true },
+            });
+        });
+
+        if (!owned) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
         console.log('Downloading file from path:', storagePath);
 
-        // Get signed URL with service role key (has more permissions)
         const { data, error } = await supabase.storage
             .from(BUCKET_NAME)
-            .createSignedUrl(storagePath, 3600); // 1 hour expiry
+            .createSignedUrl(storagePath, 3600);
 
         if (error) {
             console.error('Error creating signed URL:', error);
@@ -222,8 +256,6 @@ export const downloadFile: RequestHandler = async (req, res) => {
         }
 
         console.log('Successfully created signed URL');
-
-        // Return the signed URL
         res.json({ downloadUrl: data.signedUrl });
 
     } catch (error) {

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/db";
+import { withRLS } from "../lib/rls";
 import { withDatabaseRetry, handleDatabaseError } from "../lib/databaseHealth";
 import { AuthPerformanceMonitor } from "../lib/authPerformanceMonitor";
 import { supabaseAdmin } from "../config/supabaseClient";
@@ -377,52 +378,43 @@ export const getCurrentUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        // Get user from database
-        let user = await withDatabaseRetry(async () => {
-            return await prisma.user.findUnique({
-                where: { id: String(userId) },
-                select: {
-                    id: true,
-                    fullname: true,
-                    email: true,
-                    role: true,
-                    isVerified: true
-                }
-            });
-        });
+        const role = (req.user?.role as string) || 'STUDENT';
 
-        // If user doesn't exist in database, create from Supabase data
-        if (!user && req.user) {
-            user = await prisma.user.create({
-                data: {
-                    id: req.user.id,
-                    email: req.user.email || '',
-                    fullname: (req.user as any).fullname || 'User',
-                    password: '', // Managed by Supabase
-                    role: req.user.role as any || 'STUDENT',
-                    isVerified: true // If they can login, email is verified
-                },
-                select: {
-                    id: true,
-                    fullname: true,
-                    email: true,
-                    role: true,
-                    isVerified: true
-                }
+        // All DB operations in one RLS-enforced transaction.
+        const user = await withRLS(String(userId), role, async (tx) => {
+            let u = await tx.user.findUnique({
+                where: { id: String(userId) },
+                select: { id: true, fullname: true, email: true, role: true, isVerified: true }
             });
-        }
+
+            // First-login sync: create Prisma row if Supabase user exists but row is missing.
+            if (!u && req.user) {
+                u = await tx.user.create({
+                    data: {
+                        id: req.user.id,
+                        email: req.user.email || '',
+                        fullname: (req.user as any).fullname || 'User',
+                        password: '',
+                        role: req.user.role as any || 'STUDENT',
+                        isVerified: true
+                    },
+                    select: { id: true, fullname: true, email: true, role: true, isVerified: true }
+                });
+            }
+
+            if (u && !u.isVerified) {
+                await tx.user.update({
+                    where: { id: u.id },
+                    data: { isVerified: true }
+                });
+                u.isVerified = true;
+            }
+
+            return u;
+        });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
-        }
-
-        // Update isVerified if needed (user logged in, so email is verified)
-        if (user && !user.isVerified) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { isVerified: true }
-            });
-            user.isVerified = true;
         }
 
         return res.status(200).json({
@@ -455,28 +447,26 @@ export const updateUserProfile = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // Check if email is already taken by another user
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                email,
-                NOT: { id: String(userId) }
-            }
+        const role = (req.user?.role as string) || 'STUDENT';
+
+        // Both queries in one RLS-enforced transaction.
+        // Email uniqueness is enforced by the DB @unique constraint (catches P2002).
+        // The pre-check is omitted because RLS hides other users' rows anyway —
+        // the unique constraint on the email column provides the authoritative guard.
+        const updatedUser = await withRLS(String(userId), role, async (tx) => {
+            return tx.user.update({
+                where: { id: String(userId) },
+                data: { fullname, email },
+                select: { id: true, fullname: true, email: true, role: true }
+            });
+        }).catch((err: any) => {
+            if (err?.code === 'P2002') return null; // unique constraint — email taken
+            throw err;
         });
 
-        if (existingUser) {
+        if (!updatedUser) {
             return res.status(400).json({ message: "Email already in use" });
         }
-
-        const updatedUser = await prisma.user.update({
-            where: { id: String(userId) },
-            data: { fullname, email },
-            select: {
-                id: true,
-                fullname: true,
-                email: true,
-                role: true
-            }
-        });
 
         createAuditLog({ userId: updatedUser.id, action: AuditAction.PROFILE_UPDATED, resource: 'USER', resourceId: updatedUser.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { updatedFields: ['fullname', 'email'] } }).catch((err) => console.error('[AuditLog] Write failed:', err));
         res.status(200).json({
@@ -549,47 +539,26 @@ export const getOrganizationStats = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        // Verify user is an organization
-        const user = await prisma.user.findUnique({
-            where: { id: String(userId) },
-            select: { role: true }
-        });
-
-        if (!user || user.role !== 'ORGANIZATION') {
+        // Verify user is an organization (role check before RLS wrapping)
+        const userRole = (req.user?.role as string) || '';
+        if (userRole !== 'ORGANIZATION') {
             return res.status(403).json({ message: "Access denied. Organizations only." });
         }
 
-        // Get scholarship statistics
-        const [totalScholarships, activeScholarships, archivedScholarships] = await Promise.all([
-            prisma.scholarship.count({
-                where: { providerId: String(userId) }
-            }),
-            prisma.scholarship.count({
-                where: {
-                    providerId: String(userId),
-                    status: 'ACTIVE'
-                }
-            }),
-            prisma.archive.count({
-                where: { providerId: String(userId) }
-            })
-        ]);
-
-        // Get total applications for all scholarships by this organization
-        const totalApplications = await prisma.application.count({
-            where: {
-                scholarship: {
-                    providerId: String(userId)
-                }
-            }
+        // All count queries in one RLS-enforced transaction.
+        // RLS policies automatically scope each count to the acting organization.
+        const stats = await withRLS(String(userId), userRole, async (tx) => {
+            const [totalScholarships, activeScholarships, archivedScholarships, totalApplications] =
+                await Promise.all([
+                    tx.scholarship.count({ where: { providerId: String(userId) } }),
+                    tx.scholarship.count({ where: { providerId: String(userId), status: 'ACTIVE' } }),
+                    tx.archive.count({ where: { providerId: String(userId) } }),
+                    tx.application.count({
+                        where: { scholarship: { providerId: String(userId) } }
+                    }),
+                ]);
+            return { totalScholarships, activeScholarships, archivedScholarships, totalApplications };
         });
-
-        const stats = {
-            totalScholarships,
-            activeScholarships,
-            archivedScholarships,
-            totalApplications
-        };
 
         res.status(200).json(stats);
     } catch (error) {

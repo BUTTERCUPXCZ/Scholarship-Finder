@@ -9,7 +9,7 @@ import {
     SidebarGroupLabel,
     SidebarGroupContent,
 } from './ui/sidebar'
-import { ShieldCheck, LayoutDashboard, Users, ScrollText } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Users, ScrollText, BarChart2, FileDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthProvider/AuthProvider'
 
@@ -79,6 +79,30 @@ const AdminSidebar = () => {
                                     <Link to="/admin/audit-logs" className="flex items-center gap-2">
                                         <ScrollText className="size-4" />
                                         <span>Audit Logs</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Reporting</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link to="/admin/analytics" className="flex items-center gap-2">
+                                        <BarChart2 className="size-4" />
+                                        <span>Analytics</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link to="/admin/reports" className="flex items-center gap-2">
+                                        <FileDown className="size-4" />
+                                        <span>Reports</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

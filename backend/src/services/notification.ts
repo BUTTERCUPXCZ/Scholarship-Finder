@@ -1,4 +1,5 @@
 import { prisma } from '../lib/db';
+import type { TransactionClient } from '../lib/rls';
 import { emitNotificationToUser, emitNotificationUpdate, emitNotificationDeleted } from './socketService';
 
 export interface CreateNotificationData {
@@ -7,9 +8,17 @@ export interface CreateNotificationData {
     type: 'INFO' | 'SCHOLARSHIP_ACCEPTED' | 'SCHOLARSHIP_REJECTED' | 'SCHOLARSHIP_UPDATE';
 }
 
-export const createNotification = async (data: CreateNotificationData) => {
+/**
+ * Creates a notification row and emits a real-time Socket.IO event.
+ *
+ * When called with a transaction client (tx), the DB write is scoped to that
+ * transaction but the Socket.IO emit is skipped — the caller is responsible for
+ * emitting after the transaction commits so the event only fires on success.
+ */
+export const createNotification = async (data: CreateNotificationData, tx?: TransactionClient) => {
     try {
-        const notification = await prisma.notification.create({
+        const db = tx ?? prisma;
+        const notification = await db.notification.create({
             data: {
                 userId: data.userId,
                 message: data.message,
@@ -18,8 +27,12 @@ export const createNotification = async (data: CreateNotificationData) => {
             }
         });
 
-        // Emit real-time notification via Socket.IO
-        emitNotificationToUser(data.userId, notification);
+        // Only emit immediately when not inside a caller-managed transaction.
+        // When tx is provided, the caller emits after withRLS() returns so the
+        // event only fires if the transaction actually commits.
+        if (!tx) {
+            emitNotificationToUser(data.userId, notification);
+        }
 
         return notification;
     } catch (error) {
@@ -28,10 +41,15 @@ export const createNotification = async (data: CreateNotificationData) => {
     }
 };
 
-export const getUserNotifications = async (userId: string, options?: { page?: number; limit?: number; onlyUnread?: boolean }) => {
+export const getUserNotifications = async (
+    userId: string,
+    options?: { page?: number; limit?: number; onlyUnread?: boolean },
+    tx?: TransactionClient,
+) => {
     try {
+        const db = tx ?? prisma;
         const page = options?.page || 1;
-        const limit = Math.min(options?.limit || 20, 50); // Cap at 50
+        const limit = Math.min(options?.limit || 20, 50);
         const skip = (page - 1) * limit;
 
         const where: { userId: string; read?: boolean } = { userId };
@@ -40,7 +58,7 @@ export const getUserNotifications = async (userId: string, options?: { page?: nu
         }
 
         const [notifications, totalCount] = await Promise.all([
-            prisma.notification.findMany({
+            db.notification.findMany({
                 where,
                 orderBy: { createdAt: 'desc' },
                 skip,
@@ -54,7 +72,7 @@ export const getUserNotifications = async (userId: string, options?: { page?: nu
                     createdAt: true
                 }
             }),
-            prisma.notification.count({ where })
+            db.notification.count({ where })
         ]);
 
         return {
@@ -74,66 +92,75 @@ export const getUserNotifications = async (userId: string, options?: { page?: nu
     }
 };
 
-export const markNotificationAsRead = async (notificationId: string, userId: string) => {
+/**
+ * Marks a single notification as read.
+ * Returns the updated notification so the caller can emit the Socket.IO event
+ * after any wrapping transaction commits.
+ */
+export const markNotificationAsRead = async (
+    notificationId: string,
+    userId: string,
+    tx?: TransactionClient,
+) => {
     try {
-        const notification = await prisma.notification.updateMany({
-            where: {
-                id: notificationId,
-                userId: userId
-            },
-            data: {
-                read: true
-            }
+        const db = tx ?? prisma;
+
+        await db.notification.updateMany({
+            where: { id: notificationId, userId },
+            data: { read: true }
         });
 
-        // Get the updated notification and emit via Socket.IO
-        const updatedNotification = await prisma.notification.findFirst({
+        const updatedNotification = await db.notification.findFirst({
             where: { id: notificationId, userId }
         });
 
-        if (updatedNotification) {
+        // Only emit when not inside a caller-managed transaction.
+        if (!tx && updatedNotification) {
             emitNotificationUpdate(userId, updatedNotification);
         }
 
-        return notification;
+        return updatedNotification;
     } catch (error: unknown) {
         console.error('Error marking notification as read:', error);
         throw error;
     }
 };
 
-export const markAllNotificationsAsRead = async (userId: string) => {
+export const markAllNotificationsAsRead = async (userId: string, tx?: TransactionClient) => {
     try {
-        const notifications = await prisma.notification.updateMany({
-            where: {
-                userId: userId,
-                read: false
-            },
-            data: {
-                read: true
-            }
+        const db = tx ?? prisma;
+        return db.notification.updateMany({
+            where: { userId, read: false },
+            data: { read: true }
         });
-
-        return notifications;
     } catch (error: unknown) {
         console.error('Error marking all notifications as read:', error);
         throw error;
     }
 };
 
-export const deleteNotification = async (notificationId: string, userId: string) => {
+/**
+ * Deletes a single notification.
+ * Returns the notificationId so the caller can emit the Socket.IO deletion event
+ * after any wrapping transaction commits.
+ */
+export const deleteNotification = async (
+    notificationId: string,
+    userId: string,
+    tx?: TransactionClient,
+) => {
     try {
-        const deletedNotification = await prisma.notification.deleteMany({
-            where: {
-                id: notificationId,
-                userId: userId
-            }
+        const db = tx ?? prisma;
+        const result = await db.notification.deleteMany({
+            where: { id: notificationId, userId }
         });
 
-        // Emit deletion event via Socket.IO
-        emitNotificationDeleted(userId, notificationId);
+        // Only emit when not inside a caller-managed transaction.
+        if (!tx) {
+            emitNotificationDeleted(userId, notificationId);
+        }
 
-        return deletedNotification;
+        return result;
     } catch (error: unknown) {
         console.error('Error deleting notification:', error);
         throw error;

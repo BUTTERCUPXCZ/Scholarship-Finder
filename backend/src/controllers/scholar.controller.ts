@@ -8,6 +8,7 @@ import {
 } from "../Validators/CreateScholar";
 import { ZodError } from "zod";
 import { prisma } from "../lib/db";
+import { withRLS } from "../lib/rls";
 import { redisClient } from "../config/redisClient";
 import { createAuditLog, extractIpAddress } from "../services/auditLog.service";
 import { AuditAction, AuditStatus } from "@prisma/client";
@@ -34,18 +35,21 @@ export const createScholar = async (req: Request, res: Response) => {
 
     const deadlineDate = new Date(deadline);
 
-    const scholar = await prisma.scholarship.create({
-      data: {
-        title,
-        type,
-        description,
-        location,
-        requirements,
-        benefits,
-        deadline: deadlineDate,
-        provider: { connect: { id: providerId } },
-        status: "ACTIVE",
-      },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+    const scholar = await withRLS(providerId, role, async (tx) => {
+      return tx.scholarship.create({
+        data: {
+          title,
+          type,
+          description,
+          location,
+          requirements,
+          benefits,
+          deadline: deadlineDate,
+          provider: { connect: { id: providerId } },
+          status: "ACTIVE",
+        },
+      });
     });
 
     // Invalidate Redis caches so lists return fresh data
@@ -357,9 +361,34 @@ export const updateScholar = async (req: Request, res: Response) => {
       deadline,
     } = req.body;
 
-    // Check if scholarship exists
-    const existingScholarship = await prisma.scholarship.findUnique({
-      where: { id: scholarshipId },
+    const deadlineDate = new Date(deadline);
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+
+    // Both queries run in one RLS-enforced transaction:
+    // scholarship_select_any allows the read; scholarship_update_own enforces ownership on write.
+    let existingScholarship: { providerId: string } | null = null;
+    const updatedScholarship = await withRLS(providerId, role, async (tx) => {
+      existingScholarship = await tx.scholarship.findUnique({
+        where: { id: scholarshipId },
+        select: { providerId: true },
+      });
+
+      if (!existingScholarship) return null;
+
+      if (existingScholarship.providerId !== providerId) return null;
+
+      return tx.scholarship.update({
+        where: { id: scholarshipId },
+        data: {
+          title,
+          type,
+          description,
+          location,
+          requirements,
+          benefits,
+          deadline: deadlineDate,
+        },
+      });
     });
 
     if (!existingScholarship) {
@@ -368,29 +397,13 @@ export const updateScholar = async (req: Request, res: Response) => {
         .json({ success: false, message: "Scholarship not found" });
     }
 
-    if (existingScholarship.providerId !== providerId) {
+    if (!updatedScholarship) {
       createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_UPDATED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'forbidden_not_owner' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(403).json({
         success: false,
         message: "Forbidden: You can only update your own scholarships",
       });
     }
-
-    const deadlineDate = new Date(deadline);
-
-    // 📝 Update the scholarship
-    const updatedScholarship = await prisma.scholarship.update({
-      where: { id: scholarshipId },
-      data: {
-        title,
-        type,
-        description,
-        location,
-        requirements,
-        benefits,
-        deadline: deadlineDate,
-      },
-    });
 
     // 🧹 Invalidate related Redis caches
     const cacheKeysToDelete = [
@@ -443,26 +456,40 @@ export const deleteScholarship = async (req: Request, res: Response) => {
         .json({ success: false, message: "Invalid scholarship id" });
     }
 
-    const scholarship = await prisma.scholarship.findUnique({
-      where: { id: scholarshipId },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+
+    // Both queries in one RLS-enforced atomic transaction.
+    let scholarshipFound = false;
+    let ownershipValid = false;
+
+    await withRLS(providerId, role, async (tx) => {
+      const scholarship = await tx.scholarship.findUnique({
+        where: { id: scholarshipId },
+        select: { providerId: true },
+      });
+
+      if (!scholarship) return;
+      scholarshipFound = true;
+
+      if (scholarship.providerId !== providerId) return;
+      ownershipValid = true;
+
+      await tx.scholarship.delete({ where: { id: scholarshipId } });
     });
 
-    if (!scholarship) {
+    if (!scholarshipFound) {
       return res
         .status(404)
         .json({ success: false, message: "Scholarship not found" });
     }
 
-    if (scholarship.providerId !== providerId) {
+    if (!ownershipValid) {
       createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_DELETED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.FAILURE, metadata: { reason: 'forbidden_not_owner' } }).catch((err) => console.error('[AuditLog] Write failed:', err));
       return res.status(403).json({
         success: false,
         message: "Forbidden: You can only delete your own scholarships",
       });
     }
-
-    // 🗑 Delete from DB
-    await prisma.scholarship.delete({ where: { id: scholarshipId } });
 
     // 🧹 Invalidate related Redis cache keys
     const cacheKeysToDelete = [
@@ -515,50 +542,62 @@ export const ArchiveScholarship = async (req: Request, res: Response) => {
         .json({ success: false, message: "Invalid scholarship id" });
     }
 
-    // Check scholarship existence
-    const scholarship = await prisma.scholarship.findUnique({
-      where: { id: scholarshipId },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+
+    // All three queries in one atomic RLS-enforced transaction.
+    let scholarshipFound = false;
+    let ownershipValid = false;
+    let archivedScholarship: Awaited<ReturnType<typeof prisma.archive.create>> | null = null;
+
+    await withRLS(providerId, role, async (tx) => {
+      const scholarship = await tx.scholarship.findUnique({
+        where: { id: scholarshipId },
+      });
+
+      if (!scholarship) return;
+      scholarshipFound = true;
+
+      if (scholarship.providerId !== providerId) return;
+      ownershipValid = true;
+
+      archivedScholarship = await tx.archive.create({
+        data: {
+          scholarshipId: scholarship.id,
+          title: scholarship.title,
+          description: scholarship.description,
+          providerId: scholarship.providerId,
+          deadline: scholarship.deadline,
+          location: scholarship.location,
+          type: scholarship.type,
+          benefits: scholarship.benefits,
+          requirements: scholarship.requirements,
+          originalStatus: scholarship.status,
+          archivedBy: providerId,
+          originalCreatedAt: scholarship.createdAt,
+          originalUpdatedAt: scholarship.updatedAt,
+        },
+      });
+
+      await tx.scholarship.update({
+        where: { id },
+        data: { status: "EXPIRED" },
+      });
     });
 
-    if (!scholarship) {
+    if (!scholarshipFound) {
       return res
         .status(404)
         .json({ success: false, message: "Scholarship not found" });
     }
 
-    if (scholarship.providerId !== providerId) {
+    if (!ownershipValid) {
       return res.status(403).json({
         success: false,
         message: "Forbidden: You can only archive your own scholarships",
       });
     }
 
-    // Create archive record
-    const archivedScholarship = await prisma.archive.create({
-      data: {
-        scholarshipId: scholarship.id,
-        title: scholarship.title,
-        description: scholarship.description,
-        providerId: scholarship.providerId,
-        deadline: scholarship.deadline,
-        location: scholarship.location,
-        type: scholarship.type,
-        benefits: scholarship.benefits,
-        requirements: scholarship.requirements,
-        originalStatus: scholarship.status,
-        archivedBy: providerId,
-        originalCreatedAt: scholarship.createdAt,
-        originalUpdatedAt: scholarship.updatedAt,
-      },
-    });
-
-    // Mark original scholarship as archived
-    await prisma.scholarship.update({
-      where: { id },
-      data: { status: "EXPIRED" },
-    });
-
-    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_ARCHIVED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { archiveId: archivedScholarship.id } }).catch((err) => console.error('[AuditLog] Write failed:', err));
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_ARCHIVED, resource: 'SCHOLARSHIP', resourceId: scholarshipId, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { archiveId: archivedScholarship!.id } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Scholarship archived successfully",
@@ -595,24 +634,25 @@ export const getOrganizationScholarships = async (
       return res.status(200).json(JSON.parse(cached as string));
     }
 
-    const scholarships = await prisma.scholarship.findMany({
-      where: {
-        providerId: providerId,
-      },
-      orderBy: { createdAt: "desc" },
-      include: {
-        applications: {
-          select: {
-            id: true,
-            status: true,
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+    const scholarships = await withRLS(providerId, role, async (tx) => {
+      return tx.scholarship.findMany({
+        where: { providerId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          applications: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
+          _count: {
+            select: {
+              applications: true,
+            },
           },
         },
-        _count: {
-          select: {
-            applications: true,
-          },
-        },
-      },
+      });
     });
 
     const responseData = {
@@ -641,9 +681,12 @@ export const getArchivedScholarships = async (req: Request, res: Response) => {
         .json({ success: false, message: "Unauthorized: provider id missing" });
     }
 
-    const archivedScholarships = await prisma.archive.findMany({
-      where: { providerId: providerId },
-      orderBy: { archivedAt: "desc" },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+    const archivedScholarships = await withRLS(providerId, role, async (tx) => {
+      return tx.archive.findMany({
+        where: { providerId },
+        orderBy: { archivedAt: "desc" },
+      });
     });
 
     return res.status(200).json({
@@ -766,11 +809,14 @@ export const DeleteArchivedScholarship = async (
         .json({ success: false, message: "Invalid archive id" });
     }
 
-    const response = await prisma.archive.deleteMany({
-      where: {
-        id: archiveId,
-        providerId: providerId,
-      },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+    const response = await withRLS(providerId, role, async (tx) => {
+      return tx.archive.deleteMany({
+        where: {
+          id: archiveId,
+          providerId,
+        },
+      });
     });
     if (response.count === 0) {
       return res.status(404).json({
@@ -809,38 +855,54 @@ export const RestoreArchivedScholarship = async (
         .status(400)
         .json({ success: false, message: "Invalid archive id" });
     }
-    const archiveRecord = await prisma.archive.findUnique({
-      where: { id: archiveId },
+    const role = (req.user?.role as string) || 'ORGANIZATION';
+
+    // All three queries in one atomic RLS-enforced transaction.
+    let archiveFound = false;
+    let ownershipValid = false;
+    let restoredScholarship: Awaited<ReturnType<typeof prisma.scholarship.create>> | null = null;
+
+    await withRLS(providerId, role, async (tx) => {
+      const archiveRecord = await tx.archive.findUnique({
+        where: { id: archiveId },
+      });
+
+      if (!archiveRecord) return;
+      archiveFound = true;
+
+      if (archiveRecord.providerId !== providerId) return;
+      ownershipValid = true;
+
+      restoredScholarship = await tx.scholarship.create({
+        data: {
+          title: archiveRecord.title,
+          description: archiveRecord.description,
+          location: archiveRecord.location,
+          benefits: archiveRecord.benefits,
+          requirements: archiveRecord.requirements,
+          deadline: archiveRecord.deadline,
+          type: archiveRecord.type,
+          status: archiveRecord.originalStatus,
+          providerId: archiveRecord.providerId,
+        },
+      });
+
+      await tx.archive.delete({ where: { id: archiveId } });
     });
-    if (!archiveRecord) {
+
+    if (!archiveFound) {
       return res
         .status(404)
         .json({ success: false, message: "Archive record not found" });
     }
-    if (archiveRecord.providerId !== providerId) {
+
+    if (!ownershipValid) {
       return res.status(403).json({
         success: false,
-        message:
-          "Forbidden: You can only restore your own archived scholarships",
+        message: "Forbidden: You can only restore your own archived scholarships",
       });
     }
-    const restoredScholarship = await prisma.scholarship.create({
-      data: {
-        title: archiveRecord.title,
-        description: archiveRecord.description,
-        location: archiveRecord.location,
-        benefits: archiveRecord.benefits,
-        requirements: archiveRecord.requirements,
-        deadline: archiveRecord.deadline,
-        type: archiveRecord.type,
-        status: archiveRecord.originalStatus,
-        providerId: archiveRecord.providerId,
-      },
-    });
-    await prisma.archive.delete({
-      where: { id: archiveId },
-    });
-    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_RESTORED, resource: 'SCHOLARSHIP', resourceId: restoredScholarship.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { fromArchiveId: archiveId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
+    createAuditLog({ userId: providerId, action: AuditAction.SCHOLARSHIP_RESTORED, resource: 'SCHOLARSHIP', resourceId: restoredScholarship!.id, ipAddress: extractIpAddress(req), userAgent: (req.headers?.['user-agent'] as string) ?? 'unknown', status: AuditStatus.SUCCESS, metadata: { fromArchiveId: archiveId } }).catch((err) => console.error('[AuditLog] Write failed:', err));
     return res.status(200).json({
       success: true,
       message: "Archived scholarship restored successfully",
