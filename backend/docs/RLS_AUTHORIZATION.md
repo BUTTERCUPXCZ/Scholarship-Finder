@@ -74,11 +74,11 @@ Controller function
 
 ```bash
 # Option A: Supabase SQL Editor (recommended for first run)
-# Paste backend/prisma/migrations/manual_rls/001_enable_rls.sql into the editor and execute.
+# Paste backend/prisma/sql/rls/001_enable_rls.sql into the editor and execute.
 
 # Option B: Prisma CLI (must use DIRECT_URL — PgBouncer doesn't support DDL)
 npx prisma db execute \
-  --file ./prisma/migrations/manual_rls/001_enable_rls.sql \
+  --file ./prisma/sql/rls/001_enable_rls.sql \
   --schema ./prisma/schema.prisma \
   --url "$DIRECT_URL"
 ```
@@ -87,7 +87,7 @@ npx prisma db execute \
 
 ```bash
 npx prisma db execute \
-  --file ./prisma/migrations/manual_rls/001_rollback_rls.sql \
+  --file ./prisma/sql/rls/001_rollback_rls.sql \
   --schema ./prisma/schema.prisma \
   --url "$DIRECT_URL"
 ```
@@ -363,8 +363,8 @@ cd backend && npx tsc --noEmit
 
 | File | Change |
 |---|---|
-| `prisma/migrations/manual_rls/001_enable_rls.sql` | **Created** — SQL to enable RLS and create all policies |
-| `prisma/migrations/manual_rls/001_rollback_rls.sql` | **Created** — SQL to disable RLS and drop all policies |
+| `prisma/sql/rls/001_enable_rls.sql` | **Created** — SQL to enable RLS and create all policies |
+| `prisma/sql/rls/001_rollback_rls.sql` | **Created** — SQL to disable RLS and drop all policies |
 | `src/lib/rls.ts` | **Created** — `withRLS()` wrapper and `TransactionClient` type export |
 | `src/services/notification.ts` | **Modified** — optional `tx` parameter on all DB functions |
 | `src/controllers/scholar.controller.ts` | **Modified** — 8 functions wrapped with `withRLS()` |

@@ -371,8 +371,8 @@ The project uses PgBouncer in **transaction mode** (`pgbouncer=true` in `DATABAS
 
 ### 3.4 Database Policies
 
-**Migration file:** `backend/prisma/migrations/manual_rls/001_enable_rls.sql`
-**Rollback file:** `backend/prisma/migrations/manual_rls/001_rollback_rls.sql`
+**Migration file:** `backend/prisma/sql/rls/001_enable_rls.sql`
+**Rollback file:** `backend/prisma/sql/rls/001_rollback_rls.sql`
 
 #### Helper function
 
@@ -498,11 +498,11 @@ emitNotificationToUser(targetUserId, { message, type });
 
 ```bash
 # Option A: Supabase SQL Editor (recommended for first run)
-# Paste backend/prisma/migrations/manual_rls/001_enable_rls.sql and execute.
+# Paste backend/prisma/sql/rls/001_enable_rls.sql and execute.
 
 # Option B: Prisma CLI (requires DIRECT_URL — PgBouncer doesn't support DDL)
 npx prisma db execute \
-  --file ./prisma/migrations/manual_rls/001_enable_rls.sql \
+  --file ./prisma/sql/rls/001_enable_rls.sql \
   --schema ./prisma/schema.prisma \
   --url "$DIRECT_URL"
 ```
@@ -512,8 +512,8 @@ npx prisma db execute \
 | File | Role |
 |---|---|
 | `backend/src/lib/rls.ts` | `withRLS()` wrapper, `TransactionClient` type, sanitizers |
-| `backend/prisma/migrations/manual_rls/001_enable_rls.sql` | SQL: enable RLS, create policies |
-| `backend/prisma/migrations/manual_rls/001_rollback_rls.sql` | SQL: disable RLS, drop policies |
+| `backend/prisma/sql/rls/001_enable_rls.sql` | SQL: enable RLS, create policies |
+| `backend/prisma/sql/rls/001_rollback_rls.sql` | SQL: disable RLS, drop policies |
 | `backend/src/services/notification.ts` | Optional `tx` parameter for RLS-safe notification writes |
 | `backend/docs/RLS_AUTHORIZATION.md` | Extended reference documentation |
 
