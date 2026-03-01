@@ -179,7 +179,7 @@ export const authenticateWithMfa = async (
     }
 
     const verifiedFactors = (data?.factors || []).filter(
-      (f: any) => f.factor_type === "totp" && f.status === "verified",
+      (f: { factor_type: string; status: string }) => f.factor_type === "totp" && f.status === "verified",
     );
 
     // If user has MFA enrolled, verify the token's AAL level

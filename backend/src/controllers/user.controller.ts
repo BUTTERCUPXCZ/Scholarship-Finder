@@ -393,9 +393,9 @@ export const getCurrentUser = async (req: Request, res: Response) => {
                     data: {
                         id: req.user.id,
                         email: req.user.email || '',
-                        fullname: (req.user as any).fullname || 'User',
+                        fullname: req.user?.fullname || 'User',
                         password: '',
-                        role: req.user.role as any || 'STUDENT',
+                        role: (req.user?.role || 'STUDENT') as 'STUDENT' | 'ORGANIZATION' | 'ADMIN',
                         isVerified: true
                     },
                     select: { id: true, fullname: true, email: true, role: true, isVerified: true }
@@ -459,8 +459,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
                 data: { fullname, email },
                 select: { id: true, fullname: true, email: true, role: true }
             });
-        }).catch((err: any) => {
-            if (err?.code === 'P2002') return null; // unique constraint — email taken
+        }).catch((err: unknown) => {
+            if ((err as { code?: string })?.code === 'P2002') return null; // unique constraint — email taken
             throw err;
         });
 

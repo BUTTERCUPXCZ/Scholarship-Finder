@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { submitApplicationSchema } from '../Validators/Application';
 import { prisma } from '../lib/db';
 import { withRLS } from '../lib/rls';
-import { createNotification } from '../services/notification';
 import { emitNotificationToUser } from '../services/socketService';
 import { redisClient } from '../config/redisClient';
 import { createAuditLog, extractIpAddress } from '../services/auditLog.service';

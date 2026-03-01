@@ -174,7 +174,7 @@ const AdminAnalytics = () => {
                                             />
                                             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                                             <Tooltip
-                                                formatter={(v: number) => [v, 'Applications']}
+                                                formatter={(v: number | undefined) => [v ?? 0, 'Applications']}
                                                 labelFormatter={(l) => `Date: ${l}`}
                                             />
                                             <Line
@@ -217,7 +217,7 @@ const AdminAnalytics = () => {
                                             />
                                             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                                             <Tooltip
-                                                formatter={(v: number) => [v, 'Registrations']}
+                                                formatter={(v: number | undefined) => [v ?? 0, 'Registrations']}
                                                 labelFormatter={(l) => `Date: ${l}`}
                                             />
                                             <Area
@@ -265,7 +265,7 @@ const AdminAnalytics = () => {
                                                 }
                                             />
                                             <Tooltip
-                                                formatter={(v: number, name: string) => [v, name]}
+                                                formatter={(v: number | undefined, name: string | undefined) => [v ?? 0, name ?? '']}
                                             />
                                             <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                                             <Bar dataKey="applications" name="Total" fill={BAR_COLOR} radius={[0, 3, 3, 0]} />
@@ -309,7 +309,7 @@ const AdminAnalytics = () => {
                                                     />
                                                 ))}
                                             </Pie>
-                                            <Tooltip formatter={(v: number, name: string) => [v, name]} />
+                                            <Tooltip formatter={(v: number | undefined, name: string | undefined) => [v ?? 0, name ?? '']} />
                                             <Legend
                                                 iconType="circle"
                                                 iconSize={10}

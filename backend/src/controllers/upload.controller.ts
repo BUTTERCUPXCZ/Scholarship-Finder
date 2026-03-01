@@ -208,7 +208,7 @@ export const downloadFile: RequestHandler = async (req, res) => {
     try {
         const { storagePath } = req.body;
         const userId = authReq.userId as string | undefined;
-        const role = ((authReq as any).user?.role as string | undefined) || 'STUDENT';
+        const role = authReq.user?.role || 'STUDENT';
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });

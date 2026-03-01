@@ -23,7 +23,7 @@ const createRedisRateLimiter = (options: RateLimitOptions) => {
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const ip = (req.ip || req.headers["x-forwarded-for"] || "unknown") as string;
-    const userId = (req as any).userId as string | undefined;
+    const userId = req.userId;
 
     // Use userId when available (post-auth routes), otherwise fall back to IP
     const identifier = userId || ip;

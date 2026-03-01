@@ -135,7 +135,7 @@ export const useArchivedScholarships = () => {
         queryFn: async () => {
             try {
                 const token = await getToken();
-                const response = await getArchiveScholarships(token)
+                const response = await getArchiveScholarships(token ?? undefined)
                 return response
             } catch (error: any) {
                 if (error.message?.includes('401') || error.message?.includes('UNAUTHORIZED')) {
@@ -165,7 +165,7 @@ export const useCreateScholarship = () => {
     return useMutation({
         mutationFn: async (data: any) => {
             const token = await getToken();
-            return createScholar(data, token);
+            return createScholar(data, token ?? undefined);
         },
         onMutate: async (newScholarship) => {
 
@@ -223,7 +223,7 @@ export const useUpdateScholarship = () => {
     return useMutation({
         mutationFn: async ({ id, data }: { id: string; data: any }) => {
             const token = await getToken();
-            return updateScholar(id, data, token);
+            return updateScholar(id, data, token ?? undefined);
         },
         onMutate: async ({ id, data }) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
@@ -270,7 +270,7 @@ export const useDeleteScholarship = () => {
     return useMutation({
         mutationFn: async (scholarshipId: string) => {
             const token = await getToken();
-            return deleteScholarship(scholarshipId, token);
+            return deleteScholarship(scholarshipId, token ?? undefined);
         },
         onMutate: async (scholarshipId) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
@@ -313,7 +313,7 @@ export const useArchiveScholarship = () => {
     return useMutation({
         mutationFn: async (scholarshipId: string) => {
             const token = await getToken();
-            return archiveScholarship(scholarshipId, token);
+            return archiveScholarship(scholarshipId, token ?? undefined);
         },
         onMutate: async (scholarshipId) => {
             await queryClient.cancelQueries({ queryKey: scholarshipKeys.lists() })
@@ -361,7 +361,7 @@ export const useUpdateExpiredScholarships = () => {
     return useMutation({
         mutationFn: async () => {
             const token = await getToken();
-            return updateExpiredScholarships(token);
+            return updateExpiredScholarships(token ?? undefined);
         },
         onError: (error: any) => {
             if (error?.message?.includes('UNAUTHORIZED')) {

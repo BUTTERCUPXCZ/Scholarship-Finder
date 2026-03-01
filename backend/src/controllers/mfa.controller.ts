@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/db";
 import { withRLS } from "../lib/rls";
 import { supabaseAdmin } from "../config/supabaseClient";
 import bcrypt from "bcrypt";
