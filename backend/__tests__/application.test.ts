@@ -1,9 +1,8 @@
 import { submitApplication, getUserApplications, getApplicationById, withdrawApplication, updateApplicationStatus } from '../src/controllers/application.controller';
 import { prisma } from '../src/lib/db';
-import { createNotification } from '../src/services/notification';
 import { Request, Response } from 'express';
 
-// Mock prisma and createNotification
+// Mock prisma
 jest.mock('../src/lib/db', () => ({
     prisma: {
         application: {
@@ -14,6 +13,9 @@ jest.mock('../src/lib/db', () => ({
             update: jest.fn(),
             delete: jest.fn(),
         },
+        notification: {
+            create: jest.fn(),
+        },
         scholarship: {
             findFirst: jest.fn(),
         },
@@ -22,6 +24,18 @@ jest.mock('../src/lib/db', () => ({
 
 jest.mock('../src/services/notification', () => ({
     createNotification: jest.fn(),
+}));
+
+// withRLS calls through to the already-mocked prisma so UUID validation is bypassed in tests
+jest.mock('../src/lib/rls', () => ({
+    withRLS: jest.fn(async (_userId: string, _role: string, callback: (tx: unknown) => unknown) => {
+        const { prisma: p } = require('../src/lib/db');
+        return callback(p);
+    }),
+}));
+
+jest.mock('../src/services/socketService', () => ({
+    emitNotificationToUser: jest.fn(),
 }));
 
 jest.mock('../src/services/auditLog.service', () => ({
@@ -180,9 +194,11 @@ describe('Application Controller', () => {
             await updateApplicationStatus(req, res);
 
             expect(prisma.application.update).toHaveBeenCalled();
-            expect(createNotification).toHaveBeenCalledWith(expect.objectContaining({
-                userId: 'user123',
-                type: 'SCHOLARSHIP_ACCEPTED',
+            expect(prisma.notification.create).toHaveBeenCalledWith(expect.objectContaining({
+                data: expect.objectContaining({
+                    userId: 'user123',
+                    type: 'SCHOLARSHIP_ACCEPTED',
+                }),
             }));
             expect(res.status).toHaveBeenCalledWith(200);
         });

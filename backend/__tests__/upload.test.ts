@@ -21,6 +21,21 @@ jest.mock("../src/services/auditLog.service", () => ({
     extractIpAddress: jest.fn().mockReturnValue('127.0.0.1'),
 }));
 
+jest.mock("../src/lib/db", () => ({
+    prisma: {
+        applicationDocument: {
+            findFirst: jest.fn().mockResolvedValue({ id: 'doc1' }),
+        },
+    },
+}));
+
+jest.mock("../src/lib/rls", () => ({
+    withRLS: jest.fn(async (_userId: string, _role: string, callback: (tx: unknown) => unknown) => {
+        const { prisma } = require("../src/lib/db");
+        return callback(prisma);
+    }),
+}));
+
 // Mock Supabase client methods
 jest.mock("@supabase/supabase-js", () => {
     const mStorage = {
@@ -70,7 +85,7 @@ describe("Upload Routes", () => {
     it("should return signed download URL", async () => {
         const res = await request(app)
             .post("/upload/download")
-            .send({ storagePath: "fake/path" });
+            .send({ storagePath: "test-user/fake/path" });
 
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty("downloadUrl");

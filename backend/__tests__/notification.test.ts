@@ -25,6 +25,15 @@ app.delete("/notifications/:id", removeNotification);
 
 jest.mock("../src/services/notification");
 
+jest.mock("../src/lib/rls", () => ({
+    withRLS: jest.fn(async (_userId: string, _role: string, callback: (tx: unknown) => unknown) => callback({})),
+}));
+
+jest.mock("../src/services/socketService", () => ({
+    emitNotificationUpdate: jest.fn(),
+    emitNotificationDeleted: jest.fn(),
+}));
+
 describe("Notification Controller", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -43,7 +52,8 @@ describe("Notification Controller", () => {
         expect(res.body.data).toHaveLength(1);
         expect(notificationService.getUserNotifications).toHaveBeenCalledWith(
             "test-user",
-            { page: 1, limit: 10, onlyUnread: false }
+            { page: 1, limit: 10, onlyUnread: false },
+            expect.anything()
         );
     });
 
@@ -58,7 +68,8 @@ describe("Notification Controller", () => {
         expect(res.body.message).toBe("Notification marked as read");
         expect(notificationService.markNotificationAsRead).toHaveBeenCalledWith(
             "123",
-            "test-user"
+            "test-user",
+            expect.anything()
         );
     });
 
@@ -72,7 +83,8 @@ describe("Notification Controller", () => {
         expect(res.status).toBe(200);
         expect(res.body.message).toBe("All notifications marked as read");
         expect(notificationService.markAllNotificationsAsRead).toHaveBeenCalledWith(
-            "test-user"
+            "test-user",
+            expect.anything()
         );
     });
 
@@ -85,7 +97,8 @@ describe("Notification Controller", () => {
         expect(res.body.message).toBe("Notification deleted successfully");
         expect(notificationService.deleteNotification).toHaveBeenCalledWith(
             "456",
-            "test-user"
+            "test-user",
+            expect.anything()
         );
     });
 
