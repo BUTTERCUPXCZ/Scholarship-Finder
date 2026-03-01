@@ -9,7 +9,6 @@ declare module "express-serve-static-core" {
             email?: string;
             role?: string;
             fullname?: string;
-            [key: string]: unknown;
         };
         // Added by multer when using upload.array(...)
         files?: Express.Multer.File[];

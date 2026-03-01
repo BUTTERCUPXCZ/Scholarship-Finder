@@ -109,14 +109,14 @@ export const userRegister = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Email already exists" });
         }
 
-                
+
         // Note: Password is managed by Supabase Auth, we don't store it
         const response = await withDatabaseRetry(async () => {
             return await prisma.user.create({
-                data: { 
+                data: {
                     id, // Use Supabase user ID from frontend
-                    fullname, 
-                    email, 
+                    fullname,
+                    email,
                     password: '', // Empty - password managed by Supabase
                     role,
                     isVerified: false // Will be updated when email is verified
@@ -163,7 +163,7 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
         }
 
         // Check if user exists
-        const user = await prisma.user.findUnique({ 
+        const user = await prisma.user.findUnique({
             where: { email },
             select: { id: true, email: true, isVerified: true }
         });
@@ -187,8 +187,8 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
 
         if (linkError) {
             console.error(`❌ Failed to generate verification link for ${email}:`, linkError);
-            return res.status(500).json({ 
-                message: "Failed to generate verification link. Please try again." 
+            return res.status(500).json({
+                message: "Failed to generate verification link. Please try again."
             });
         }
 
@@ -393,7 +393,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
                     data: {
                         id: req.user.id,
                         email: req.user.email || '',
-                        fullname: req.user?.fullname || 'User',
+                        fullname: (req.user?.fullname ?? 'User') as string,
                         password: '',
                         role: (req.user?.role || 'STUDENT') as 'STUDENT' | 'ORGANIZATION' | 'ADMIN',
                         isVerified: true
